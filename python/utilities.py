@@ -33,4 +33,5 @@ def ShowEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, c
     if savefig != False:
         plt.savefig(savefig, bbox_inches = bbox_inches, pad_inches = pad_inches)
     
-    plt.show()
+    plt.close()
+    #plt.show()
