@@ -12,8 +12,9 @@ from tqdm import tqdm
 np.set_printoptions(threshold=sys.maxsize)
 
 
-# load data 
-input_filename = "gamma_20deg_0deg_run1069___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
+# load data
+run = 1012 
+input_filename = f"gamma_20deg_0deg_run{run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 input_directory = "cta/data/event-files/" + input_filename + ".h5"
 
 source = EventSource(input_directory)
@@ -26,7 +27,7 @@ subarray.info()
 # create figure of telescope subarray layout
 plt.figure()
 subarray.peek()
-plt.savefig(f"cta/data/info/telescope_subarray_layout_run1069.png")
+plt.savefig(f"cta/data/info/telescope_subarray_layout_run{run}.png")
 
 # get tables for all SST telescopes that include images and corresponding obs_id + event_id for each event
 images_table_1 = vstack([read_table(input_directory, f"/dl1/event/telescope/images/tel_{t:03}") for t in range(30, 100)])
@@ -46,13 +47,13 @@ complete_table["true_energy"] = complete_table["true_energy"].to("GeV")
 # define telescope geometry to the SST geometry (telescope id 30)
 SST_camera_geometry = source.subarray.tel[30].camera.geometry
 
-# save images individual telescope images
-for i in range(30):
-    ShowEventImage(complete_table["image"][i], SST_camera_geometry, clean_image = False, savefig = f"cta/data/images/tests/obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.png", colorbar = True, cmap = "Greys")
-    print("_______________________________")
-    print("obs_id, event_id, tel_id:", complete_table["obs_id"][i], complete_table["event_id"][i], complete_table["tel_id"][i])
-    print("true energy:", complete_table["true_energy"][i])
-    print("min/max pixel:", np.min(complete_table["image"][i]), np.max(complete_table["image"][i]))
+# # save images individual telescope images
+# for i in range(30):
+#     ShowEventImage(complete_table["image"][i], SST_camera_geometry, clean_image = False, savefig = f"cta/data/images/tests/obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.png", colorbar = True, cmap = "Greys")
+#     print("_______________________________")
+#     print("obs_id, event_id, tel_id:", complete_table["obs_id"][i], complete_table["event_id"][i], complete_table["tel_id"][i])
+#     print("true energy:", complete_table["true_energy"][i])
+#     print("min/max pixel:", np.min(complete_table["image"][i]), np.max(complete_table["image"][i]))
 
 # group table by same obs_id and event_id
 complete_table_by_obs_id_event_id = complete_table.group_by(["obs_id", "event_id", "true_energy"])
@@ -61,7 +62,7 @@ complete_table_by_obs_id_event_id = complete_table.group_by(["obs_id", "event_id
 complete_table_tel_combined = complete_table_by_obs_id_event_id.groups.keys
 
 # save data into a .csv file
-ascii.write(complete_table_tel_combined, f"cta/data/csv/gamma_20deg_0deg_run1069___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)
+ascii.write(complete_table_tel_combined, f"cta/data/csv/gamma_20deg_0deg_run{run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)
 
 image_combined = [[]] * len(complete_table_tel_combined)
 # image_combined = np.zeros(shape = (len(complete_table_tel_combined), 2048))
@@ -82,20 +83,20 @@ complete_table_tel_combined["image combined"] = image_combined
 # save combined telescope images
 for i in tqdm(range(len(complete_table_tel_combined))):
     # create directory in which the images will be saved
-    path = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/png"
+    path = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
     try:
         os.makedirs(path)
     except OSError:
         pass
 
     # save image
-    ShowEventImage(complete_table_tel_combined["image combined"][i][0], SST_camera_geometry, clean_image = True, savefig = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/png/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.png", colorbar = False, cmap = "Greys")
+    ShowEventImage(complete_table_tel_combined["image combined"][i][0], SST_camera_geometry, clean_image = True, savefig = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.tif", colorbar = False, cmap = "Greys")
 
-    # print information
-    print("_______________________________")
-    print("obs_id, event_id:", complete_table_tel_combined["obs_id"][i], complete_table_tel_combined["event_id"][i])
-    print("true energy:", np.round(complete_table_tel_combined["true_energy"][i], 10))
-    print("min/max pixel:", np.min(complete_table_tel_combined["image combined"][i][0]), np.max(complete_table_tel_combined["image combined"][i][0]))
+    # # print information
+    # print("_______________________________")
+    # print("obs_id, event_id:", complete_table_tel_combined["obs_id"][i], complete_table_tel_combined["event_id"][i])
+    # print("true energy:", np.round(complete_table_tel_combined["true_energy"][i], 10))
+    # print("min/max pixel:", np.min(complete_table_tel_combined["image combined"][i][0]), np.max(complete_table_tel_combined["image combined"][i][0]))
 
 # convert png images to pgm
 for i in tqdm(range(len(complete_table_tel_combined))):
@@ -106,12 +107,7 @@ for i in tqdm(range(len(complete_table_tel_combined))):
     except OSError:
         pass
 
-    os.system(f"convert cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/png/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.png cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.pgm")
+    os.system(f"convert cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.tif cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.pgm")
 
 # close event file
 source.close()
-##################### more options ########################
-
-# # show telescope array structure
-# source.subarray.peek()
-# plt.show()
