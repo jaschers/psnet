@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 from ctapipe.visualization import CameraDisplay
 
-def ShowEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
+def GetEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
     """[summary]
 
     Args:
