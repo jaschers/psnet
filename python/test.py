@@ -1,7 +1,6 @@
 import numpy as np
 
-Y = np.random.rand(3,2)
-
-x = np.linspace(np.min(Y), np.max(np.min(Y)), 100)
-
-print(x)
+a=np.array([[[0,1,2],[0,0,2],[0,0,2]],[[0,0,2],[0,1,2],[0,0,2]],[[0,0,2],[0,1,2],[0,0,2]],[[0,0,2],[1,0,2],[0,0,2]]])
+print(a)
+a = a.reshape(2,2,3,3).transpose(0,2,1,3).reshape(6,6)
+print(a)

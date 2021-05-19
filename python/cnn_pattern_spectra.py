@@ -19,7 +19,7 @@ run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]
 table = pd.DataFrame()
 for r in range(len(run)):
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = "dm-finder/cnn/input/images/" + run_filename + "_images.h5"
+    input_filename = "dm-finder/cnn/input/pattern-spectra/" + run_filename + "_ps.h5"
 
     table_individual_run = pd.read_hdf(input_filename)
     print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -30,9 +30,9 @@ print("Total number of events:", len(table))
 # input features: CTA images normalised to 1
 X = [[]] * len(table)
 for i in range(len(table)):
-    X[i] = table["image"][i]
+    X[i] = table["pattern spectrum"][i]
 X = np.asarray(X) # / 255
-X = X.reshape(-1, 339, 342, 1)
+X = X.reshape(-1, 20, 20, 1)
 
 # output label: log10(true energy)
 Y = np.log10(np.asarray(table["true_energy"]))
@@ -45,7 +45,7 @@ Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
 # plt.figure()
 # plt.imshow(X[0], cmap = "Greys_r")
 # plt.colorbar()
-# plt.savefig("dm-finder/cnn/checks/cta_image.png")
+# plt.savefig("dm-finder/cnn/checks/pattern_spectrum.png")
 # plt.close()
 
 # display total energy distribution of data set
@@ -55,7 +55,7 @@ plt.xlabel("true energy [GeV]")
 plt.ylabel("number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig("dm-finder/cnn/checks/total_energy_distribution.png")
+plt.savefig("dm-finder/cnn/checks/total_energy_distribution_ps.png")
 plt.close()
 
 # ----------------------------------------------------------------------
@@ -100,7 +100,7 @@ model.compile(
     loss_weights=weight_energy,  
     optimizer=keras.optimizers.Adam(lr=1E-3))
 
-history_path = "dm-finder/cnn/history/history.csv"
+history_path = "dm-finder/cnn/history/history_ps.csv"
 
 fit = model.fit(X_train,
     Y_train,
@@ -110,6 +110,6 @@ fit = model.fit(X_train,
     validation_split=0.1,
     callbacks=[CSVLogger(history_path)])
 
-model_path = "dm-finder/cnn/model/model.h5"
+model_path = "dm-finder/cnn/model/model_ps.h5"
 
 model.save(model_path)

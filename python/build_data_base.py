@@ -6,7 +6,7 @@ from tqdm import tqdm
 import h5py
 pd.options.mode.chained_assignment = None  # default='warn'
 
-run = np.array([107, 1034, 1037, 1054, 1057, 1073, 1086, 1098, 3667])
+run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098, 3667])
 for r in range(len(run)):
     # read csv file
     print("Run", run[r])
@@ -34,5 +34,6 @@ for r in range(len(run)):
         table["image"][i] = image[15:-15, 77:-77]
 
     # save tabel as h5 file
-    output_filename = "cta/data/cnn-data-base/" + run_filename + "_cnn.h5"
+    output_filename = "dm-finder/cnn/input/images/" + run_filename + "_images.h5"
+    print(output_filename)
     table.to_hdf(output_filename, key = 'events', mode = 'w', index = False)
