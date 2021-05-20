@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 # properties = np.array([9, 0, 0, 0, 10, 100000, 2, 0, 20, 20, 3]) # a1, a2, dl1, dl2, dh1, dh2, m1, m2, n1, n2, f 
 # pattern spectra properties
-a = np.array([9, 0])
+a = np.array([10, 0])
 dl = np.array([0, 0])
 dh = np.array([10, 100000])
 m = np.array([2, 0])

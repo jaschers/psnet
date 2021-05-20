@@ -24,7 +24,7 @@ f = 3
 
 particle_type = "gamma"
 image_type = "minimalistic"
-run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]) #1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
+run = np.array([107]) #1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
 
 table = pd.DataFrame()
 for r in range(len(run)):
@@ -127,6 +127,6 @@ fit = model.fit(X_train,
     validation_split=0.1,
     callbacks=[CSVLogger(history_path)])
 
-model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv"
+model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
 
 model.save(model_path)
