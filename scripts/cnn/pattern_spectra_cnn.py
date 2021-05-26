@@ -24,7 +24,7 @@ f = 3
 
 particle_type = "gamma"
 image_type = "minimalistic"
-run = np.array([107]) #1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
+run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]) #1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
 
 table = pd.DataFrame()
 for r in range(len(run)):
@@ -51,19 +51,19 @@ Y = np.log10(np.asarray(table["true_energy"]))
 X_train, X_test = np.split(X, [int(-len(table) / 10)])
 Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
 
-# # display a random cta image
-# plt.figure()
-# plt.imshow(X[0], cmap = "Greys_r")
-# plt.colorbar()
-# plt.savefig("dm-finder/cnn/checks/pattern_spectrum.png")
-# plt.close()
-
 path = f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/"
 
 try:
     os.makedirs(path)
 except OSError:
     pass #print("Directory could not be created")
+
+# display a random pattern spectrum
+#plt.figure()
+#plt.imshow(X[0], cmap = "Greys")
+#plt.colorbar()
+#plt.savefig(path + "pattern_spectrum_example.png")
+#plt.close()
 
 # display total energy distribution of data set
 plt.figure()

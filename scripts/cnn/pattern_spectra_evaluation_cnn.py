@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import keras
 from keras.layers import *
+import os
 layers = keras.layers
 print("Packages successfully loaded")
 
@@ -38,6 +40,11 @@ X = [[]] * len(table)
 for i in range(len(table)):
     X[i] = table["pattern spectrum"][i]
 X = np.asarray(X) # / 255
+
+plt.figure()
+plt.imshow(X[0], cmap = "Greys")
+plt.savefig(f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + "ps_example.png")
+
 X = X.reshape(-1, 20, 20, 1)
 
 # output label: log10(true energy)
@@ -55,11 +62,11 @@ model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a
 
 model = keras.models.load_model(model_path)
 
-losses = model.evaluate(X_train, Y_train, batch_size=128, verbose=0)
+losses = model.evaluate(X_test, Y_test, batch_size=128, verbose=0)
 print("%.5e (energy)" % losses)
 
 # predict output for test set and undo feature scaling
-yp = model.predict(X_train, batch_size=128)
+yp = model.predict(X_test, batch_size=128)
 yp = yp[:, 0]  # remove unnecessary last axis
 
 path = f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/"
@@ -70,22 +77,42 @@ try:
 except OSError:
     pass #print("Directory could not be created")
 
-difference = (yp - Y_train) / Y_train #10**(yp - Y_train) - 1
-reso = np.std(difference)
+difference = (yp - Y_test) / Y_test #10**(yp - Y_test) - 1
+mean = np.mean(difference)
+sigma = np.std(difference)
 plt.figure()
+plt.title("pattern spectra")
+plt.grid(alpha = 0.2)
 plt.hist(difference, bins = np.linspace(np.min(difference), np.max(difference), 40))
 plt.yscale("log")
-plt.xlabel("($E_\mathrm{rec} - E_\mathrm{true}) / E_\mathrm{true}$")
+plt.xlabel("($\log_{10}(E_\mathrm{rec}/\mathrm{GeV}) - \log_{10}(E_\mathrm{true}/\mathrm{GeV}))/ \log_{10}(E_\mathrm{true} /\mathrm{GeV})$")
 plt.ylabel("Number of events")
-# plt.text(0.95, 0.95, "$\sigma = %.3f$" % reso, ha="right", va="top", transform=plt.gca().transAxes)
-plt.grid()
+# plt.text(0.95, 0.95, "$\mu = %.3f$" % mean, ha="right", va="top", transform=plt.gca().transAxes)
+# plt.text(0.95, 0.90, "$\sigma = %.3f$" % sigma, ha="right", va="top", transform=plt.gca().transAxes)
+plt.vlines(mean, 0.7, 3e3, linestyle = "dashed", label = "$\mu = %.3f$" % mean)
+plt.vlines(mean + sigma, 0.7, 3e3, linestyle = "dashdot", label =  "$\sigma = %.3f$" % sigma)
+plt.vlines(mean - sigma, 0.7, 3e3, linestyle = "dashdot")
+plt.legend()
 plt.savefig(path + "energy_histogram.png")
 
-x = np.linspace(np.min(Y_train), np.max(Y_train), 100)
+x = np.linspace(np.min(Y_test), np.max(Y_test), 100)
 plt.figure()
+plt.title("pattern spectra")
 plt.grid(alpha = 0.2)
 plt.plot(x, x, color="black")
-plt.scatter(Y_train, yp)
+plt.scatter(Y_test, yp)
 plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
 plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
 plt.savefig(path + "energy_scattering.png")
+
+# 2D energy scattering
+plt.figure()
+plt.title("pattern spectra")
+plt.grid(alpha = 0.2)
+plt.plot(x, x, color="black")
+# plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
+plt.hist2d(Y_test, yp, bins=(50, 50), cmap = "viridis", norm=matplotlib.colors.LogNorm())
+plt.colorbar()
+plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
+plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
+plt.savefig(path + "energy_scattering_2D.png")
