@@ -14,6 +14,7 @@ def GetEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, co
         savefig (bool, optional): [description]. Defaults to False.
     """
     plt.figure()
+    # plt.style.use('dark_background')
     disp = CameraDisplay(camera_geometry, cmap = cmap, show_frame = show_frame)
     disp.image = image
 

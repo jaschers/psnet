@@ -6,7 +6,6 @@ from keras.layers import *
 import os 
 from keras.callbacks import CSVLogger
 import tensorflow as tf
-import time
 layers = keras.layers
 
 print("Packages successfully loaded")
@@ -25,10 +24,10 @@ f = 3
 
 particle_type = "gamma"
 image_type = "minimalistic"
-run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098, 1108, 1117, 1119, 1121, 1146, 1196, 1213, 1232, 1234, 1257, 1258, 1275, 1305, 1308, 1330, 134, 1364, 1368, 1369, 1373, 1394, 1413, 1467, 1475, 1477, 1489, 148, 1514, 1517, 1521, 1531, 1542, 1570, 1613, 1614, 1628, 1642, 1674, 1691, 1703, 1713, 1716, 1749, 1753, 1760, 1780, 1788, 1796, 1798, 1807, 1845, 1862, 1875, 1876, 1945, 1964, 2007, 2079, 2092, 2129, 2139, 214, 2198, 2224, 223, 2254, 2273, 2294, 2299, 2309, 2326, 2331]) #1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
-
+run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]) #107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
+# 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098, 1108, 1117, 1119, 1121, 1146, 1196, 1213, 1232, 1234, 1257, 1258, 1275, 1305, 1308, 1330, 134, 1364, 1368, 1369, 1373, 1394, 1413, 1467, 1475, 1477, 1489, 148, 1514, 1517, 1521
 table = pd.DataFrame()
-for r in range(len(run)): # len(run)
+for r in range(len(run)):
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
     input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type}/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + run_filename + "_ps.h5"
 
@@ -43,8 +42,7 @@ X = [[]] * len(table)
 for i in range(len(table)):
     X[i] = table["pattern spectrum"][i]
 X = np.asarray(X) # / 255
-X_shape = np.shape(X)
-X = X.reshape(-1, X_shape[1], X_shape[2], 1)
+X = X.reshape(-1, 20, 20, 1)
 
 # output label: log10(true energy)
 Y = np.log10(np.asarray(table["true_energy"]))
@@ -60,12 +58,6 @@ try:
 except OSError:
     pass #print("Directory could not be created")
 
-# display a random pattern spectrum
-#plt.figure()
-#plt.imshow(X[0], cmap = "Greys")
-#plt.colorbar()
-#plt.savefig(path + "pattern_spectrum_example.png")
-#plt.close()
 
 # display total energy distribution of data set
 plt.figure()
@@ -74,7 +66,7 @@ plt.xlabel("true energy [GeV]")
 plt.ylabel("number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(path + "total_energy_distribution.png", dpi = 250)
+plt.savefig(path + "total_energy_distribution.png")
 plt.close()
 
 # ----------------------------------------------------------------------
@@ -86,8 +78,7 @@ input1 = layers.Input(shape = X_shape[1:])
 
 # define a suitable network 
 z = Conv2D(4, # number of filters, the dimensionality of the output space
-    kernel_size = (3,3),
-    padding = "same", # size of filters 3x3
+    kernel_size = (3,3), # size of filters 3x3
     activation = "relu")(input1)
 zl = [z]
 
@@ -100,9 +91,6 @@ for i in range(5):
     z = concatenate(zl[:], axis=-1)
 
 z = GlobalAveragePooling2D()(z)
-# z = Flatten()(z)
-# z = Dense(32,activation="relu")(z)
-# z = Dense(16,activation="relu")(z)
 z = Dense(8,activation="relu")(z)
 
 output = layers.Dense(1, name="energy")(z)
@@ -125,9 +113,6 @@ model.compile(
 
 history_path = f"dm-finder/cnn/pattern_spectra/history/{image_type}/" + f"history_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv"
 
-# start timer
-start_time = time.time()
-
 fit = model.fit(X_train,
     Y_train,
     batch_size=32,
@@ -135,9 +120,6 @@ fit = model.fit(X_train,
     verbose=2,
     validation_split=0.1,
     callbacks=[CSVLogger(history_path)])
-
-# end timer and print training time
-print("Time spend for training the CNN: ", time.time() - start_time)
 
 model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
 

@@ -1,49 +1,20 @@
-import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import keras
-from keras.layers import *
-import os 
-from keras.callbacks import CSVLogger
-import tensorflow as tf
-layers = keras.layers
+import csv
 
-print("Packages successfully loaded")
+a = np.array([1, 2, 3, 4])
+b = np.array([5, 6, 7, 8])
 
-# ---------------------------------------------------
-# Load and prepare dataset
-# ---------------------------------------------------
+print(np.shape(a))
 
-# import data
-run = np.array([107]) # 107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098, 
-table = pd.DataFrame()
-for r in range(len(run)):
-    run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = "dm-finder/cnn/input/pattern-spectra/" + run_filename + "_ps.h5"
+a = np.reshape(a, (len(a), 1))
+b = np.reshape(b, (len(b), 1))
 
-    table_individual_run = pd.read_hdf(input_filename)
-    print(f"Number of events in Run {run[r]}:", len(table_individual_run))
-    table = table.append(table_individual_run, ignore_index = True)
+c = np.hstack((a, b))
 
-print("Total number of events:", len(table))
+with open('test.csv', 'w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(["log10(E_true / GeV)", "log10(E_rec / GeV)"])
+    writer.writerows(c)
 
-# input features: CTA images normalised to 1
-X = [[]] * len(table)
-for i in range(len(table)):
-    X[i] = table["pattern spectrum"][i]
-X = np.asarray(X) # / 255
-print(X)
-print("#####################################")
-print(X[0])
-print("#####################################")
-print(X[0][0])
-print("#####################################")
-print(X[0][0][0])
-X = X.reshape(-1, 21, 21, 1)
 
-# output label: log10(true energy)
-Y = np.log10(np.asarray(table["true_energy"]))
-
-# # hold out the last 3000 events as test data
-X_train, X_test = np.split(X, [int(-len(table) / 10)])
-Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
+# ascii.write(complete_table_tel_combined, f"dm-finder/data/{particle_type}/tables/{particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)

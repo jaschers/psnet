@@ -16,11 +16,13 @@ np.set_printoptions(threshold=sys.maxsize)
 # ----------------------------------------------------------------------
 
 # load data
-run = np.array([1086, 1098])
+particle_type = "gamma" # gamma/proton
+image_type = "default" # default/minimalistic
+run = np.array([1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]) #gamma 107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098
 for r in range(len(run)):
     print("Run", run[r])
     input_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_directory = "cta/data/event-files/" + input_filename + ".h5"
+    input_directory = f"dm-finder/data/{particle_type}/event_files/" + input_filename + ".h5"
 
     source = EventSource(input_directory)
     print(f"Total number of events: {len(source)}")
@@ -29,11 +31,11 @@ for r in range(len(run)):
     subarray = SubarrayDescription.from_hdf(input_directory)
     subarray.info()
 
-    # create figure of telescope subarray layout
-    plt.figure()
-    subarray.peek()
-    plt.savefig(f"cta/data/info/telescope_subarray_layout_run{run[r]}.png")
-    plt.close()
+    # # create figure of telescope subarray layout
+    # plt.figure()
+    # subarray.peek()
+    # plt.savefig(f"cta/data/info/telescope_subarray_layout_run{run[r]}.png")
+    # plt.close()
 
     # get tables for all SST telescopes that include images and corresponding obs_id + event_id for each event
     sst_tel_id = np.append(range(30, 100), range(131, 181))
@@ -68,7 +70,7 @@ for r in range(len(run)):
     complete_table_tel_combined = complete_table_by_obs_id_event_id.groups.keys
 
     # # save data into a .csv file
-    ascii.write(complete_table_tel_combined, f"cta/data/csv/gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)
+    # ascii.write(complete_table_tel_combined, f"dm-finder/data/{particle_type}/tables/{particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)
 
     # create empty image combined list to be filled in
     image_combined = [[]] * len(complete_table_tel_combined)
@@ -82,27 +84,27 @@ for r in range(len(run)):
     # add combined images list to the table
     complete_table_tel_combined["image combined"] = image_combined
 
-    # display and save energy distribution
-    plt.figure()
-    plt.grid(alpha = 0.2)
-    plt.hist(complete_table_tel_combined["true_energy"].to("TeV").value)
-    plt.xlabel("true energy [TeV]")
-    plt.ylabel("number of events")
-    plt.yscale("log")
-    plt.savefig(f"cta/data/info/energy_distribution_run{run[r]}.png")
-    plt.close()
+    # # display and save energy distribution
+    # plt.figure()
+    # plt.grid(alpha = 0.2)
+    # plt.hist(complete_table_tel_combined["true_energy"].to("TeV").value)
+    # plt.xlabel("true energy [TeV]")
+    # plt.ylabel("number of events")
+    # plt.yscale("log")
+    # plt.savefig(f"dm-finder/data/{particle_type}/info/energy_distribution/energy_distribution_run{run[r]}.png")
+    # plt.close()
 
     # save combined telescope images
     for i in tqdm(range(len(complete_table_tel_combined))):
         # create directory in which the images will be saved
-        path = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
+        path = f"dm-finder/data/{particle_type}/images/{image_type}/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
         try:
             os.makedirs(path)
         except OSError:
             pass
 
         # save image
-        GetEventImage(complete_table_tel_combined["image combined"][i][0], sst_camera_geometry, clean_image = True, savefig = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.tif", colorbar = False, cmap = "Greys")
+        GetEventImage(complete_table_tel_combined["image combined"][i][0], sst_camera_geometry, clean_image = True, savefig = f"dm-finder/data/{particle_type}/images/{image_type}/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}_r.tif", colorbar = False, cmap = "Greys_r")
 
         # # print information
         # print("_______________________________")
@@ -113,13 +115,13 @@ for r in range(len(run)):
     # convert png images to pgm
     for i in tqdm(range(len(complete_table_tel_combined))):
         # create directory in which the images will be saved
-        path = f"cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm"
+        path = f"dm-finder/data/{particle_type}/images/{image_type}/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm"
         try:
             os.makedirs(path)
         except OSError:
             pass
 
-        os.system(f"convert cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.tif cta/data/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.pgm")
+        os.system(f"convert dm-finder/data/{particle_type}/images/{image_type}/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}_r.tif dm-finder/data/{particle_type}/images/{image_type}/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}_r.pgm")
 
     # close event file
     source.close()

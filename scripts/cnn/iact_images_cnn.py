@@ -6,6 +6,7 @@ from keras.layers import *
 import os 
 from keras.callbacks import CSVLogger
 import tensorflow as tf
+import time
 layers = keras.layers
 
 print("Packages successfully loaded")
@@ -17,7 +18,7 @@ print("Packages successfully loaded")
 # import data
 particle_type = "gamma"
 image_type = "minimalistic"
-run = np.array([107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098]) # 107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098, 
+run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098, 1108, 1117, 1119, 1121, 1146, 1196, 1213, 1232, 1234, 1257, 1258, 1275, 1305, 1308, 1330, 134, 1364, 1368, 1369, 1373, 1394, 1413, 1467, 1475, 1477, 1489, 148, 1514, 1517, 1521, 1531, 1542, 1570, 1613, 1614, 1628, 1642, 1674, 1691, 1703, 1713, 1716, 1749, 1753, 1760, 1780, 1788, 1796, 1798, 1807, 1845, 1862, 1875, 1876, 1945, 1964, 2007, 2079, 2092, 2129, 2139, 214, 2198, 2224, 223, 2254, 2273, 2294, 2299, 2309, 2326, 2331]) # 107, 1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 1086, 1098, 
 table = pd.DataFrame()
 for r in range(len(run)):
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
@@ -51,14 +52,18 @@ Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
 # plt.savefig("dm-finder/cnn/checks/cta_image.png")
 # plt.close()
 
+# remove strange outlier
+index = np.argmin(Y)
+Y = np.delete(Y, index)
+
 # display total energy distribution of data set
 plt.figure()
-plt.hist(table["true_energy"], bins=np.logspace(np.log10(np.min(table["true_energy"])),np.log10(np.max(table["true_energy"])), 50))
+plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
 plt.xlabel("true energy [GeV]")
 plt.ylabel("number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/total_energy_distribution.png")
+plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/total_energy_distribution.png", dpi = 250)
 plt.close()
 
 # ----------------------------------------------------------------------
@@ -105,6 +110,9 @@ model.compile(
 
 history_path = f"dm-finder/cnn/iact_images/history/{image_type}/" + "history.csv"
 
+# start timer
+start_time = time.time()
+
 fit = model.fit(X_train,
     Y_train,
     batch_size=32,
@@ -112,6 +120,9 @@ fit = model.fit(X_train,
     verbose=2,
     validation_split=0.1,
     callbacks=[CSVLogger(history_path)])
+
+# end timer and print training time
+print("Time spend for training the CNN: ", time.time() - start_time)
 
 model_path = f"dm-finder/cnn/iact_images/model/{image_type}/" + "model.h5"
 
