@@ -30,7 +30,7 @@ run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098,
 table = pd.DataFrame()
 for r in range(len(run)): # len(run)
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type}/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + run_filename + "_ps.h5"
+    input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type}/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + run_filename + "_ps_8bit.h5"
 
     table_individual_run = pd.read_hdf(input_filename)
     print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -48,7 +48,7 @@ X = X.reshape(-1, X_shape[1], X_shape[2], 1)
 
 plt.figure()
 plt.imshow(X[0], cmap = "Greys")
-plt.savefig(f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + "ps_example.png")
+plt.savefig(f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + "ps_example_8bit.png")
 
 
 # output label: log10(true energy)
@@ -67,7 +67,7 @@ Y_test = np.delete(Y_test, index)
 # Evaluation
 # ----------------------------------------------------------------------
 
-model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
+model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_8bit_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
 
 model = keras.models.load_model(model_path)
 
@@ -81,21 +81,21 @@ start_time = time.time()
 yp = model.predict(X_test, batch_size=128)
 yp = yp[:, 0]  # remove unnecessary last axis
 
-# end timer and print classification time
-total_time = time.time() - start_time
-time_per_event = total_time / len(yp)
-print("Number test events", len(yp))
-print("Total time needed", total_time)
-print("Time spend for classification per event: ", time_per_event)
-print(yp)
+# # end timer and print classification time
+# total_time = time.time() - start_time
+# time_per_event = total_time / len(yp)
+# print("Number test events", len(yp))
+# print("Total time needed", total_time)
+# print("Time spend for classification per event: ", time_per_event)
+# print(yp)
 
-# path = f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/"
+path = f"dm-finder/cnn/pattern_spectra/results/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/"
 
-# # energy
-# try:
-#     os.makedirs(path)
-# except OSError:
-#     pass #print("Directory could not be created")
+# energy
+try:
+    os.makedirs(path)
+except OSError:
+    pass #print("Directory could not be created")
 
 # difference = (yp - Y_test) / Y_test #10**(yp - Y_test) - 1
 # mean = np.mean(difference)
@@ -115,7 +115,7 @@ print(yp)
 # # plt.legend()
 # plt.savefig(path + "energy_histogram.png")
 
-# x = np.linspace(np.min(Y_test), np.max(Y_test), 100)
+x = np.linspace(np.min(Y_test), np.max(Y_test), 100)
 # plt.figure()
 # plt.title("pattern spectra")
 # plt.grid(alpha = 0.2)
@@ -125,29 +125,48 @@ print(yp)
 # plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
 # plt.savefig(path + "energy_scattering.png")
 
-# # 2D energy scattering
-# plt.figure()
-# plt.title("pattern spectra")
-# plt.grid(alpha = 0.2)
-# plt.plot(x, x, color="black")
-# # plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
-# plt.hist2d(Y_test, yp, bins=(50, 50), cmap = "viridis", norm=matplotlib.colors.LogNorm())
-# cbar = plt.colorbar()
-# cbar.set_label('Number of events')
-# plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
-# plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
-# plt.savefig(path + "energy_scattering_2D.png", dpi = 250)
+# remove strange outlier
+index = np.argmin(yp)
+yp = np.delete(yp, index)
+Y_test = np.delete(Y_test, index)
 
-# # create csv output file
-# Y_test = np.reshape(Y_test, (len(Y_test), 1))
-# yp = np.reshape(yp, (len(yp), 1))
-# table_output = np.hstack((Y_test, yp))
+# 2D energy scattering
+plt.figure()
+plt.title("pattern spectra")
+plt.grid(alpha = 0.2)
+plt.plot(x, x, color="black")
+# plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
+plt.hist2d(Y_test, yp, bins=(50, 50), cmap = "viridis", norm=matplotlib.colors.LogNorm())
+cbar = plt.colorbar()
+cbar.set_label('Number of events')
+plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
+plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
+plt.savefig(path + "energy_scattering_2D_8bit.png", dpi = 250)
 
-# path_output = f'dm-finder/cnn/pattern_spectra/output/{image_type}/'
+# plot history
+history_path = f"dm-finder/cnn/pattern_spectra/history/{image_type}/" + f"history_8bit_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv"
 
-# try:
-#     os.makedirs(path_output)
-# except OSError:
-#     pass #print("Directory could not be created")
+table_history = pd.read_csv(history_path)
 
-# pd.DataFrame(table_output).to_csv(f'dm-finder/cnn/pattern_spectra/output/{image_type}/test_set_energy_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv', index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
+plt.figure()
+plt.plot(table_history["epoch"] + 1, table_history["loss"], label = "training")
+plt.plot(table_history["epoch"] + 1, table_history["val_loss"], label = "validation")
+plt.xlabel("epoch")
+plt.ylabel("loss")
+plt.legend()
+plt.savefig(path + "loss_8bit.png")
+plt.close()
+
+# create csv output file
+Y_test = np.reshape(Y_test, (len(Y_test), 1))
+yp = np.reshape(yp, (len(yp), 1))
+table_output = np.hstack((Y_test, yp))
+
+path_output = f'dm-finder/cnn/pattern_spectra/output/{image_type}/'
+
+try:
+    os.makedirs(path_output)
+except OSError:
+    pass #print("Directory could not be created")
+
+pd.DataFrame(table_output).to_csv(f'dm-finder/cnn/pattern_spectra/output/{image_type}/test_set_energy_8bit_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv', index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])

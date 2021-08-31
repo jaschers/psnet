@@ -22,7 +22,7 @@ run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098,
 table = pd.DataFrame()
 for r in range(len(run)):
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = f"dm-finder/cnn/iact_images/input/{particle_type}/{image_type}/" + run_filename + "_images.h5"
+    input_filename = f"dm-finder/cnn/iact_images/input/{particle_type}/{image_type}/" + run_filename + "_images_8bit.h5"
 
     table_individual_run = pd.read_hdf(input_filename)
     print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -33,7 +33,7 @@ print("Total number of events:", len(table))
 # input features: CTA images normalised to 1
 X = [[]] * len(table)
 for i in range(len(table)):
-    X[i] = table["image"][i]
+    X[i] = np.asarray(table["image"][i])
 X = np.asarray(X) # / 255
 X_shape = np.shape(X)
 X = X.reshape(-1, X_shape[1], X_shape[2], 1)
@@ -63,7 +63,7 @@ plt.xlabel("True energy [GeV]")
 plt.ylabel("Number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/total_energy_distribution.png", dpi = 250)
+plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/total_energy_distribution_8bit.png", dpi = 250)
 plt.close()
 
 # ----------------------------------------------------------------------
@@ -108,7 +108,7 @@ model.compile(
     loss_weights=weight_energy,  
     optimizer=keras.optimizers.Adam(lr=1E-3))
 
-history_path = f"dm-finder/cnn/iact_images/history/{image_type}/" + "history_2.csv"
+history_path = f"dm-finder/cnn/iact_images/history/{image_type}/" + "history_8bit.csv"
 
 # start timer
 start_time = time.time()
@@ -124,6 +124,6 @@ fit = model.fit(X_train,
 # end timer and print training time
 print("Time spend for training the CNN: ", time.time() - start_time)
 
-model_path = f"dm-finder/cnn/iact_images/model/{image_type}/" + "model_2.h5"
+model_path = f"dm-finder/cnn/iact_images/model/{image_type}/" + "model_8bit.h5"
 
 model.save(model_path)

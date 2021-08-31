@@ -30,7 +30,7 @@ run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098,
 table = pd.DataFrame()
 for r in range(len(run)): # len(run)
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type}/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + run_filename + "_ps.h5"
+    input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type}/{image_type}/" + f"a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}/" + run_filename + "_ps_float32.h5"
 
     table_individual_run = pd.read_hdf(input_filename)
     print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -70,8 +70,8 @@ except OSError:
 # display total energy distribution of data set
 plt.figure()
 plt.hist(table["true_energy"], bins=np.logspace(np.log10(np.min(table["true_energy"])),np.log10(np.max(table["true_energy"])), 50))
-plt.xlabel("true energy [GeV]")
-plt.ylabel("number of events")
+plt.xlabel("True energy [GeV]")
+plt.ylabel("Number of events")
 plt.xscale("log")
 plt.yscale("log")
 plt.savefig(path + "total_energy_distribution.png", dpi = 250)
@@ -123,7 +123,7 @@ model.compile(
     loss_weights=weight_energy,  
     optimizer=keras.optimizers.Adam(lr=1E-3))
 
-history_path = f"dm-finder/cnn/pattern_spectra/history/{image_type}/" + f"history_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv"
+history_path = f"dm-finder/cnn/pattern_spectra/history/{image_type}/" + f"history_float32_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.csv"
 
 # start timer
 start_time = time.time()
@@ -139,6 +139,6 @@ fit = model.fit(X_train,
 # end timer and print training time
 print("Time spend for training the CNN: ", time.time() - start_time)
 
-model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
+model_path = f"dm-finder/cnn/pattern_spectra/model/{image_type}/" + f"model_float32_a_{a[0]}_{a[1]}__dl_{dl[0]}_{dl[1]}__dh_{dh[0]}_{dh[1]}__m_{m[0]}_{m[1]}__n_{n[0]}_{n[1]}__f_{f}.h5"
 
 model.save(model_path)

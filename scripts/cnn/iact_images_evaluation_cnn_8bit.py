@@ -7,6 +7,7 @@ from keras.layers import *
 import os 
 from keras.callbacks import CSVLogger
 import tensorflow as tf
+import time
 layers = keras.layers
 
 print("Packages successfully loaded")
@@ -19,7 +20,7 @@ run = np.array([1012, 1024, 1034, 1037, 1054, 1057, 1069, 1073, 107, 1086, 1098,
 table = pd.DataFrame()
 for r in range(len(run)):
     run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = f"dm-finder/cnn/iact_images/input/{particle_type}/{image_type}/" + run_filename + "_images.h5"
+    input_filename = f"dm-finder/cnn/iact_images/input/{particle_type}/{image_type}/" + run_filename + "_images_8bit.h5"
 
     table_individual_run = pd.read_hdf(input_filename)
     print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -35,7 +36,7 @@ X = np.asarray(X) # / 255
 
 plt.figure()
 plt.imshow(X[0], cmap = "Greys_r")
-plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/" + "iact_image_example.png")
+plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/" + "iact_image_example_8bit.png")
 
 X_shape = np.shape(X)
 X = X.reshape(-1, X_shape[1], X_shape[2], 1)
@@ -56,7 +57,7 @@ Y_test = np.delete(Y_test, index)
 # Evaluation
 # ----------------------------------------------------------------------
 
-model_path = f"dm-finder/cnn/iact_images/model/{image_type}/" + "model_2.h5"
+model_path = f"dm-finder/cnn/iact_images/model/{image_type}/" + "model_8bit_2.h5"
 
 model = keras.models.load_model(model_path)
 
@@ -76,35 +77,35 @@ yp = yp[:, 0]  # remove unnecessary last axis
 
 path = f"dm-finder/cnn/iact_images/results/{image_type}/"
 
-# # # energy
-# # difference = (yp - Y_test) / Y_test #10**(yp - Y_test) - 1
-# # mean = np.mean(difference)
-# # sigma = np.std(difference)
-# # plt.figure()
-# # plt.title("CTA images")
-# # plt.grid(alpha = 0.2)
-# # plt.hist(difference, bins = np.linspace(np.min(difference), np.max(difference), 40))
-# # # plt.yscale("log")
-# # plt.xlabel("($\log_{10}(E_\mathrm{rec}/\mathrm{GeV}) - \log_{10}(E_\mathrm{true}/\mathrm{GeV})) / \log_{10}(E_\mathrm{true} /\mathrm{GeV})$")
-# # plt.ylabel("Number of events")
-# # plt.text(0.95, 0.95, "$\mu = %.3f$" % mean, ha="right", va="top", transform=plt.gca().transAxes)
-# # plt.text(0.95, 0.90, "$\sigma = %.3f$" % sigma, ha="right", va="top", transform=plt.gca().transAxes)
-# # # plt.vlines(mean, 0.7, 3e3, linestyle = "dashed", label = "$\mu = %.3f$" % mean, color = "black")
-# # # plt.vlines(mean + sigma, 0.7, 3e3, linestyle = "dashdot", label =  "$\sigma = %.3f$" % sigma, color = "black")
-# # # plt.vlines(mean - sigma, 0.7, 3e3, linestyle = "dashdot", color = "black")
-# # # plt.legend()
-# # plt.xlim(-0.4, 0.4)
-# # plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/energy_histogram.png")
+# # energy
+# difference = (yp - Y_test) / Y_test #10**(yp - Y_test) - 1
+# mean = np.mean(difference)
+# sigma = np.std(difference)
+# plt.figure()
+# plt.title("CTA images")
+# plt.grid(alpha = 0.2)
+# plt.hist(difference, bins = np.linspace(np.min(difference), np.max(difference), 40))
+# # plt.yscale("log")
+# plt.xlabel("($\log_{10}(E_\mathrm{rec}/\mathrm{GeV}) - \log_{10}(E_\mathrm{true}/\mathrm{GeV})) / \log_{10}(E_\mathrm{true} /\mathrm{GeV})$")
+# plt.ylabel("Number of events")
+# plt.text(0.95, 0.95, "$\mu = %.3f$" % mean, ha="right", va="top", transform=plt.gca().transAxes)
+# plt.text(0.95, 0.90, "$\sigma = %.3f$" % sigma, ha="right", va="top", transform=plt.gca().transAxes)
+# # plt.vlines(mean, 0.7, 3e3, linestyle = "dashed", label = "$\mu = %.3f$" % mean, color = "black")
+# # plt.vlines(mean + sigma, 0.7, 3e3, linestyle = "dashdot", label =  "$\sigma = %.3f$" % sigma, color = "black")
+# # plt.vlines(mean - sigma, 0.7, 3e3, linestyle = "dashdot", color = "black")
+# # plt.legend()
+# plt.xlim(-0.4, 0.4)
+# plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/energy_histogram.png")
 
 x = np.linspace(np.min(Y_test), np.max(Y_test), 100)
-# # plt.figure()
-# # plt.title("CTA images")
-# # plt.grid(alpha = 0.2)
-# # plt.plot(x, x, color="black")
-# # plt.scatter(Y_test, yp)
-# # plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
-# # plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
-# # plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/energy_scattering.png")
+# plt.figure()
+# plt.title("CTA images")
+# plt.grid(alpha = 0.2)
+# plt.plot(x, x, color="black")
+# plt.scatter(Y_test, yp)
+# plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
+# plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
+# plt.savefig(f"dm-finder/cnn/iact_images/results/{image_type}/energy_scattering.png")
 
 # remove strange outlier
 index = np.argmin(yp)
@@ -113,7 +114,7 @@ Y_test = np.delete(Y_test, index)
 
 # 2D energy scattering
 plt.figure()
-plt.title("CTA images (original)")
+plt.title("CTA images (8-bit)")
 plt.grid(alpha = 0.2)
 plt.plot(x, x, color="black")
 # plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
@@ -122,21 +123,21 @@ cbar = plt.colorbar()
 cbar.set_label('Number of events')
 plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
 plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
-plt.savefig(path + "energy_scattering_2D_2.1.png", dpi = 250)
+plt.savefig(path + "energy_scattering_2D_8bit_2.png", dpi = 250)
 
-# # plot history
-# history_path = f"dm-finder/cnn/iact_images/history/{image_type}/" + "history.csv"
+# plot history
+history_path = f"dm-finder/cnn/iact_images/history/{image_type}/" + "history_8bit.csv"
 
-# table_history = pd.read_csv(history_path)
+table_history = pd.read_csv(history_path)
 
-# plt.figure()
-# plt.plot(table_history["epoch"] + 1, table_history["loss"], label = "training")
-# plt.plot(table_history["epoch"] + 1, table_history["val_loss"], label = "validation")
-# plt.xlabel("epoch")
-# plt.ylabel("loss")
-# plt.legend()
-# plt.savefig(path + "loss.png")
-# plt.close()
+plt.figure()
+plt.plot(table_history["epoch"] + 1, table_history["loss"], label = "training")
+plt.plot(table_history["epoch"] + 1, table_history["val_loss"], label = "validation")
+plt.xlabel("epoch")
+plt.ylabel("loss")
+plt.legend()
+plt.savefig(path + "loss_8bit_2.png")
+plt.close()
 
 # create csv output file
 Y_test = np.reshape(Y_test, (len(Y_test), 1))
@@ -150,4 +151,4 @@ try:
 except OSError:
     pass #print("Directory could not be created")
 
-pd.DataFrame(table_output).to_csv(f'dm-finder/cnn/iact_images/output/{image_type}/test_set_energy_2.csv', index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
+# pd.DataFrame(table_output).to_csv(f'dm-finder/cnn/iact_images/output/{image_type}/test_set_energy_8bit.csv', index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
