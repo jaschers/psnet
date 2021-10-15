@@ -59,19 +59,19 @@ if args.data_type == "int8":
 else:
     string_data_type = ""
 
-if args.energy_range != [0.02, 300]:
-    string_energy_range = f"_{args.energy_range[0]}-{args.energy_range[1]}_TeV"
-else:
-    string_energy_range = ""
+# if args.energy_range != [0.02, 300]:
+#     string_energy_range = f"_{args.energy_range[0]}-{args.energy_range[1]}_TeV"
+# else:
+#     string_energy_range = ""
 
 if args.input == "cta":
-    print(f"################### Input summary ################### \nInput: CTA \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEpochs: {args.epochs}")
+    print(f"################### Input summary ################### \nInput: CTA \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs}")
     string_input = "iact_images"
     string_input_short = "_images"
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
-    print(f"################### Input summary ################### \nInput: pattern spectra \nParticle type: {args.particle_type} \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs}")
+    print(f"################### Input summary ################### \nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs}")
     string_input = "pattern_spectra"
     string_input_short = "_ps"
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
@@ -132,7 +132,7 @@ for i in range(9):
     ax[i].imshow(X[i], cmap = "Greys_r")
     ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
     ax[i].axis("off")
-plt.savefig(f"dm-finder/cnn/{string_input}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + string_energy_range + ".png", dpi = 500)
+plt.savefig(f"dm-finder/cnn/{string_input}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png", dpi = 500)
 
 # reshape X data
 X_shape = np.shape(X)
@@ -154,14 +154,12 @@ plt.xlabel("True energy [GeV]")
 plt.ylabel("Number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(f"dm-finder/cnn/{string_input}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + string_energy_range + ".png", dpi = 250)
+plt.savefig(f"dm-finder/cnn/{string_input}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png", dpi = 250)
 plt.close()
 ##########################################################################################
 
 
 ######################################## Define a model ########################################
-# define initializers (starting parameters)
-
 X_shape = np.shape(X_train)
 Y_shape = np.shape(Y_train)
 input1 = keras.layers.Input(shape = X_shape[1:])
@@ -169,12 +167,21 @@ input1 = keras.layers.Input(shape = X_shape[1:])
 # define a suitable network 
 z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
     kernel_size = (3,3), # size of filters 3x3
-    activation = "relu", kernel_initializer = "zeros", bias_initializer = "zeros")(input1)
+    activation = "relu")(input1)
 zl = [z]
 
-z = keras.layers.GlobalAveragePooling2D()(z)
+for i in range(5):
+    z = keras.layers.Conv2D(16, 
+        kernel_size = (3,3), 
+        padding = "same", # padding, "same" = on, "valid" = off
+        activation = "relu")(z) 
+    zl.append(z)
+    z = keras.layers.concatenate(zl[:], axis=-1)
 
-output = keras.layers.Dense(1, name = "energy", kernel_initializer = "zeros", bias_initializer = "zeros")(z)
+z = keras.layers.GlobalAveragePooling2D()(z)
+z = keras.layers.Dense(8, activation = "relu")(z)
+
+output = keras.layers.Dense(1, name = "energy")(z)
 ##########################################################################################
 
 
@@ -191,7 +198,7 @@ model.compile(
     loss_weights=weight_energy,  
     optimizer=keras.optimizers.Adam(learning_rate = 1E-3))
 
-history_path = f"dm-finder/cnn/{string_input}/history/" + string_ps_input + "history" + string_data_type + string_name + string_energy_range + ".csv"
+history_path = f"dm-finder/cnn/{string_input}/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
 
 # start timer
 start_time = time.time()
@@ -207,13 +214,13 @@ fit = model.fit(X_train,
 # end timer and print training time
 print("Time spend for training the CNN: ", np.round(time.time() - start_time, 1), "s")
 
-model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + string_energy_range + ".h5"
+model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
 
 model.save(model_path)
 #########################################################################################
 
 ######################################## Results ########################################
-model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + string_energy_range + ".h5"
+model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
 model = keras.models.load_model(model_path)
 
 losses = model.evaluate(X_test, Y_test, batch_size=128, verbose=0)
@@ -233,5 +240,5 @@ table_output = np.hstack((Y_test, yp))
 path_output = f"dm-finder/cnn/{string_input}/output/" + string_ps_input
 os.makedirs(path_output, exist_ok = True)
 
-pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + string_energy_range + ".csv", index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
+pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
 ##########################################################################################
