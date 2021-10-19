@@ -15,7 +15,7 @@ mamba env create --file environment.yaml
 ```
 
 ## Usage
-Start the `ctapipe`` environment:
+Start the ``ctapipe`` environment:
 
 ```sh
 conda activate ctapipe
