@@ -28,6 +28,8 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 # Define expected arguments
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
+parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action='append', nargs='+')
+
 # parser.add_argument("-r", "--run_list", type = str, required = True, metavar = "", help = "path to the csv file that contains the run numbers")
 
 args = parser.parse_args()
@@ -43,6 +45,9 @@ filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
 run = pd.read_csv(filename_run)
 run = run.to_numpy().reshape(len(run))
 
+if args.run != None:
+    run = args.run[0]
+
 for r in range(len(run)): #len(run)
     print("Run", run[r])
 
@@ -56,6 +61,7 @@ for r in range(len(run)): #len(run)
 
     source = EventSource(input_directory)
     print(f"Total number of events: {len(source)}")
+    print(source)
 
     # get telescope subarray description
     subarray = SubarrayDescription.from_hdf(input_directory)
