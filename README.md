@@ -29,7 +29,7 @@ mdkir -p dm-finder/data/gamma/event_files
 ``` 
 to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory. 
 
-### extract CTA images
+### Extract CTA images
 Run 
 ```sh
 python dm-finder/scripts/iact_images/create_iact_images.py -h
