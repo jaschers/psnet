@@ -29,7 +29,7 @@ mdkir -p dm-finder/data/gamma/event_files
 ``` 
 to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory. 
 
-### Extract CTA images
+### Create CTA images
 Run 
 ```sh
 python dm-finder/scripts/iact_images/create_iact_images.py -h
@@ -43,4 +43,37 @@ creates float CTA images from gamma-ray events from the data runs listed in ``dm
 ```sh
 python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64 -r 100
 ``` 
-will create CTA images from data run 100.
+will create CTA images from data run 100. The images are saved into the ''dm-finder/data/gamma/images`` directory.
+
+### Create pattern spectra
+This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The following attributes, filter and mapper are available
+```sh
+attr =  0 - Area (default) 
+        1 - Area of the minimum enclosing rectangle 
+        2 - Length of the diagonal of the minimum encl. rect. 
+        3 - Area (Peri) 
+        4 - Perimeter (Peri) 
+        5 - Complexity (Peri) 
+        6 - Simplicity (Peri) 
+        7 - Compactness (Peri) 
+        8 - Moment Of Inertia 
+        9 - (Moment Of Inertia) / (Area*Area) 
+        10 - Compactnes                          (Jagged) 
+        11 - (Moment Of Inertia) / (Area*Area)   (Jagged) 
+        12 - Jaggedness                          (Jagged)
+        13 - Entropy 
+        14 - Lambda-Max (not idempotent -> not a filter) 
+        15 - Max. Pos. X 
+        16 - Max. Pos. Y 
+        17 - Grey level 
+        18 - Sum grey levels 
+filter = 0 - "Min" decision 
+        1 - "Direct" decision (default) 
+        2 - "Max" decision 
+        3 - Wilkinson decision 
+mapper = 0 - Area mapper 
+        1 - Linear mapper 
+        2 - Sqrt mapper 
+        3 - Log2 mapper 
+        4 - Log10 mapper
+```
