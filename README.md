@@ -46,7 +46,9 @@ python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64
 will create CTA images from data run 100. The images are saved into the ''dm-finder/data/gamma/images`` directory.
 
 ### Create pattern spectra
-This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The following attributes, filter and mapper are available
+This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The pattern spectra characteristics can be specified with ``-a`` (attributes), ``-dl`` (domain lower), ``-dh`` (domain higher), ``-m`` (mapper), ``-n`` (size) and ``-f`` (filter).
+
+The following attributes, filter and mapper are available
 ```sh
 attr =  0 - Area (default) 
         1 - Area of the minimum enclosing rectangle 
@@ -77,3 +79,5 @@ mapper = 0 - Area mapper
         3 - Log2 mapper 
         4 - Log10 mapper
 ```
+
+
