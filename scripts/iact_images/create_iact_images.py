@@ -18,7 +18,7 @@ plt.rcParams.update({'font.size': 14})
 
 script_version=0.1
 script_descr="""
-This script creates Cherenkov images of gamma/diffuse gamma/proton events simulated for CTA. The images are saved in tif and pgm format and stored in a HDF table. One can choose between int8 and float64 images.
+This script creates Cherenkov images of gamma/diffuse-gamma/proton events simulated for CTA. The images are saved in tif and pgm format and stored in a HDF table. One can choose between int8 and float64 images.
 """
 
 # Open argument parser
@@ -28,7 +28,7 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 # Define expected arguments
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
-parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action='append', nargs='+')
+parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the CTA images will be extracted, default: csv list", action='append', nargs='+')
 
 # parser.add_argument("-r", "--run_list", type = str, required = True, metavar = "", help = "path to the csv file that contains the run numbers")
 
