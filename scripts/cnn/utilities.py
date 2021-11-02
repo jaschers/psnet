@@ -44,7 +44,7 @@ def PlotRelativeEnergyError(relative_energy_error_single, mean, sigma_total, pat
     plt.close()
 
 def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, path):
-    fig, ax = plt.subplots(5, 3)
+    fig, ax = plt.subplots(3, 3)
     ax = ax.ravel()
     for j in range(len(energy_true_binned)):
         relative_energy_error = (energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] 
@@ -166,6 +166,12 @@ def PlotEnergyAccuracyComparison(median_all, bins, label, path):
 
 
 def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
+    # mean = np.array([])
+    # error = np.array([])
+    # for k in range(len(sigma_all[0])):
+    #     row = [row_k[k] for row_k in sigma_all]
+    #     mean = np.append(mean, np.mean(row))
+    #     error = np.append(error, np.std(row))
     bins_central = np.array([])
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
@@ -174,9 +180,12 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     plt.grid(alpha = 0.2)
     for i in range(len(sigma_all)):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
+    # plt.plot(bins_central, mean, linestyle = "--", label = "Mean", color = "black")
+    # plt.fill_between(bins_central, mean - error, mean + error, color = "grey", alpha = 0.25)
     plt.xlabel("Energy [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
+    # plt.ylim(0.2, 0.60)
     plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
