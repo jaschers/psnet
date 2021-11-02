@@ -15,7 +15,7 @@ print("Packages successfully loaded")
 ######################################## argparse setup ########################################
 script_version=0.1
 script_descr="""
-This script loads data (CTA images or pattern spectra), defines a CNN, trains the CNN and puts the results in a csv table.
+This script loads data (CTA images or pattern spectra), defines a CNN for energy reconstruction, trains the CNN and puts the results in a csv table.
 """
 
 # Open argument parser
@@ -27,7 +27,7 @@ parser.add_argument("-i", "--input", type = str, required = True, metavar = "-",
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action='append', nargs='+')
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
-parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in GeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
+parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(1, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
@@ -117,9 +117,9 @@ Y = np.log10(np.asarray(table["true_energy"]))
 
 
 # make some folders
-path_results = f"dm-finder/cnn/{string_input}/results/" + string_ps_input + f"{string_name[1:]}/"
-path_history = f"dm-finder/cnn/{string_input}/history/" + string_ps_input
-path_model = f"dm-finder/cnn/{string_input}/model/" + string_ps_input
+path_results = f"dm-finder/cnn/{string_input}/energy/results/" + string_ps_input + f"{string_name[1:]}/"
+path_history = f"dm-finder/cnn/{string_input}/energy/history/" + string_ps_input
+path_model = f"dm-finder/cnn/{string_input}/energy/model/" + string_ps_input
 
 os.makedirs(path_results, exist_ok = True)
 os.makedirs(path_history, exist_ok = True)
@@ -132,7 +132,7 @@ for i in range(9):
     ax[i].imshow(X[i], cmap = "Greys_r")
     ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
     ax[i].axis("off")
-plt.savefig(f"dm-finder/cnn/{string_input}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png", dpi = 500)
+plt.savefig(f"dm-finder/cnn/{string_input}/energy/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png", dpi = 500)
 
 # reshape X data
 X_shape = np.shape(X)
@@ -154,7 +154,7 @@ plt.xlabel("True energy [GeV]")
 plt.ylabel("Number of events")
 plt.xscale("log")
 plt.yscale("log")
-plt.savefig(f"dm-finder/cnn/{string_input}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png", dpi = 250)
+plt.savefig(f"dm-finder/cnn/{string_input}/energy/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png", dpi = 250)
 plt.close()
 ##########################################################################################
 
@@ -198,7 +198,7 @@ model.compile(
     loss_weights=weight_energy,  
     optimizer=keras.optimizers.Adam(learning_rate = 1E-3))
 
-history_path = f"dm-finder/cnn/{string_input}/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
+history_path = f"dm-finder/cnn/{string_input}/energy/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
 
 # start timer
 start_time = time.time()
@@ -214,13 +214,13 @@ fit = model.fit(X_train,
 # end timer and print training time
 print("Time spend for training the CNN: ", np.round(time.time() - start_time, 1), "s")
 
-model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
+model_path = f"dm-finder/cnn/{string_input}/energy/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
 
 model.save(model_path)
 #########################################################################################
 
 ######################################## Results ########################################
-model_path = f"dm-finder/cnn/{string_input}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
+model_path = f"dm-finder/cnn/{string_input}/energy/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
 model = keras.models.load_model(model_path)
 
 losses = model.evaluate(X_test, Y_test, batch_size=128, verbose=0)
@@ -237,8 +237,8 @@ Y_test = np.reshape(Y_test, (len(Y_test), 1))
 yp = np.reshape(yp, (len(yp), 1))
 table_output = np.hstack((Y_test, yp))
 
-path_output = f"dm-finder/cnn/{string_input}/output/" + string_ps_input
+path_output = f"dm-finder/cnn/{string_input}/energy/output/" + string_ps_input
 os.makedirs(path_output, exist_ok = True)
 
-pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
+pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/energy/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"])
 ##########################################################################################
