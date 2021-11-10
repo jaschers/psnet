@@ -1,6 +1,6 @@
 # dm-finder
 ## Preamble
-The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms of used by the CTA, H.E.S.S., ... collaborations.
+The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
 
 ## Installation
 Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. Next, clone this repository into your prefered folder:
