@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 from keras.callbacks import CSVLogger
 from keras.models import Model
+import matplotlib.patches as mpatches
 
 
 def PlotLoss(epochs, loss_training, loss_validation, path):
@@ -193,7 +194,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
 
 def LoadExampleData(run, string_input, particle_type, string_ps_input, string_input_short, string_data_type, string_table_column):
     # load example data
-    run_filename = f"gamma_20deg_0deg_run{run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
+    run_filename = f"{particle_type}_20deg_0deg_run{run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
     input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
 
     table = pd.read_hdf(input_filename, ignore_index = True)
@@ -250,7 +251,7 @@ def PlotFeatureMaps(X, model, index_example, path):
     # plot the output from each block
     for j in range(len(feature_maps)):
         ix = 1
-        fig, ax = plt.subplots(int(np.sqrt(layer_shape_output[j])), int(np.sqrt(layer_shape_output[j])))
+        fig, ax = plt.subplots(int(np.round(np.sqrt(layer_shape_output[j]), decimals = 0)), int(np.round(np.sqrt(layer_shape_output[j]), decimals = 0)))
         fig.suptitle(f"feature maps - {j + 1}. convolutional layer")
         ax = ax.ravel()
         for k in range(layer_shape_output[j]):
@@ -274,15 +275,153 @@ def PlotFilters(model, path):
             # filters = (weights - f_min) / (f_max - f_min)  
             filters = weights[:,:,:, 0]
 
-            fig, ax = plt.subplots(int(np.sqrt(weights.shape[3])), int(np.sqrt(weights.shape[3])))
+            fig, ax = plt.subplots(int(np.round(np.sqrt(weights.shape[3]), decimals = 0)), int(np.round(np.sqrt(weights.shape[3]), decimals = 0)))
             fig.suptitle(f"filters - {j}. convolutional layer")
             ax = ax.ravel()
             for k in range(weights.shape[3]):
                 filters = weights[:,:,:, k]
                 ax[k].set_xticks([])
                 ax[k].set_yticks([])
-                ax[k].imshow(filters[ :,:, 0], cmap='gray')
+                ax[k].imshow(filters[ :, :, 0], cmap='gray')
             # save the figure
             plt.savefig(path + f"_{j}.png", dpi = 250)
             plt.close()
             j += 1
+
+def EnergyDistributionSeparation(table, path):
+    # display total energy distribution of data set
+    plt.figure()
+    table_gamma = np.asarray(table[table["particle"] == 1].reset_index(drop = True)["true_energy"])
+    table_proton = np.asarray(table[table["particle"] == 0].reset_index(drop = True)["true_energy"])
+    plt.hist(table_gamma, bins = np.logspace(np.log10(np.min(table_gamma)), np.log10(np.max(table_gamma)), 50), alpha = 0.5, label = "gamma")
+    plt.hist(table_proton, bins = np.logspace(np.log10(np.min(table_proton)), np.log10(np.max(table_proton)), 50), alpha = 0.5, label = "proton")
+    plt.xlabel("True energy [GeV]")
+    plt.ylabel("Number of events")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def EnergyDistributionEnergy(Y, path):
+    # display total energy distribution of data set
+    plt.figure()
+    plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
+    plt.xlabel("True energy [GeV]")
+    plt.ylabel("Number of events")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def ExamplesEnergy(X, Y, path):
+    # plot a few examples
+    fig, ax = plt.subplots(3, 3)
+    ax = ax.ravel()
+    for i in range(9):
+        ax[i].imshow(X[i], cmap = "Greys_r")
+        ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
+        ax[i].axis("off")
+    plt.savefig(path, dpi = 500)
+
+def ExamplesSeparation(X, Y, path):
+    # plot a few examples
+    fig, ax = plt.subplots(3, 3)
+    ax = ax.ravel()
+    for i in range(9):
+        ax[i].imshow(X[i], cmap = "Greys_r")
+        if Y[i][1] == 1:
+            ax[i].title.set_text(f"gamma ray")
+        elif Y[i][1] == 0:
+            ax[i].title.set_text(f"proton")
+        ax[i].axis("off")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 500)
+
+def PlotGammaness(gammaness_true, gammaness_rec, path):
+    # define true gammaness as boolean
+    gammaness_true_bool = gammaness_true.astype(bool)
+    gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
+    # extract gammaness of true gamma-ray events
+    gammaness_gammas = gammaness_rec[gammaness_true_bool]
+    # extract gammaness of true proton events
+    gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
+
+    # calculate the true positive rate for gamma rays and protons
+    threshold = 0.5
+    true_positive_rate_gamma = len(gammaness_gammas[gammaness_gammas >= 0.5]) / len(gammaness_gammas)
+    true_positive_rate_proton = len(gammaness_protons[gammaness_protons < 0.5]) / len(gammaness_protons)
+    true_positive_rate_total = (len(gammaness_gammas[gammaness_gammas >= 0.5]) + len(gammaness_protons[gammaness_protons < 0.5])) / (len(gammaness_gammas) + len(gammaness_protons))
+
+    # calculate the false positive rate for gamma rays and protons
+    false_positive_rate_gamma = len(gammaness_protons[gammaness_protons >= 0.5]) / len(gammaness_protons)
+    false_positive_rate_proton = len(gammaness_gammas[gammaness_gammas < 0.5]) / len(gammaness_gammas)
+
+    # print("true positive rate total: %.2f" % np.round(true_positive_rate_total * 100, 2))
+    # print("true positive rate gamma rays: %.2f" % np.round(true_positive_rate_gamma * 100, 2))
+    # print("true positive rate protons: %.2f" % np.round(true_positive_rate_proton * 100, 2))
+    # print("false positive rate gamma rays: %.2f" % np.round(false_positive_rate_gamma * 100, 2))
+    # print("false positive rate protons: %.2f" % np.round(false_positive_rate_proton * 100, 2))
+
+    fig, ax = plt.subplots(1)
+    plt.grid(alpha = 0.3)
+    plt.hist(gammaness_gammas, label = r"true photons - acc = {0} $\%$".format(np.round(true_positive_rate_gamma * 100, 2)), bins = np.linspace(0, 1, 31), alpha = 0.6)
+    plt.hist(gammaness_protons, label = r"true protons - acc = {0} $\%$".format(np.round(true_positive_rate_proton * 100, 2)), bins = np.linspace(0, 1, 31), alpha = 0.6)
+    plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
+    plt.xlabel("Gammaness")
+    plt.ylabel("Number events")
+    # plt.yscale('log')
+    handles, labels = fig.gca().get_legend_handles_labels()
+    patch = mpatches.Patch(color = 'white', label = r"total - acc = {0} $\%$".format(np.round(true_positive_rate_total * 100, 2)))
+    handles.append(patch) 
+    plt.legend(handles = handles, framealpha = 0.95)
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PositiveRates(x, y, thresholds):
+    true_positive_rate = np.array([])
+    false_positive_rate = np.array([])
+
+    for i in range(len(thresholds)):
+        true_positive_rate = np.append(true_positive_rate, len(x[x >= thresholds[i]]) / len(x))
+        false_positive_rate = np.append(false_positive_rate, len(y[y >= thresholds[i]]) / len(y))
+
+    return(true_positive_rate, false_positive_rate)
+
+# area under ROC curve (Riemann integral)
+def AreaUnderROCCurve(x, y):
+    x = x[::-1]
+    y = y[::-1]
+    area_under_ROC_curve = np.sum(y[1:] * np.diff(x))
+    return area_under_ROC_curve
+
+# def AreaUnderROCCurveNumpy(x, y):
+#     area = np.trapz(y[::-1], x[::-1])
+#     return area
+
+def PlotROC(gammaness_true, gammaness_rec, path):
+    # define true gammaness as boolean
+    gammaness_true_bool = gammaness_true.astype(bool)
+    gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
+    # extract gammaness of true gamma-ray events
+    gammaness_gammas = gammaness_rec[gammaness_true_bool]
+    # extract gammaness of true proton events
+    gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
+
+    # calculate the true positive rate for gamma rays and protons depending on the threshold
+    thresholds = np.linspace(0, 1, 10000)
+    true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
+    area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
+
+    # plot the ROC curve
+    plt.figure()
+    plt.grid(alpha = 0.3)
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0}".format(np.round(area_under_ROC_curve, 3)))
+    plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
+    plt.xlabel("False positive rate")
+    plt.ylabel("True positive rate")
+    plt.legend(loc = "lower right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
