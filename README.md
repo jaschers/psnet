@@ -61,7 +61,7 @@ Every script has a help option ``-h`` or ``--help`` in order to get basic instru
 ### CTA data download
 Use 
 ```sh
-mkdir -p dm-finder/data/gamma/event_files
+mkdir -p dm-finder/data/gamma_diffuse/event_files
 ``` 
 to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory (see the [Checklist for CTA newcomers](https://github.com/jaschers/cta-newcomers) for details). 
 
