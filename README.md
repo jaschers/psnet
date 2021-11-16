@@ -16,6 +16,7 @@ vim ~/.ssh/config
 Add the following lines into the ``~/.ssh/config`` file:
 ```
 Host *
+  IgnoreUnknown UseKeychain
   AddKeysToAgent yes
   UseKeychain yes
   IdentityFile ~/.ssh/id_ed25519
