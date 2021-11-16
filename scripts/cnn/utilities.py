@@ -5,6 +5,8 @@ import pandas as pd
 from keras.callbacks import CSVLogger
 from keras.models import Model
 import matplotlib.patches as mpatches
+import sys
+np.set_printoptions(threshold=sys.maxsize)
 
 
 def PlotLoss(epochs, loss_training, loss_validation, path):
@@ -347,34 +349,19 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     # extract gammaness of true proton events
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
-    # calculate the true positive rate for gamma rays and protons
-    threshold = 0.5
-    true_positive_rate_gamma = len(gammaness_gammas[gammaness_gammas >= 0.5]) / len(gammaness_gammas)
-    true_positive_rate_proton = len(gammaness_protons[gammaness_protons < 0.5]) / len(gammaness_protons)
-    true_positive_rate_total = (len(gammaness_gammas[gammaness_gammas >= 0.5]) + len(gammaness_protons[gammaness_protons < 0.5])) / (len(gammaness_gammas) + len(gammaness_protons))
-
-    # calculate the false positive rate for gamma rays and protons
-    false_positive_rate_gamma = len(gammaness_protons[gammaness_protons >= 0.5]) / len(gammaness_protons)
-    false_positive_rate_proton = len(gammaness_gammas[gammaness_gammas < 0.5]) / len(gammaness_gammas)
-
-    # print("true positive rate total: %.2f" % np.round(true_positive_rate_total * 100, 2))
-    # print("true positive rate gamma rays: %.2f" % np.round(true_positive_rate_gamma * 100, 2))
-    # print("true positive rate protons: %.2f" % np.round(true_positive_rate_proton * 100, 2))
-    # print("false positive rate gamma rays: %.2f" % np.round(false_positive_rate_gamma * 100, 2))
-    # print("false positive rate protons: %.2f" % np.round(false_positive_rate_proton * 100, 2))
-
     fig, ax = plt.subplots(1)
     plt.grid(alpha = 0.3)
-    plt.hist(gammaness_gammas, label = r"true photons - acc = {0} $\%$".format(np.round(true_positive_rate_gamma * 100, 2)), bins = np.linspace(0, 1, 31), alpha = 0.6)
-    plt.hist(gammaness_protons, label = r"true protons - acc = {0} $\%$".format(np.round(true_positive_rate_proton * 100, 2)), bins = np.linspace(0, 1, 31), alpha = 0.6)
+    plt.hist(gammaness_gammas, label = "true photons", bins = np.linspace(0, 1, 31), alpha = 0.6)
+    plt.hist(gammaness_protons, label = "true protons", bins = np.linspace(0, 1, 31), alpha = 0.6)
     plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
     plt.xlabel("Gammaness")
     plt.ylabel("Number events")
-    # plt.yscale('log')
-    handles, labels = fig.gca().get_legend_handles_labels()
-    patch = mpatches.Patch(color = 'white', label = r"total - acc = {0} $\%$".format(np.round(true_positive_rate_total * 100, 2)))
-    handles.append(patch) 
-    plt.legend(handles = handles, framealpha = 0.95)
+    # plt.yscale("log")
+    # handles, labels = fig.gca().get_legend_handles_labels()
+    # patch = mpatches.Patch(color = 'white', label = r"total - acc = {0} $\%$".format(np.round(true_positive_rate_total * 100, 2)))
+    # handles.append(patch) 
+    # plt.legend(handles = handles, framealpha = 0.95)
+    plt.legend(framealpha = 0.95)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -389,6 +376,16 @@ def PositiveRates(x, y, thresholds):
 
     return(true_positive_rate, false_positive_rate)
 
+def NegativeRates(x, y, thresholds):
+    true_negative_rate = np.array([])
+    false_negative_rate = np.array([])
+
+    for i in range(len(thresholds)):
+        true_negative_rate = np.append(true_negative_rate, len(y[y < thresholds[i]]) / len(y))
+        false_negative_rate = np.append(false_negative_rate, len(x[x < thresholds[i]]) / len(x))
+
+    return(true_negative_rate, false_negative_rate)
+
 # area under ROC curve (Riemann integral)
 def AreaUnderROCCurve(x, y):
     x = x[::-1]
@@ -400,6 +397,61 @@ def AreaUnderROCCurve(x, y):
 #     area = np.trapz(y[::-1], x[::-1])
 #     return area
 
+def PlotGammanessEnergyBinned(table_output, energy_range, path):
+    # prepare energy binning
+    table_output = table_output.sort_values(by = ["E_true / GeV"], ignore_index = True)
+    energy_true = np.asarray(table_output["E_true / GeV"]) * 1e-3
+    gammaness_true = np.asarray(table_output["true gammaness"])
+    gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
+
+    number_energy_ranges = 6 # number of energy ranges the whole energy range will be splitted
+    sst_energy_min = energy_range[0] # TeV
+    sst_energy_max = energy_range[1] # TeV
+    bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
+    indices = np.array([], dtype = int)
+    for b in range(len(bins) - 2):
+        index = np.max(np.where(energy_true < bins[b+1])) + 1
+        indices = np.append(indices, index)
+
+    energy_true_binned = np.split(energy_true, indices)
+    gammaness_true_binned = np.split(gammaness_true, indices)
+    gammaness_rec_binned = np.split(gammaness_rec, indices)
+
+    fig, ax = plt.subplots(3, 2)
+    ax = ax.ravel()
+    plt.grid(alpha = 0.3)
+    for i in range(number_energy_ranges):
+        # define true gammaness as boolean
+        gammaness_true_bool = gammaness_true_binned[i].astype(bool)
+        gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
+
+        # extract gammaness of true gamma-ray events
+        gammaness_gammas = gammaness_rec_binned[i][gammaness_true_bool]
+        # extract gammaness of true proton events
+        gammaness_protons = gammaness_rec_binned[i][gammaness_true_bool_inverted]
+
+        # calculate the true positive rate for gamma rays and protons depending on the threshold
+        thresholds = np.linspace(0, 1, 10000)
+        true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
+        area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
+
+        ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
+        ax[i].hist(gammaness_gammas, label = "true photons", alpha = 0.6)
+        ax[i].hist(gammaness_protons, label = "true protons", alpha = 0.6)
+        ylim = ax[i].get_ylim()
+        ax[i].set_xlim(-0.05, 1.05)
+        ax[i].text(0, 0.8 * ylim[1], f"AOC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
+        ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
+        ax[i].tick_params(axis = 'both', which = 'major', labelsize = 10)
+
+    ax[-1].set_xlabel("Gammaness", fontsize = 10)
+    ax[-2].set_xlabel("Gammaness", fontsize = 10)
+    ax[2].set_ylabel("Number events", fontsize = 10)
+    # plt.legend(framealpha = 0.95, fontsize = 10)
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
 def PlotROC(gammaness_true, gammaness_rec, path):
     # define true gammaness as boolean
     gammaness_true_bool = gammaness_true.astype(bool)
@@ -410,8 +462,13 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
     # calculate the true positive rate for gamma rays and protons depending on the threshold
-    thresholds = np.linspace(0, 1, 10000)
+    thresholds = np.linspace(0, 1.0, 10000)
     true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
+    true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
+    true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
+    true_negative_rate_50, false_negative_rate_50 = NegativeRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
+    print("Correctly classified photons: ", true_positive_rate_50[0])
+    print("Correctly classified protons: ", true_negative_rate_50[0])
     area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
     # plot the ROC curve
