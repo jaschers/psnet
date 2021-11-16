@@ -3,14 +3,35 @@
 The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
 
 ## Installation
-Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
+### Git and ssh key
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git and a shh-key with the following commands:
 ```
 git config --global user.name "<firstname> <lastname>"
 git config --global user.email "<email>"
 git config --list
+ssh-keygen -t ed25519 -C "your_email@example.com"
+eval "$(ssh-agent -s)"
+vim ~/.ssh/config
 ```
-Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. Next, clone this repository into your prefered folder:
+Add the following lines into the ``~/.ssh/config`` file:
+```
+Host *
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519
+```
+Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-key. Add your SSH private key to the ssh-agent and store your passphrase in the keychain.
 
+```
+ssh-add -k ~/.ssh/id_ed25519
+```
+Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of the file.
+
+### Anaconda
+Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. 
+
+### dm-finder repository
+Clone this repository into your prefered folder:
 ```sh
 git clone https://github.com/jaschers/dm-finder.git
 ```
