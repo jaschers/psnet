@@ -3,6 +3,12 @@
 The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
 
 ## Installation
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
+```
+git config --global user.name "<firstname> <lastname>"
+git config --global user.email "<email>"
+git config --list
+```
 Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. Next, clone this repository into your prefered folder:
 
 ```sh
