@@ -31,6 +31,7 @@ Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of t
 ```
 You've successfully authenticated, but GitHub does not provide shell access.
 ```
+Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
 ### dm-finder repository
 Clone this repository into your prefered folder:
