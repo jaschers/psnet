@@ -20,7 +20,7 @@ Host *
   UseKeychain yes
   IdentityFile ~/.ssh/id_ed25519
 ```
-Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-key. Add your SSH private key to the ssh-agent and store your passphrase in the keychain.
+Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-key. Add your SSH private key to the ssh-agent and store your passphrase in the keychain:
 
 ```
 ssh-add -k ~/.ssh/id_ed25519
