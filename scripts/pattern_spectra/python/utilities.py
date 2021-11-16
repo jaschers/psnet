@@ -1,15 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import math
 
 def PlotPatternSpectra(number_energy_ranges, size, bins, pattern_spectra_binned, path):
     pattern_spectra_sum = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     pattern_spectra_sum_normed = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     pattern_spectra_sum_difference = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
 
-    fig_normed, ax_normed = plt.subplots(int(np.sqrt(number_energy_ranges)), int(np.sqrt(number_energy_ranges)))
+    fig_normed, ax_normed = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_normed = ax_normed.ravel()
-    fig_difference, ax_difference = plt.subplots(int(np.sqrt(number_energy_ranges)), int(np.sqrt(number_energy_ranges)))
+    fig_difference, ax_difference = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_difference = ax_difference.ravel()
 
     for i in range(number_energy_ranges):
