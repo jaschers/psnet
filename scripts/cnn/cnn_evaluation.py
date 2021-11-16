@@ -183,11 +183,13 @@ for i in range(len(args.input[0])):
         PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution" + string_data_type[i] + string_name[i] + ".png")
     
     elif args.mode == "separation":
-        # convert energy to TeV
         gammaness_true = np.asarray(table_output["true gammaness"])
         gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
+        energy_true = np.asarray(table_output["E_true / GeV"])
 
         PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness" + string_data_type[i] + string_name[i] + ".png")
+
+        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned" + string_data_type[i] + string_name[i] + ".png")
 
         PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc" + string_data_type[i] + string_name[i] + ".png")
 
