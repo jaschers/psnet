@@ -47,7 +47,7 @@ Setup the ``ctapipe`` environment:
 
 ```sh
 conda install mamba -n base -c conda-forge
-mamba env create --file environment.yaml
+mamba env create --file environment.yml
 ```
 
 Start the ``ctapipe`` environment:
