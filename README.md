@@ -25,16 +25,16 @@ Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-k
 ```
 ssh-add -k ~/.ssh/id_ed25519
 ```
-Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of the file.
-
-### Anaconda
-Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. 
+Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of the file. Go to on [GitHub](https://github.com/) -> click your profile photo -> Settings -> SSH and GPG keys -> New SSH key or Add SSH key. In the "Title" field, add a descriptive label for the new key. Paste your key into the "Key" field. Click 'Add SSH key'. If prompted, confirm your GitHub password.  
 
 ### dm-finder repository
 Clone this repository into your prefered folder:
 ```sh
 git clone https://github.com/jaschers/dm-finder.git
 ```
+
+### Anaconda
+Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. 
 
 ### Environment setup
 Setup the ``ctapipe`` environment:
