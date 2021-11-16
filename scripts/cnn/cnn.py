@@ -38,6 +38,7 @@ parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granul
 parser.add_argument("-n", "--size", type = int, metavar = "-", help = "Granulometry: size <n1>x<n2>, default: 20 20", default = [20, 20], nargs = 2)
 parser.add_argument("-f", "--filter", type = int, metavar = "-", help = "Use decision <filter>, default: 3", default = 3, nargs = 1)
 parser.add_argument("-e", "--epochs", type = int, metavar = "-", help = "Number of epochs for CNN training, default: 50", default = 50)
+parser.add_argument("-t", "--test", type = str, metavar = "-", help = "If yes, csv test list is used [y/n]", default = "n")
 
 # parser.add_argument("-r", "--run_list", type = str, required = True, metavar = "-", help = "path to the csv file that contains the run numbers")
 
@@ -67,13 +68,13 @@ else:
 #     string_energy_range = ""
 
 if args.input == "cta":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
     string_input_short = "_images"
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "pattern_spectra"
     string_input_short = "_ps"
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
@@ -96,6 +97,8 @@ os.makedirs(path_output, exist_ok = True)
 # import data
 if args.mode == "energy":
     filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+    if args.test == "y":
+        filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
     run = pd.read_csv(filename_run)
     run = run.to_numpy().reshape(len(run))
 
@@ -120,8 +123,11 @@ elif args.mode == "separation":
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
         filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
+        if args.test == "y":
+            filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
         run = pd.read_csv(filename_run)
         run = run.to_numpy().reshape(len(run))
+
         for r in range(len(run)):
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
             input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type[p]}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
@@ -141,14 +147,17 @@ elif args.mode == "separation":
 
     EnergyDistributionSeparation(table, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
 
-    # shuffle data set
-    table = table.sample(frac=1).reset_index(drop=True)
-
 
 table.drop(table.loc[table["true_energy"] <= args.energy_range[0] * 1e3].index, inplace=True)
 table.drop(table.loc[table["true_energy"] >= args.energy_range[1] * 1e3].index, inplace=True)
 table.reset_index(inplace = True)
 
+print("______________________________________________")
+if args.mode == "separation":
+    # shuffle data set
+    table = table.sample(frac=1).reset_index(drop=True)
+    print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
+    print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
 print("Total number of events after energy cut:", len(table))
 
 
@@ -171,6 +180,7 @@ elif args.mode == "separation":
     # output label: particle or gammaness (1 = gamma, 0 = proton)
     Y = np.asarray(table["particle"])
     Y = keras.utils.to_categorical(Y, 2)
+    energy_true_test = np.asarray(table["true_energy"])[int(-len(table) / 10):]
 
     # plot a few examples
     ExamplesSeparation(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
@@ -220,7 +230,7 @@ if args.mode == "energy":
 
 elif args.mode == "separation":
 
-    ### cnn architecture number 1 (cnn1) ###
+    # ## cnn architecture number 1 (cnn1) ###
     # # define a suitable network 
     # z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
@@ -241,20 +251,55 @@ elif args.mode == "separation":
     # z = keras.layers.Dense(8, activation = "relu")(z)
 
     # output = keras.layers.Dense(2, activation = 'softmax', name = "gammaness")(z)
+    # #######################################
+
+    ## cnn architecture number 2 (cnn2) ###
+    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     ########################################
 
-    ### cnn architecture number 2 (cnn2) ###
-    z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
-    z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(z)
-    z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(z)
-    z = keras.layers.GlobalAveragePooling2D()(z)
+    # #######################################
 
+    # cnn architecture number 3 (cnn3) ###
+    z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
+    z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
+    z = keras.layers.Flatten()(z)
+
+    z = keras.layers.Dense(256, activation = "relu")(z)
+    z = keras.layers.Dense(128, activation = "relu")(z)
     z = keras.layers.Dense(64, activation = "relu")(z)
     z = keras.layers.Dense(32, activation = "relu")(z)
     z = keras.layers.Dense(16, activation = "relu")(z)
 
     output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    ########################################    
+
     ########################################
+
+    # ### fnn architecture number 1 (fnn1) ###
+    # z = keras.layers.Flatten()(input1)
+    # z = keras.layers.Dense(564, activation = "relu")(z)
+    # z = keras.layers.Dense(564, activation = "relu")(z)
+    # z = keras.layers.Dense(256, activation = "relu")(z)
+    # z = keras.layers.Dense(128, activation = "relu")(z)
+    # # z = keras.layers.AveragePooling1D()(z)
+
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.AveragePooling1D()(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    # ########################################
 
     # define the loss function
     loss = "categorical_crossentropy"
@@ -312,12 +357,17 @@ if args.mode == "energy":
 elif args.mode == "separation":
     yp = yp[:, 1]  # get gammaness (or photon score)
     Y_test = np.argmax(Y_test, axis = 1)
-    header = ["true gammaness", "reconstructed gammaness"]
+    header = ["true gammaness", "reconstructed gammaness", "E_true / GeV"]
 
 # create csv output file
 Y_test = np.reshape(Y_test, (len(Y_test), 1))
 yp = np.reshape(yp, (len(yp), 1))
-table_output = np.hstack((Y_test, yp))
+
+if args.mode == "energy":
+    table_output = np.hstack((Y_test, yp))
+elif args.mode == "separation":
+    energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
+    table_output = np.hstack((Y_test, yp, energy_true_test))
 
 pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = header)
 ##########################################################################################
