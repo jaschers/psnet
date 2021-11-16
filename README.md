@@ -1,13 +1,46 @@
 # dm-finder
 ## Preamble
-The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms of used by the CTA, H.E.S.S., ... collaborations.
+The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
 
 ## Installation
-Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. Next, clone this repository into your prefered folder:
+### Git and ssh key
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git and a shh-key with the following commands:
+```
+git config --global user.name "<firstname> <lastname>"
+git config --global user.email "<email>"
+git config --list
+ssh-keygen -t ed25519 -C "your_email@example.com"
+eval "$(ssh-agent -s)"
+vim ~/.ssh/config
+```
+Add the following lines into the ``~/.ssh/config`` file:
+```
+Host *
+  IgnoreUnknown UseKeychain
+  AddKeysToAgent yes
+  UseKeychain yes
+  IdentityFile ~/.ssh/id_ed25519
+```
+Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-key. Add your SSH private key to the ssh-agent and store your passphrase in the keychain:
 
+```
+ssh-add -k ~/.ssh/id_ed25519
+```
+Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of the file. Go on [GitHub](https://github.com/) -> click your profile photo -> Settings -> SSH and GPG keys -> New SSH key or Add SSH key. In the "Title" field, add a descriptive label for the new key. Paste your key into the "Key" field. Click 'Add SSH key'. If prompted, confirm your GitHub password. Test your ssh connection with ``ssh -T git@github.com``. If everything was setup correctly, you should get the following message
+
+```
+You've successfully authenticated, but GitHub does not provide shell access.
+```
+Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+### dm-finder repository
+Clone this repository into your prefered folder:
 ```sh
 git clone https://github.com/jaschers/dm-finder.git
 ```
+
+### Anaconda
+Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. 
 
 ### Environment setup
 Setup the ``ctapipe`` environment:
@@ -28,7 +61,7 @@ Every script has a help option ``-h`` or ``--help`` in order to get basic instru
 ### CTA data download
 Use 
 ```sh
-mdkir -p dm-finder/data/gamma/event_files
+mkdir -p dm-finder/data/gamma/event_files
 ``` 
 to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory (see the [Checklist for CTA newcomers](https://github.com/jaschers/cta-newcomers) for details). 
 
