@@ -83,7 +83,7 @@ will create CTA images from data run 100. The images are saved into the ``dm-fin
 
 ### Create pattern spectra
 ```sh
-python dm-finder/scripts/pattern_spectra/create_pattern_spectra.py
+python dm-finder/scripts/pattern_spectra/python/create_pattern_spectra.py
 ```
 
 This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The pattern spectra characteristics can be specified with ``-a`` (attributes), ``-dl`` (domain lower), ``-dh`` (domain higher), ``-m`` (mapper), ``-n`` (size) and ``-f`` (filter).
