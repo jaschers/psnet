@@ -1,6 +1,6 @@
 # dm-finder
 ## Preamble
-The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
+This project investigates the potential of pattern spectra for analyses based on Cherenkov telescope data. By applying pattern spectra on convolutional neural networks (CNNs), the goal of this project is to outperform the performance of the current standard analysis and/or to reduce the computational power needed to train the CNNs.
 
 ## Installation
 ### Git and ssh key
@@ -83,7 +83,7 @@ will create CTA images from data run 100. The images are saved into the ``dm-fin
 
 ### Create pattern spectra
 ```sh
-python dm-finder/scripts/pattern_spectra/python/create_pattern_spectra.py
+python dm-finder/scripts/pattern_spectra/python/create_pattern_spectra.py -h
 ```
 
 This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The pattern spectra characteristics can be specified with ``-a`` (attributes), ``-dl`` (domain lower), ``-dh`` (domain higher), ``-m`` (mapper), ``-n`` (size) and ``-f`` (filter).
@@ -125,7 +125,22 @@ The pattern spectra are saved as matlab files into the ``dm-finder/data/gamma/pa
 In order to use the GUI of the pattern spectra code to have a look at an individual pattern spectrum, one has to go into the ``xmaxtree`` directoy via ``cd dm-finder/scripts/pattern_spectra/xmaxtree`` and run ``./xmaxtree <filename>.pgm a 9, 0 dl 0, 0 dh 10, 10 m 2, 0 n 20, 20 f 3``. The input parameter can be adjusted according to your needs.
 
 ### Convolutional neural network (CNN)
-Currently, the code provides options to train a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
+Currently, the code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
 
 #### Training
+```
+python dm-finder/scripts/cnn/cnn.py -h
+```
+It is highly recommened to train the CNN on the Peregrine HPC cluster, if the full data set is used for training. Tests can be performed with a smaller data set on your local machine with the ``-t y`` option. 
+
+##### Energy reconstruction
+```
+python dm-finder/scripts/cnn/cnn.py -m energy -i cta
+python dm-finder/scripts/cnn/cnn.py -m energy -i ps
+```
+##### Signal/background separation
+```
+python dm-finder/scripts/cnn/cnn.py -m separation -i cta
+python dm-finder/scripts/cnn/cnn.py -m separation -i ps
+```
 
