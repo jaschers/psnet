@@ -135,7 +135,35 @@ Currently, the code provides options to train and evaluate a CNN for energy reco
 ```
 python dm-finder/scripts/cnn/cnn.py -h
 ```
-It is highly recommened to train the CNN on the Peregrine HPC cluster, if the full data set is used for training. Tests can be performed with a smaller data set listed in ``dm-finder/scripts/run_lists/<particle_type>_run_list_test.csv`` on your local machine with the ``-t y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
+It is highly recommened to train the CNN on the Peregrine HPC cluster, if the full data set is used for training. In order to copy your local data and scripts on the Peregrine HPC cluster, copy the following commands into your ``~/.bashrc`` file:
+
+```
+alias sshperigrine='ssh -X <your_P/S-number>@peregrine.hpc.rug.nl'
+alias pushperegrine='rsync -avzu <path_on_your_local_machine>/dm-finder/scripts <path_on_your_local_machine>/dm-finder/cnn <your_P/S-number>@peregrine.hpc.rug.nl:/data/<your_P/S-number>/dm-finder'
+alias pullperegrine='rsync -avzu <your_P/S-number>@peregrine.hpc.rug.nl:/data/<your_P/S-number>/dm-finder/cnn <path_on_your_local_machine>/dm-finder'
+```
+Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The ``sshperigrine`` command allows you to connect to the Peregrine cluster. The ``pushperegrine`` copies your data and scripts on the Peregrine cluster. The ``pullperegrine`` command copies the output of your CNN training on your local machine. In order to run a script on the Peregrine cluster, follow the steps below:
+1. login to the Peregrine cluster via ``sshperigrine``
+2. Go into your working directory via ``cd /data/<your_P/S-number>``
+3. Create a folder for your jobs via ``mkdir jobs``
+4. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
+5. Copy the following lines into the file
+
+```
+#!/bin/bash
+#SBATCH --time=03:00:00
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:v100:1
+#SBATCH --mem=60G
+#SBATCH --job-name=iact_s
+#SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+#SBATCH --mail-user=j.j.m.aschersleben@rug.nl
+#SBATCH --output=outputs/iact_images_cnn_separation.log
+module restore ctapipe
+python /data/p301858/dm-finder/scripts/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_fnn1_exp1 -er 0.5 100 -e 50
+```
+
+Tests can be performed with a smaller data set listed in ``dm-finder/scripts/run_lists/<particle_type>_run_list_test.csv`` on your local machine with the ``-t y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
 
 ##### Signal/background separation
 ```
