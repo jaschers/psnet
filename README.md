@@ -143,11 +143,14 @@ alias pushperegrine='rsync -avzu <path_on_your_local_machine>/dm-finder/scripts 
 alias pullperegrine='rsync -avzu <your_P/S-number>@peregrine.hpc.rug.nl:/data/<your_P/S-number>/dm-finder/cnn <path_on_your_local_machine>/dm-finder'
 ```
 Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The ``sshperigrine`` command allows you to connect to the Peregrine cluster. The ``pushperegrine`` copies your data and scripts on the Peregrine cluster. The ``pullperegrine`` command copies the output of your CNN training on your local machine. In order to run a script on the Peregrine cluster, follow the steps below:
-1. login to the Peregrine cluster via ``sshperigrine``
+1. Login to the Peregrine cluster via ``sshperigrine``
 2. Go into your working directory via ``cd /data/<your_P/S-number>``
 3. Create a folder for your jobs via ``mkdir jobs``
-4. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
-5. Copy the following lines into the file
+4. Create a folder for your output via ``mkdir outputs``
+5. Load the required modules via ``module add matplotlib/3.1.1-fosscuda-2019b-Python-3.7.4`` and ``module add TensorFlow/2.3.1-fosscuda-2019b-Python-3.7.4``
+6. Save the modules for later use ``module save ctapipe``
+8. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
+9. Copy the following lines into the file (this is an example of a job, you have to adjust it according to your needs):
 
 ```
 #!/bin/bash
@@ -155,13 +158,19 @@ Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The 
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:v100:1
 #SBATCH --mem=60G
-#SBATCH --job-name=iact_s
+#SBATCH --job-name=cta_s
 #SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
 #SBATCH --mail-user=j.j.m.aschersleben@rug.nl
-#SBATCH --output=outputs/iact_images_cnn_separation.log
+#SBATCH --output=outputs/cta_images_cnn_separation.log
 module restore ctapipe
-python /data/p301858/dm-finder/scripts/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_fnn1_exp1 -er 0.5 100 -e 50
+python /data/p301858/dm-finder/scripts/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_exp1 -er 0.5 100 -e 50
 ```
+10. Close and save the file. 
+12. Load your modules via ``module restore ctapipe``
+13. Send a job request via ``sbatch jobs/<name_of_your_job>.sh``
+14. You can check the current status of your job via ``squeue -u $USER``
+
+More information can be found on the [Peregrine HPC cluster wiki page](https://wiki.hpc.rug.nl/peregrine/start). After the job is completed, you can copy the output of your neural network to your local machine via ``pullperegrine`` (on your local machine).
 
 Tests can be performed with a smaller data set listed in ``dm-finder/scripts/run_lists/<particle_type>_run_list_test.csv`` on your local machine with the ``-t y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
 
