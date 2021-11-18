@@ -3,12 +3,15 @@
 This project investigates the potential of pattern spectra for analyses based on Cherenkov telescope data. By applying pattern spectra on convolutional neural networks (CNNs), the goal of this project is to outperform the performance of the current standard analysis and/or to reduce the computational power needed to train the CNNs.
 
 ## Installation
-### Git and ssh key
-Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git and a shh-key with the following commands:
+### Git and personal access token
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
 ```
 git config --global user.name "<firstname> <lastname>"
 git config --global user.email "<email>"
 git config --list
+```
+<!---
+```
 ssh-keygen -t ed25519 -C "your_email@example.com"
 eval "$(ssh-agent -s)"
 vim ~/.ssh/config
@@ -31,6 +34,7 @@ Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of t
 ```
 You've successfully authenticated, but GitHub does not provide shell access.
 ```
+--->
 Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
 ### dm-finder repository
