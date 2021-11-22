@@ -147,8 +147,9 @@ Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The 
 2. Go into your working directory via ``cd /data/<your_P/S-number>``
 3. Create a folder for your jobs via ``mkdir jobs``
 4. Create a folder for your output via ``mkdir outputs``
-5. Load the required modules via ``module add matplotlib/3.1.1-fosscuda-2019b-Python-3.7.4`` and ``module add TensorFlow/2.3.1-fosscuda-2019b-Python-3.7.4``
-6. Save the modules for later use ``module save ctapipe``
+5. Install Keras via ``pip install --user keras``
+6. Load the required modules via ``module add matplotlib/3.1.1-fosscuda-2019b-Python-3.7.4`` and ``module add TensorFlow/2.3.1-fosscuda-2019b-Python-3.7.4``
+7. Save the modules for later use ``module save ctapipe``
 8. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
 9. Copy the following lines into the file (this is an example of a job, you have to adjust it according to your needs):
 
