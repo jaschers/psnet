@@ -11,7 +11,7 @@ print("Packages successfully loaded")
 ######################################## argparse setup ########################################
 script_version=0.1
 script_descr="""
-Evaluates the pattern spectra pixel distribution for different energies
+Evaluates the pattern spectra pixel distribution for different energies and primary particles
 """
 
 # Open argument parser
@@ -46,6 +46,8 @@ string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_l
 # import data
 if args.mode == "energy":
     filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+    if args.test == "y":
+            filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
     run = pd.read_csv(filename_run)
     run = run.to_numpy().reshape(len(run))
 
@@ -128,41 +130,65 @@ if args.mode == "energy":
     energy_true_binned = np.split(energy_true, indices)
     pattern_spectra_binned = np.split(pattern_spectra, indices)
 
-    path = f"dm-finder/data/{args.particle_type}/info/pattern_spectra_distribution_energy/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
+    path = f"dm-finder/data/{args.particle_type}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
     os.makedirs(path, exist_ok = True)
 
-    PlotPatternSpectra(number_energy_ranges, args.size, bins, pattern_spectra_binned, path)
+    # extract the normed sum of all pattern spectra in each specific energy bin
+    pattern_spectra_sum_normed = ExtractPatternSpectraSum(number_energy_ranges, args.size, pattern_spectra_binned)
+    # subtract normed pattern spectrum of the first energy bin from all other normed pattern spectra of each other energy bin 
+    pattern_spectra_sum_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_sum_normed)
+    # extract the min and max value of pattern_spectra_sum_difference to set the colourbar equally 
+    pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = ExtractPatternSpectraDiffernceMinMax(number_energy_ranges, pattern_spectra_sum_difference)
+    # plot normed and difference pattern spectra
+    PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, args.particle_type, path)
+
 
 elif args.mode == "separation":
-    for s in range(2):
-        table = table.loc[table["particle"] == s]
-        table = table.reset_index(drop = True)
-        pattern_spectra = [[]] * len(table)
-        for i in range(len(table)):
-            pattern_spectra[i] = table["pattern spectrum"][i]
-        pattern_spectra = np.asarray(pattern_spectra) 
+    # for energy dependend comparison
+    pattern_spectra_sum_normed_gamma_proton = [[]] * len(particle_type)
+    # for energy independend comparison
+    pattern_spectra_total_sum_normed_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
+    for p in range(len(particle_type)):
+        table_individual = table.loc[table["particle"] == p]
+        table_individual = table_individual.reset_index(drop = True)
+        pattern_spectra = [[]] * len(table_individual)
+        for i in range(len(table_individual)):
+            pattern_spectra[i] = table_individual["pattern spectrum"][i]
+            pattern_spectra_total_sum_normed_gamma_proton[p] = np.add(pattern_spectra_total_sum_normed_gamma_proton[p], pattern_spectra[i])
+        pattern_spectra = np.asarray(pattern_spectra)
+
+        # normalise it to 1
+        pattern_spectra_total_sum_normed_gamma_proton[p] = (pattern_spectra_total_sum_normed_gamma_proton[p] - np.min(pattern_spectra_total_sum_normed_gamma_proton[p]))
+        pattern_spectra_total_sum_normed_gamma_proton[p] = pattern_spectra_total_sum_normed_gamma_proton[p] / np.max(pattern_spectra_total_sum_normed_gamma_proton[p]) 
 
         # collect true energy
-        energy_true = np.asarray(table["true_energy"]) * 1e-3
+        energy_true = np.asarray(table_individual["true_energy"]) * 1e-3
 
         # prepare energy binning
-        number_energy_ranges = 3 # number of energy ranges the whole energy range will be splitted
+        number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
         sst_energy_min = args.energy_range[0] # TeV
         sst_energy_max = args.energy_range[1] # TeV
         bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
-        print(bins)
         indices = np.array([], dtype = int)
         for b in range(len(bins) - 2):
-            print(energy_true)
-            print(bins[b+1])
-            print("______________")
             index = np.max(np.where(energy_true < bins[b+1])) + 1
             indices = np.append(indices, index)
 
         energy_true_binned = np.split(energy_true, indices)
         pattern_spectra_binned = np.split(pattern_spectra, indices)
 
-        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution_separation/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
+        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
         os.makedirs(path, exist_ok = True)
 
-        PlotPatternSpectra(number_energy_ranges, args.size, bins, pattern_spectra_binned, path)
+        # extract the normed sum of all pattern spectra in each specific energy bin
+        pattern_spectra_sum_normed = ExtractPatternSpectraSum(number_energy_ranges, args.size, pattern_spectra_binned)
+        pattern_spectra_sum_normed_gamma_proton[p] = pattern_spectra_sum_normed
+        # subtract normed pattern spectrum of the first energy bin from all other normed pattern spectra of each other energy bin 
+        pattern_spectra_sum_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_sum_normed)
+        # extract the min and max value of pattern_spectra_sum_difference to set the colourbar equally 
+        pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = ExtractPatternSpectraDiffernceMinMax(number_energy_ranges, pattern_spectra_sum_difference)
+        # plot normed and difference pattern spectra
+        PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, particle_type[p], path)
+
+    PlotPatternSpectraComparisonTotal(pattern_spectra_total_sum_normed_gamma_proton, particle_type, args.attribute, path)
+    PlotPatternSpectraComparison(number_energy_ranges, pattern_spectra_sum_normed_gamma_proton, bins, particle_type, path)
