@@ -85,7 +85,9 @@ python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64
 ``` 
 will create CTA images from data run 100. The images are saved into the ``dm-finder/data/gamma/images`` directory.
 
-### Create pattern spectra
+### Pattern spectra
+
+#### Extraction
 ```sh
 python dm-finder/scripts/pattern_spectra/python/create_pattern_spectra.py -h
 ```
@@ -126,7 +128,12 @@ mapper = 0 - Area mapper
 
 The pattern spectra are saved as matlab files into the ``dm-finder/data/gamma/pattern_spectra`` directory. Again the pattern spectra are created from the runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv``. Pattern spectra from a particular run can be created by adding the ``-r`` command.
 
+### Evaluation / investigation
 In order to use the GUI of the pattern spectra code to have a look at an individual pattern spectrum, one has to go into the ``xmaxtree`` directoy via ``cd dm-finder/scripts/pattern_spectra/xmaxtree`` and run ``./xmaxtree <filename>.pgm a 9, 0 dl 0, 0 dh 10, 10 m 2, 0 n 20, 20 f 3``. The input parameter can be adjusted according to your needs.
+
+```
+python dm-finder/scripts/pattern_spectra/python/pattern_spectra_evaluation.py -h
+```
 
 ### Convolutional neural network (CNN)
 Currently, the code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
@@ -186,5 +193,10 @@ The CNN can be trained for signal/background (photon/proton) separation with the
 ```
 python dm-finder/scripts/cnn/cnn.py -m energy -i cta
 python dm-finder/scripts/cnn/cnn.py -m energy -i ps
+```
+
+#### Evaluation
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -h
 ```
 
