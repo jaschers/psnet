@@ -1,14 +1,17 @@
 # dm-finder
 ## Preamble
-The goal of this project is to investigate the potential of pattern spectra for analyses based on Cherenkov telescope data. In the current state, the goal of the project is NOT to outperfom the standard algorithms used by the CTA, H.E.S.S., ... collaborations.
+This project investigates the potential of pattern spectra for analyses based on Cherenkov telescope data. By applying pattern spectra on convolutional neural networks (CNNs), the goal of this project is to outperform the performance of the current standard analysis and/or to reduce the computational power needed to train the CNNs.
 
 ## Installation
-### Git and ssh key
-Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git and a shh-key with the following commands:
+### Git and personal access token
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
 ```
 git config --global user.name "<firstname> <lastname>"
 git config --global user.email "<email>"
 git config --list
+```
+<!---
+```
 ssh-keygen -t ed25519 -C "your_email@example.com"
 eval "$(ssh-agent -s)"
 vim ~/.ssh/config
@@ -31,6 +34,7 @@ Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of t
 ```
 You've successfully authenticated, but GitHub does not provide shell access.
 ```
+--->
 Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
 ### dm-finder repository
@@ -47,7 +51,7 @@ Setup the ``ctapipe`` environment:
 
 ```sh
 conda install mamba -n base -c conda-forge
-mamba env create --file environment.yaml
+mamba env create --file environment.yml
 ```
 
 Start the ``ctapipe`` environment:
@@ -61,7 +65,7 @@ Every script has a help option ``-h`` or ``--help`` in order to get basic instru
 ### CTA data download
 Use 
 ```sh
-mkdir -p dm-finder/data/gamma/event_files
+mkdir -p dm-finder/data/gamma_diffuse/event_files
 ``` 
 to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory (see the [Checklist for CTA newcomers](https://github.com/jaschers/cta-newcomers) for details). 
 
@@ -81,7 +85,13 @@ python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64
 ``` 
 will create CTA images from data run 100. The images are saved into the ``dm-finder/data/gamma/images`` directory.
 
-### Create pattern spectra
+### Pattern spectra
+
+#### Extraction
+```sh
+python dm-finder/scripts/pattern_spectra/python/create_pattern_spectra.py -h
+```
+
 This script creates pattern spectra from the CTA images of gamma/diffuse-gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. The pattern spectra characteristics can be specified with ``-a`` (attributes), ``-dl`` (domain lower), ``-dh`` (domain higher), ``-m`` (mapper), ``-n`` (size) and ``-f`` (filter).
 
 The following attributes, filter and mapper are available
@@ -118,10 +128,75 @@ mapper = 0 - Area mapper
 
 The pattern spectra are saved as matlab files into the ``dm-finder/data/gamma/pattern_spectra`` directory. Again the pattern spectra are created from the runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv``. Pattern spectra from a particular run can be created by adding the ``-r`` command.
 
+### Evaluation / investigation
 In order to use the GUI of the pattern spectra code to have a look at an individual pattern spectrum, one has to go into the ``xmaxtree`` directoy via ``cd dm-finder/scripts/pattern_spectra/xmaxtree`` and run ``./xmaxtree <filename>.pgm a 9, 0 dl 0, 0 dh 10, 10 m 2, 0 n 20, 20 f 3``. The input parameter can be adjusted according to your needs.
 
+```
+python dm-finder/scripts/pattern_spectra/python/pattern_spectra_evaluation.py -h
+```
+
 ### Convolutional neural network (CNN)
-Currently, the code provides options to train a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
+Currently, the code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
 
 #### Training
+```
+python dm-finder/scripts/cnn/cnn.py -h
+```
+It is highly recommened to train the CNN on the Peregrine HPC cluster, if the full data set is used for training. In order to copy your local data and scripts on the Peregrine HPC cluster, copy the following commands into your ``~/.bashrc`` file:
+
+```
+alias sshperigrine='ssh -X <your_P/S-number>@peregrine.hpc.rug.nl'
+alias pushperegrine='rsync -avzu <path_on_your_local_machine>/dm-finder/scripts <path_on_your_local_machine>/dm-finder/cnn <your_P/S-number>@peregrine.hpc.rug.nl:/data/<your_P/S-number>/dm-finder'
+alias pullperegrine='rsync -avzu <your_P/S-number>@peregrine.hpc.rug.nl:/data/<your_P/S-number>/dm-finder/cnn <path_on_your_local_machine>/dm-finder'
+```
+Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The ``sshperigrine`` command allows you to connect to the Peregrine cluster. The ``pushperegrine`` copies your data and scripts on the Peregrine cluster. The ``pullperegrine`` command copies the output of your CNN training on your local machine. In order to run a script on the Peregrine cluster, follow the steps below:
+1. Login to the Peregrine cluster via ``sshperigrine``
+2. Go into your working directory via ``cd /data/<your_P/S-number>``
+3. Create a folder for your jobs via ``mkdir jobs``
+4. Create a folder for your output via ``mkdir outputs``
+5. Install Keras via ``pip install --user keras``
+6. Load the required modules via ``module add matplotlib/3.1.1-fosscuda-2019b-Python-3.7.4`` and ``module add TensorFlow/2.3.1-fosscuda-2019b-Python-3.7.4``
+7. Save the modules for later use ``module save ctapipe``
+8. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
+9. Copy the following lines into the file (this is an example of a job, you have to adjust it according to your needs):
+
+```
+#!/bin/bash
+#SBATCH --time=03:00:00
+#SBATCH --partition=gpu
+#SBATCH --gres=gpu:v100:1
+#SBATCH --mem=60G
+#SBATCH --job-name=cta_s
+#SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
+#SBATCH --mail-user=j.j.m.aschersleben@rug.nl
+#SBATCH --output=outputs/cta_images_cnn_separation.log
+module restore ctapipe
+python /data/p301858/dm-finder/scripts/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_exp1 -er 0.5 100 -e 50
+```
+10. Close and save the file. 
+12. Load your modules via ``module restore ctapipe``
+13. Send a job request via ``sbatch jobs/<name_of_your_job>.sh``
+14. You can check the current status of your job via ``squeue -u $USER``
+
+More information can be found on the [Peregrine HPC cluster wiki page](https://wiki.hpc.rug.nl/peregrine/start). After the job is completed, you can copy the output of your neural network to your local machine via ``pullperegrine`` (on your local machine).
+
+Tests can be performed with a smaller data set listed in ``dm-finder/scripts/run_lists/<particle_type>_run_list_test.csv`` on your local machine with the ``-t y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
+
+##### Signal/background separation
+```
+python dm-finder/scripts/cnn/cnn.py -m separation -i cta
+python dm-finder/scripts/cnn/cnn.py -m separation -i ps
+```
+The CNN can be trained for signal/background (photon/proton) separation with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra** section. By default, the full data set of all runs listed in ``dm-finder/scripts/run_lists/gamma_diffuse_run_list.csv`` and ``dm-finder/scripts/run_lists/proton_run_list.csv`` are considered. The energy range of the considered events can be specified with the ``-er <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-er 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The number of epochs for the CNN training can be chosen with the ``-e <number_epochs>`` argument. 
+
+##### Energy reconstruction
+```
+python dm-finder/scripts/cnn/cnn.py -m energy -i cta
+python dm-finder/scripts/cnn/cnn.py -m energy -i ps
+```
+
+#### Evaluation
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -h
+```
 
