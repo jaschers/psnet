@@ -31,7 +31,7 @@ parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
-parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(1, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
+parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
 parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 2 0", default = [2, 0], nargs = 2)
@@ -189,9 +189,14 @@ elif args.mode == "separation":
 X_shape = np.shape(X)
 X = X.reshape(-1, X_shape[1], X_shape[2], 1)
 
-# # hold out 10 percent as test data
+# # hold out 10 percent as test data and extract the corresponding obs_id and event_id
 X_train, X_test = np.split(X, [int(-len(table) / 10)])
 Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
+obs_id_test, event_id_test = table.tail(int(len(table) / 10))["obs_id"],  table.tail(int(len(table) / 10))["event_id"]
+obs_id_test.reset_index(drop = True, inplace = True)
+event_id_test.reset_index(drop = True, inplace = True)
+obs_id_test, event_id_test = np.asarray(obs_id_test), np.asarray(event_id_test)
+
 
 # # remove strange outlier
 # index = np.argmin(Y)
@@ -353,21 +358,23 @@ yp = model.predict(X_test, batch_size=128)
 
 if args.mode == "energy":
     yp = yp[:, 0]  # remove unnecessary last axis
-    header = ["log10(E_true / GeV)", "log10(E_rec / GeV)"]
+    header = ["obs_id", "event_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
 elif args.mode == "separation":
     yp = yp[:, 1]  # get gammaness (or photon score)
     Y_test = np.argmax(Y_test, axis = 1)
-    header = ["true gammaness", "reconstructed gammaness", "E_true / GeV"]
+    header = ["obs_id", "event_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
 
 # create csv output file
 Y_test = np.reshape(Y_test, (len(Y_test), 1))
 yp = np.reshape(yp, (len(yp), 1))
+obs_id_test = np.reshape(obs_id_test, (len(obs_id_test), 1)).astype(int)
+event_id_test = np.reshape(event_id_test, (len(event_id_test), 1)).astype(int)
 
 if args.mode == "energy":
-    table_output = np.hstack((Y_test, yp))
+    table_output = np.hstack((obs_id_test, event_id_test, Y_test, yp))
 elif args.mode == "separation":
     energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
-    table_output = np.hstack((Y_test, yp, energy_true_test))
+    table_output = np.hstack((obs_id_test, event_id_test, Y_test, yp, energy_true_test))
 
 pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = header)
 ##########################################################################################
