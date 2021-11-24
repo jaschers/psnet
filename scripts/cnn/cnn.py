@@ -258,34 +258,34 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation = 'softmax', name = "gammaness")(z)
     # #######################################
 
-    ## cnn architecture number 2 (cnn2) ###
-    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
-    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
-    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
-    # z = keras.layers.GlobalAveragePooling2D()(z)
-
-    # z = keras.layers.Dense(64, activation = "relu")(z)
-    # z = keras.layers.Dense(32, activation = "relu")(z)
-    # z = keras.layers.Dense(16, activation = "relu")(z)
-
-    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
-    ########################################
-
-    # #######################################
-
-    # cnn architecture number 3 (cnn3) ###
+    # cnn architecture number 2 (cnn2) ###
     z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
     z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
     z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
-    z = keras.layers.Flatten()(z)
+    z = keras.layers.GlobalAveragePooling2D()(z)
 
-    z = keras.layers.Dense(256, activation = "relu")(z)
-    z = keras.layers.Dense(128, activation = "relu")(z)
     z = keras.layers.Dense(64, activation = "relu")(z)
     z = keras.layers.Dense(32, activation = "relu")(z)
     z = keras.layers.Dense(16, activation = "relu")(z)
 
     output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    ########################################
+
+    # #######################################
+
+    # # cnn architecture number 3 (cnn3) ###
+    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
+    # z = keras.layers.Flatten()(z)
+
+    # z = keras.layers.Dense(256, activation = "relu")(z)
+    # z = keras.layers.Dense(128, activation = "relu")(z)
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     ########################################    
 
     ########################################
