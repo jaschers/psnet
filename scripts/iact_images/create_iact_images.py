@@ -161,6 +161,14 @@ for r in range(len(run)): #len(run)
     obs_id_unique = np.unique(table["obs_id"])
     event_id = table["event_id"]
 
+    # add run information to the table
+    table["run"] = run[r]
+
+    # rearange the order of the columns
+    columns = list(table.columns.values)
+    columns = columns[-1:] + columns[:-1]
+    table = table[columns]
+
     # add image columns to table to be filled in
     if (args.particle_type == "gamma") or (args.particle_type == "gamma_diffuse"):
         table["particle"] = 1
