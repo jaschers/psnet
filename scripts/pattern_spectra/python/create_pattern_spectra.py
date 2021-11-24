@@ -50,7 +50,8 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 
 # Define expected arguments
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
-parser.add_argument("-a", "--attribute", type = int, metavar = "", choices = np.arange(1, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
+parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the pattern spectra will be extracted, default: csv list", action='append', nargs='+')
+parser.add_argument("-a", "--attribute", type = int, metavar = "", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
 parser.add_argument("-m", "--mapper", type = int, metavar = "", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 2 0", default = [2, 0], nargs = 2)
@@ -67,6 +68,9 @@ filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
 run = pd.read_csv(filename_run)
 run = run.to_numpy().reshape(len(run))
 
+if args.run != None:
+    run = args.run[0]
+
 print(f"Total number of runs: {len(run)}")
 print(f"Run IDs: {run}")
 
@@ -82,12 +86,21 @@ for r in range(len(run)): #len(run)
     obs_id_unique = np.unique(table["obs_id"])
     event_id = table["event_id"]
 
+    # add run information to the table
+    table["run"] = run[r]
+
+    # rearange the order of the columns
+    columns = list(table.columns.values)
+    columns = columns[-1:] + columns[:-1]
+    table = table[columns]
+
+    # add particle type information to the table
     if (args.particle_type == "gamma") or (args.particle_type == "gamma_diffuse"):
         table["particle"] = 1
     elif args.particle_type == "proton":
         table["particle"] = 0
 
-    # add image column to table to be filled in
+    # add pattern spectrum column to table to be filled in
     table["pattern spectrum"] = np.nan
     table["pattern spectrum"] = table["pattern spectrum"].astype(object)
 
