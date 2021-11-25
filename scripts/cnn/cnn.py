@@ -147,7 +147,6 @@ elif args.mode == "separation":
 
     EnergyDistributionSeparation(table, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
 
-
 table.drop(table.loc[table["true_energy"] <= args.energy_range[0] * 1e3].index, inplace=True)
 table.drop(table.loc[table["true_energy"] >= args.energy_range[1] * 1e3].index, inplace=True)
 table.reset_index(inplace = True)
@@ -189,14 +188,14 @@ elif args.mode == "separation":
 X_shape = np.shape(X)
 X = X.reshape(-1, X_shape[1], X_shape[2], 1)
 
-# # hold out 10 percent as test data and extract the corresponding obs_id and event_id
+# # hold out 10 percent as test data and extract the corresponding run, obs_id and event_id
 X_train, X_test = np.split(X, [int(-len(table) / 10)])
 Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
-obs_id_test, event_id_test = table.tail(int(len(table) / 10))["obs_id"],  table.tail(int(len(table) / 10))["event_id"]
+run_test, obs_id_test, event_id_test = table.tail(int(len(table) / 10))["run"], table.tail(int(len(table) / 10))["obs_id"],  table.tail(int(len(table) / 10))["event_id"]
+run_test.reset_index(drop = True, inplace = True)
 obs_id_test.reset_index(drop = True, inplace = True)
 event_id_test.reset_index(drop = True, inplace = True)
-obs_id_test, event_id_test = np.asarray(obs_id_test), np.asarray(event_id_test)
-
+run_test, obs_id_test, event_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test)
 
 # # remove strange outlier
 # index = np.argmin(Y)
@@ -280,9 +279,13 @@ elif args.mode == "separation":
     # z = keras.layers.Flatten()(z)
 
     # z = keras.layers.Dense(256, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
     # z = keras.layers.Dense(128, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
     # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
     # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
     # z = keras.layers.Dense(16, activation = "relu")(z)
 
     # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
@@ -358,23 +361,24 @@ yp = model.predict(X_test, batch_size=128)
 
 if args.mode == "energy":
     yp = yp[:, 0]  # remove unnecessary last axis
-    header = ["obs_id", "event_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
+    header = ["run", "obs_id", "event_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
 elif args.mode == "separation":
     yp = yp[:, 1]  # get gammaness (or photon score)
     Y_test = np.argmax(Y_test, axis = 1)
-    header = ["obs_id", "event_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
+    header = ["run", "obs_id", "event_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
 
 # create csv output file
 Y_test = np.reshape(Y_test, (len(Y_test), 1))
 yp = np.reshape(yp, (len(yp), 1))
+run_test = np.reshape(run_test, (len(run_test), 1)).astype(int)
 obs_id_test = np.reshape(obs_id_test, (len(obs_id_test), 1)).astype(int)
 event_id_test = np.reshape(event_id_test, (len(event_id_test), 1)).astype(int)
 
 if args.mode == "energy":
-    table_output = np.hstack((obs_id_test, event_id_test, Y_test, yp))
+    table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp))
 elif args.mode == "separation":
     energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
-    table_output = np.hstack((obs_id_test, event_id_test, Y_test, yp, energy_true_test))
+    table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp, energy_true_test))
 
 pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = header)
 ##########################################################################################
