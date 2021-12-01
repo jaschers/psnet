@@ -12,8 +12,10 @@ from tensorflow import keras
 from keras.callbacks import CSVLogger
 from keras.models import Model
 import logging
+import time
 
 plt.rcParams.update({'font.size': 14})
+pd.options.mode.chained_assignment = None 
 
 ######################################## argparse setup ########################################
 script_version=0.1
@@ -32,6 +34,7 @@ parser.add_argument("-na", "--name", type = str, required = False, metavar = "-"
 parser.add_argument("-l", "--label", type = str, required = False, metavar = "-", help = "plotting label for the individual experiments", action='append', nargs='+')
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
+parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
@@ -107,7 +110,7 @@ for i in range(len(args.input[0])):
     table_history = pd.read_csv(history_path)
 
     # plot loss history
-    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss" + string_data_type[i] + string_name[i] + ".png")
+    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.png")
 
     ####################################### Filters and feature maps ########################################
     # define example run and load example data
@@ -119,18 +122,17 @@ for i in range(len(args.input[0])):
     model = keras.models.load_model(model_path)
     
     # plot filters
-    PlotFilters(model, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "filters" + string_data_type[i] + string_name[i])
+    PlotFilters(model, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "filters")
 
     # plot feature maps for an example image
     index_example = 39
-    PlotFeatureMaps(X, model, index_example, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "feature_maps" + string_data_type[i] + string_name[i] )
+    PlotFeatureMaps(X, model, index_example, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "feature_maps")
     ##########################################################################################
 
     # load data file that contains E_true and E_rec from the test set
     filename_output = f"dm-finder/cnn/{string_input[i]}/{args.mode}/output/" + string_ps_input[i] + "evaluation" + string_data_type[i] + string_name[i] + ".csv"
 
     table_output = pd.read_csv(filename_output)
-
 
     if args.mode == "energy":
         table_output = table_output.sort_values(by = ["log10(E_true / GeV)"])
@@ -140,7 +142,7 @@ for i in range(len(args.input[0])):
         energy_rec = np.asarray((10**table_output["log10(E_rec / GeV)"] * 1e-3))
 
         # create 2D energy scattering plot
-        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D" + string_data_type[i] + string_name[i] + ".png")
+        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.png")
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
@@ -161,13 +163,13 @@ for i in range(len(args.input[0])):
         sigma_total = np.std(relative_energy_error_toal)
         
         # save relative energy error histogram (total)
-        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error" + string_data_type[i] + string_name[i] + ".png")
+        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.png")
 
         # save relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram" + string_data_type[i] + string_name[i] + ".png")
+        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.png")
 
         # save corrected relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected" + string_data_type[i] + string_name[i] + ".png")
+        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.png")
 
         # get median and sigma68 values (binned)
         median, sigma = MedianSigma68(energy_true_binned, energy_rec_binned, bins)
@@ -177,21 +179,38 @@ for i in range(len(args.input[0])):
         sigma_all[i] = sigma
 
         # plot energy accuracy
-        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy" + string_data_type[i] + string_name[i] + ".png")
+        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.png")
     
         # plot energy resolution
-        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution" + string_data_type[i] + string_name[i] + ".png")
+        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.png")
     
     elif args.mode == "separation":
+        particle_type = np.array(["gamma_diffuse", "proton"])
         gammaness_true = np.asarray(table_output["true gammaness"])
         gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
         energy_true = np.asarray(table_output["E_true / GeV"])
 
-        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness" + string_data_type[i] + string_name[i] + ".png")
+        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.png")
 
-        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned" + string_data_type[i] + string_name[i] + ".png")
+        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.png")
 
-        PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc" + string_data_type[i] + string_name[i] + ".png")
+        PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.png")
+
+        # Plot wrongly classified CTA images / pattern spectra
+        if args.gammaness_limit != [0.0, 0.0, 0.0, 0.0]:
+            # load CTA images or pattern spectra into the table_output 
+            table_output = ExtendTable(table_output, string_table_column[i], string_input[i], string_ps_input[i], string_input_short[i], string_data_type[i])
+
+            # Plot 15 examples of wrongly classified events
+            PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column[i], args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_examples")
+
+            # get normed sum pattern spectra
+            pattern_spectra_sum_normed_gammaness_limit = ExtractPatternSpectraSum(table_output, particle_type, args.size, args.gammaness_limit, string_table_column[i])
+            # plot normed sum of pattern spectra of missclassified events
+            PlotPatternSpectraSum(pattern_spectra_sum_normed_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_sum")
+
+            # plot pattern spectra difference (gamma - proton) of missclassified events
+            PlotPatternSpectraDifference(pattern_spectra_sum_normed_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
 
 
 if args.mode == "energy":
