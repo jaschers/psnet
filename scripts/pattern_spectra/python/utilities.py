@@ -10,9 +10,10 @@ def ExtractPatternSpectraSum(number_energy_ranges, size, pattern_spectra_binned)
     for i in range(number_energy_ranges):
         for j in range(len(pattern_spectra_binned[i])):
             pattern_spectra_sum[i] += pattern_spectra_binned[i][j]
+
         # calculate normed pattern spectra sum
-        pattern_spectra_sum_normed[i] = (pattern_spectra_sum[i] - np.min(pattern_spectra_sum[i]))
-        pattern_spectra_sum_normed[i] = pattern_spectra_sum_normed[i] / np.max(pattern_spectra_sum_normed[i])
+        pattern_spectra_sum_normed[i] = pattern_spectra_sum[i] / len(pattern_spectra_binned[i])
+        # pattern_spectra_sum_normed[i] = pattern_spectra_sum_normed[i] / np.max(pattern_spectra_sum_normed[i])
 
     return pattern_spectra_sum_normed
 
@@ -20,32 +21,25 @@ def ExtractPatternSpectraDifference(number_energy_ranges, size, pattern_spectra_
     pattern_spectra_sum_difference = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     for i in range(number_energy_ranges):
         # calculate normed patter spectra sum minus pattern spectra of first energy range
-        pattern_spectra_sum_difference[i] = pattern_spectra_sum_normed[i] - pattern_spectra_sum_normed[0]
-        if i == 1:
-            pattern_spectra_sum_difference_min = np.min(pattern_spectra_sum_difference[i])
-            pattern_spectra_sum_difference_max = np.max(pattern_spectra_sum_difference[i])
-        elif i > 1:
-            if np.min(pattern_spectra_sum_difference[i]) < pattern_spectra_sum_difference_min:
-                pattern_spectra_sum_difference_min = np.min(pattern_spectra_sum_difference[i])
-            if np.max(pattern_spectra_sum_difference[i]) > pattern_spectra_sum_difference_max:
-                pattern_spectra_sum_difference_max = np.max(pattern_spectra_sum_difference[i])
-    
+        pattern_spectra_sum_difference[i] = (pattern_spectra_sum_normed[i] - pattern_spectra_sum_normed[0])
+        # pattern_spectra_sum_difference[i] = np.nan_to_num(pattern_spectra_sum_difference[i], nan = 0, posinf = 0)
+
     return pattern_spectra_sum_difference
 
-def ExtractPatternSpectraDiffernceMinMax(number_energy_ranges, pattern_spectra_sum_difference):
+def ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra):
     for i in range(number_energy_ranges):
         if i == 1:
-            pattern_spectra_sum_difference_min = np.min(pattern_spectra_sum_difference[i])
-            pattern_spectra_sum_difference_max = np.max(pattern_spectra_sum_difference[i])
+            pattern_spectra_min = np.min(pattern_spectra[i])
+            pattern_spectra_max = np.max(pattern_spectra[i])
         elif i > 1:
-            if np.min(pattern_spectra_sum_difference[i]) < pattern_spectra_sum_difference_min:
-                pattern_spectra_sum_difference_min = np.min(pattern_spectra_sum_difference[i])
-            if np.max(pattern_spectra_sum_difference[i]) > pattern_spectra_sum_difference_max:
-                pattern_spectra_sum_difference_max = np.max(pattern_spectra_sum_difference[i])
+            if np.min(pattern_spectra[i]) < pattern_spectra_min:
+                pattern_spectra_min = np.min(pattern_spectra[i])
+            if np.max(pattern_spectra[i]) > pattern_spectra_max:
+                pattern_spectra_max = np.max(pattern_spectra[i])
     
-    return(pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max)
+    return(pattern_spectra_min, pattern_spectra_max)
 
-def PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, particle_type, path):
+def PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_normed_min, pattern_spectra_sum_normed_max, pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, particle_type, path):
     fig_normed, ax_normed = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_normed = ax_normed.ravel()
     fig_difference, ax_difference = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
@@ -56,11 +50,13 @@ def PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern
     if abs(pattern_spectra_sum_difference_min) < abs(pattern_spectra_sum_difference_max):
         pattern_spectra_sum_difference_min = - pattern_spectra_sum_difference_max 
 
+
     for i in range(number_energy_ranges):
         # plot pattern spectra sum
         fig_normed.suptitle(f"pattern spectra sum - {particle_type}")   
         ax_normed[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})  
-        im = ax_normed[i].imshow(pattern_spectra_sum_normed[i])
+        im = ax_normed[i].imshow(pattern_spectra_sum_normed[i], cmap = "afmhot_r")
+        im.set_clim(pattern_spectra_sum_normed_min, pattern_spectra_sum_normed_max)
         ax_normed[i].set_xticks([])
         ax_normed[i].set_yticks([])
         divider = make_axes_locatable(ax_normed[i])
@@ -70,7 +66,7 @@ def PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern
         # plot pattern spectra difference
         fig_difference.suptitle(f"pattern spectra sum difference - {particle_type}")   
         ax_difference[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax_difference[i].imshow(pattern_spectra_sum_difference[i], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.01, vmin = pattern_spectra_sum_difference_min, vmax = pattern_spectra_sum_difference_max, base = 10))
+        im = ax_difference[i].imshow(pattern_spectra_sum_difference[i], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.1, vmin = pattern_spectra_sum_difference_min, vmax = pattern_spectra_sum_difference_max, base = 10))
         im.set_clim(pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max)
         ax_difference[i].set_xticks([])
         ax_difference[i].set_yticks([])
@@ -126,7 +122,7 @@ def PlotPatternSpectraComparisonTotal(pattern_spectra_total_sum_normed_gamma_pro
 
     plt.figure()
     plt.title(f"pattern spectra total sum difference - {particle_type[0]} - {particle_type[1]}", fontsize = 10)
-    im = plt.imshow(pattern_spectra_sum_total_normed_gamma_proton_difference, cmap = "RdBu", norm = SymLogNorm(linthresh = 0.01, base = 10))
+    im = plt.imshow(pattern_spectra_sum_total_normed_gamma_proton_difference, cmap = "RdBu", norm = SymLogNorm(linthresh = 0.04, base = 10))
     im.set_clim(pattern_spectra_sum_total_difference_min, pattern_spectra_sum_total_difference_max)
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
