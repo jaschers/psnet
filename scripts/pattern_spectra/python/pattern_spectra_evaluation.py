@@ -134,33 +134,35 @@ if args.mode == "energy":
     os.makedirs(path, exist_ok = True)
 
     # extract the normed sum of all pattern spectra in each specific energy bin
-    pattern_spectra_sum_normed = ExtractPatternSpectraSum(number_energy_ranges, args.size, pattern_spectra_binned)
+    pattern_spectra_mean = ExtractPatternSpectraMean(number_energy_ranges, args.size, pattern_spectra_binned)
+    pattern_spectra_mean_min, pattern_spectra_mean_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean)
+
     # subtract normed pattern spectrum of the first energy bin from all other normed pattern spectra of each other energy bin 
-    pattern_spectra_sum_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_sum_normed)
-    # extract the min and max value of pattern_spectra_sum_difference to set the colourbar equally 
-    pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = ExtractPatternSpectraDiffernceMinMax(number_energy_ranges, pattern_spectra_sum_difference)
+    pattern_spectra_mean_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_mean)
+    # extract the min and max value of pattern_spectra_mean_difference to set the colourbar equally 
+    pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
     # plot normed and difference pattern spectra
-    PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, args.particle_type, path)
+    PlotPatternSpectra(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, args.particle_type, path)
 
 
 elif args.mode == "separation":
     # for energy dependend comparison
-    pattern_spectra_sum_normed_gamma_proton = [[]] * len(particle_type)
-    pattern_spectra_sum_normed_min = [[]] * len(particle_type)
-    pattern_spectra_sum_normed_max = [[]] * len(particle_type)
+    pattern_spectra_mean_gamma_proton = [[]] * len(particle_type)
+    pattern_spectra_mean_min = [[]] * len(particle_type)
+    pattern_spectra_mean_max = [[]] * len(particle_type)
     # for energy independend comparison
-    pattern_spectra_total_sum_normed_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
+    pattern_spectra_total_mean_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
     for p in range(len(particle_type)):
         table_individual = table.loc[table["particle"] == p]
         table_individual = table_individual.reset_index(drop = True)
         pattern_spectra = [[]] * len(table_individual)
         for i in range(len(table_individual)):
             pattern_spectra[i] = table_individual["pattern spectrum"][i]
-            pattern_spectra_total_sum_normed_gamma_proton[p] = np.add(pattern_spectra_total_sum_normed_gamma_proton[p], pattern_spectra[i])
+            pattern_spectra_total_mean_gamma_proton[p] = np.add(pattern_spectra_total_mean_gamma_proton[p], pattern_spectra[i])
         pattern_spectra = np.asarray(pattern_spectra)
 
         # normalise it to 1
-        pattern_spectra_total_sum_normed_gamma_proton[p] = pattern_spectra_total_sum_normed_gamma_proton[p] / len(pattern_spectra)
+        pattern_spectra_total_mean_gamma_proton[p] = pattern_spectra_total_mean_gamma_proton[p] / len(pattern_spectra)
 
         # collect true energy
         energy_true = np.asarray(table_individual["true_energy"]) * 1e-3
@@ -182,15 +184,15 @@ elif args.mode == "separation":
         os.makedirs(path, exist_ok = True)
 
         # extract the normed sum of all pattern spectra in each specific energy bin
-        pattern_spectra_sum_normed = ExtractPatternSpectraSum(number_energy_ranges, args.size, pattern_spectra_binned)
-        pattern_spectra_sum_normed_min[p], pattern_spectra_sum_normed_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_sum_normed)
-        pattern_spectra_sum_normed_gamma_proton[p] = pattern_spectra_sum_normed
+        pattern_spectra_mean = ExtractPatternSpectraMean(number_energy_ranges, args.size, pattern_spectra_binned)
+        pattern_spectra_mean_min[p], pattern_spectra_mean_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean)
+        pattern_spectra_mean_gamma_proton[p] = pattern_spectra_mean
         # subtract normed pattern spectrum of the first energy bin from all other normed pattern spectra of each other energy bin 
-        pattern_spectra_sum_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_sum_normed)
-        # extract the min and max value of pattern_spectra_sum_difference to set the colourbar equally 
-        pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_sum_difference)
+        pattern_spectra_mean_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_mean)
+        # extract the min and max value of pattern_spectra_mean_difference to set the colourbar equally 
+        pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
         # plot normed and difference pattern spectra
-        PlotPatternSpectra(number_energy_ranges, pattern_spectra_sum_normed, pattern_spectra_sum_normed_min[p], pattern_spectra_sum_normed_max[p], pattern_spectra_sum_difference, pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max, bins, particle_type[p], path)
+        PlotPatternSpectra(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min[p], pattern_spectra_mean_max[p], pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type[p], path)
 
-    PlotPatternSpectraComparisonTotal(pattern_spectra_total_sum_normed_gamma_proton, particle_type, args.attribute, path)
-    PlotPatternSpectraComparison(number_energy_ranges, pattern_spectra_sum_normed_gamma_proton, bins, particle_type, path)
+    PlotPatternSpectraComparisonTotal(pattern_spectra_total_mean_gamma_proton, particle_type, args.attribute, path)
+    PlotPatternSpectraComparison(number_energy_ranges, pattern_spectra_mean_gamma_proton, bins, particle_type, path)
