@@ -6,6 +6,9 @@ from keras.callbacks import CSVLogger
 from keras.models import Model
 import matplotlib.patches as mpatches
 import sys
+from tqdm import tqdm
+from matplotlib.colors import SymLogNorm, LogNorm
+
 np.set_printoptions(threshold=sys.maxsize)
 
 
@@ -481,4 +484,121 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     plt.legend(loc = "lower right")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
+    plt.close()
+
+def ExtendTable(table_output, string_table_column, string_input, string_ps_input, string_input_short, string_data_type):
+    # sort the table by run, obs_id and event_id
+    table_output = table_output.sort_values(by = ["run", "obs_id", "event_id"])
+    table_output.reset_index(drop = True, inplace = True)
+
+    # add empty coloumn to be filled in with CTA images or patter spectra
+    table_output[string_table_column] = np.nan
+    table_output[string_table_column] = table_output[string_table_column].astype(object)
+
+    # extract unique run ids
+    runs_unique = pd.unique(table_output["run"])
+    # for loop over output table in order to add CTA image / pattern spectrum to each column
+    for n in tqdm(range(len(table_output))): #len(table_output)
+        # check if it is an gamma ray or proton
+        if table_output["true gammaness"][n] == 1.0:
+            particle_type_n = "gamma_diffuse"
+        elif table_output["true gammaness"][n] == 0.0:
+            particle_type_n = "proton"
+
+        # define the (CNN) input data file name
+        run_filename = f"{particle_type_n}_20deg_0deg_run{int(table_output['run'][n])}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
+        input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type_n}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
+
+        # read the (CNN) input data file to extract CTA image / pattern spectrum of correpsoning run, obs_id and event_id
+        table_input = pd.read_hdf(input_filename)
+        table_input_row = table_input[(table_input["obs_id"] == table_output["obs_id"][n]) & (table_input["event_id"] == table_output["event_id"][n])]
+
+        # add CTA image / pattern spectrum to the table
+        table_output[string_table_column][n] = table_input_row.iloc[0][string_table_column]
+
+    return table_output
+
+def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column, gammaness_limit, path):
+    # shuffle the table
+    table_output = table_output.sample(frac = 1).reset_index(drop = True)
+
+    for pt in range(len(particle_type)): # gamma + proton
+        # extract table of gammas/protons with gammaness limit
+        table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit[1])]
+        table_gammaness_limit.reset_index(drop = True, inplace = True)
+
+        N = 5
+        fig, ax = plt.subplots(N, N)
+        if particle_type[pt] == "gamma_diffuse":
+            fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}")
+            path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
+        elif particle_type[pt] == "proton":
+            fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}")
+            path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
+        ax = ax.ravel()
+        for n in range(N**2):
+            # ax[n].title.set_text(f"{int(np.round(table_gammaness_limit['E_true / GeV'][n]))} GeV")
+            ax[n].imshow(table_gammaness_limit[string_table_column][n], cmap = "Greys_r")
+            ax[n].set_xticks([])
+            ax[n].set_yticks([])
+        plt.tight_layout()
+        plt.savefig(path_total, dpi = 250)
+        plt.close()
+
+def ExtractPatternSpectraSum(table_output, particle_type, size, gammaness_limit, string_table_column):
+    pattern_spectra_sum_normed = np.zeros(shape = (len(particle_type), size[0], size[1]))
+    for pt in range(len(particle_type)):
+        table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit[1])]
+
+        pattern_spectra_sum = table_gammaness_limit[string_table_column].sum()
+        pattern_spectra_sum_normed[pt] = (pattern_spectra_sum - np.min(pattern_spectra_sum))
+        pattern_spectra_sum_normed[pt] = pattern_spectra_sum_normed[pt] / np.max(pattern_spectra_sum_normed[pt])
+
+    return pattern_spectra_sum_normed
+
+def PlotPatternSpectraSum(pattern_spectra_sum_normed, particle_type, attribute, gammaness_limit, path):
+    for pt in range(len(particle_type)):
+        plt.figure()
+        if particle_type[pt] == "gamma_diffuse":
+            plt.title(f"{particle_type[pt]} normed sum - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
+            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
+        elif particle_type[pt] == "proton":
+            plt.title(f"{particle_type[pt]} normed sum - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
+            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
+        plt.imshow(pattern_spectra_sum_normed[pt])
+        plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
+        plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+        plt.xticks([])
+        plt.yticks([])
+        cb = plt.colorbar()
+        cb.set_label(label='normed pixel flux', size = 18)
+        cb.ax.tick_params(labelsize = 18) 
+        plt.tight_layout()
+        plt.savefig(path_total, dpi = 250)
+        plt.close()
+
+def PlotPatternSpectraDifference(pattern_spectra_sum_normed, particle_type, attribute, gammaness_limit, path):
+    # calculate the pattern spectra difference between gamma and proton events
+    pattern_spectra_sum_difference = pattern_spectra_sum_normed[0] - pattern_spectra_sum_normed[1]
+    pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = np.min(pattern_spectra_sum_difference), np.max(pattern_spectra_sum_difference)
+
+    if abs(pattern_spectra_sum_difference_min) > abs(pattern_spectra_sum_difference_max):
+        pattern_spectra_sum_difference_max = abs(pattern_spectra_sum_difference_min)
+    elif abs(pattern_spectra_sum_difference_min) < abs(pattern_spectra_sum_difference_max):
+        pattern_spectra_sum_difference_min = - abs(pattern_spectra_sum_difference_max)
+
+    plt.figure()
+    plt.title(f"pattern spectra sum difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
+    im = plt.imshow(pattern_spectra_sum_normed[0] - pattern_spectra_sum_normed[1], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.001, base = 10))
+    im.set_clim(pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max)
+    # im.set_clim(-0.09, 0.09)    
+    plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
+    plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+    plt.xticks([])
+    plt.yticks([])
+    cb = plt.colorbar()
+    cb.set_label(label =  "pixel flux", size = 18)
+    cb.ax.tick_params(labelsize = 18) 
+    plt.tight_layout()
+    plt.savefig(path + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png", dpi = 250)
     plt.close()

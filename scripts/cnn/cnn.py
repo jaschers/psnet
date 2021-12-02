@@ -289,10 +289,36 @@ elif args.mode == "separation":
     # z = keras.layers.Dense(16, activation = "relu")(z)
 
     # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
-    ########################################    
+    ######################################## 
 
+    ######################################## 
+    # # cnn architecture number 2 (cnn4) ###
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # zl = [z]
+    # # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2, padding = "same")(z)
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # zl.append(z)  
+    # # z = keras.layers.Conv2D(32, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2, padding = "same")(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # zl.append(z)  
+    # # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2, padding = "same")(z)
+    # z = keras.layers.concatenate(zl[:], axis = -1)
+    # # z = keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2, padding = "same")(z)
+
+    # z = keras.layers.Flatten()(z)
+    # # z = keras.layers.Dense(128, activation = "relu")(z)
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)   
     ########################################
 
+    ########################################
     # ### fnn architecture number 1 (fnn1) ###
     # z = keras.layers.Flatten()(input1)
     # z = keras.layers.Dense(564, activation = "relu")(z)
