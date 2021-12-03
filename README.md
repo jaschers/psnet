@@ -200,4 +200,17 @@ python dm-finder/scripts/cnn/cnn.py -m energy -i ps
 ```
 python dm-finder/scripts/cnn/cnn_evaluation.py -h
 ```
+The CNN evaluation script loads the output csv file that contains the performance of the CNN on the test data and evaluates the results. 
 
+#### Signal/background separation
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m separation -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
+```
+Specify ``-m separation`` in order to evaluate a CNN that was trained for signal/background separation. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-er`` option that you specified for the CNN training in the previous section. The gammaness limit ``-gl <g_min_gamma> <g_max_gamma> <g_min_proton> <g_max_proton>`` option is optional and can help to investigate wrongly classified events. The following plots will be extracted and and saved under ``dm-finder/cnn/<iact_images/pattern_spectra>/separation/results/<pattern_spectra_specifications>/<name>/``:
+
+
+
+#### Energy reconstruction
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
+```
