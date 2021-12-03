@@ -228,6 +228,8 @@ Specify ``-m energy`` in order to evaluate a CNN that was trained for energy rec
 * Loss of the CNN during training
 * Feature maps
 * Filters
+
+
 It is also possible to directly compare the results of several CNNs, e.g. via
 ```
 python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -er <energy_lower> <energy_upper>
