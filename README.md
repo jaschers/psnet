@@ -219,3 +219,17 @@ Specify ``-m separation`` in order to evaluate a CNN that was trained for signal
 python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
 ```
 Specify ``-m energy`` in order to evaluate a CNN that was trained for energy reconstruction. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-er`` option that you specified for the CNN training in the previous section. The following plots will be extracted and and saved under ``dm-finder/cnn/<iact_images/pattern_spectra>/energy/results/<pattern_spectra_specifications>/<name>/``:
+* Energy bias (energy accuracy)
+* Energy resolution
+* Relative energy error (total)
+* Relative energy error (energy binned)
+* Relative energy error (energy binned & bias corrected)
+* Total energy distribution
+* Loss of the CNN during training
+* Feature maps
+* Filters
+It is also possible to directly compare the results of several CNNs, e.g. via
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -er <energy_lower> <energy_upper>
+```
+The corresponding plots are saved under ``dm-finder/cnn/comparison/``. 
