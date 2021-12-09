@@ -195,6 +195,7 @@ The CNN can be trained for signal/background (photon/proton) separation with the
 python dm-finder/scripts/cnn/cnn.py -m energy -i cta
 python dm-finder/scripts/cnn/cnn.py -m energy -i ps
 ```
+The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra section**. By default, the full data set of all runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv`` are considered. The energy range of the considered events can be specified with the ``-er <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-er 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The number of epochs for the CNN training can be chosen with the ``-e <number_epochs>`` argument. 
 
 #### Evaluation
 ```
@@ -202,7 +203,7 @@ python dm-finder/scripts/cnn/cnn_evaluation.py -h
 ```
 The CNN evaluation script loads the output csv file that contains the performance of the CNN on the test data and evaluates the results. 
 
-#### Signal/background separation
+##### Signal/background separation
 ```
 python dm-finder/scripts/cnn/cnn_evaluation.py -m separation -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
 ```
@@ -214,7 +215,7 @@ Specify ``-m separation`` in order to evaluate a CNN that was trained for signal
 * Feature maps
 * Filters
 
-#### Energy reconstruction
+##### Energy reconstruction
 ```
 python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
 ```
