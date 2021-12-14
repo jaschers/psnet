@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 import os 
 import time
 import argparse
+from matplotlib import cm
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from utilities import *
 
 print("Packages successfully loaded")
+
+np.seterr(divide='ignore', invalid='ignore')
 
 ######################################## argparse setup ########################################
 script_version=0.1
@@ -148,21 +152,54 @@ if args.mode == "energy":
 elif args.mode == "separation":
     # for energy dependend comparison
     pattern_spectra_mean_gamma_proton = [[]] * len(particle_type)
+    pattern_spectra_median_gamma_proton = [[]] * len(particle_type)
+    pattern_spectra_variance_gamma_proton = [[]] * len(particle_type)
     pattern_spectra_mean_min = [[]] * len(particle_type)
     pattern_spectra_mean_max = [[]] * len(particle_type)
+    pattern_spectra_median_min = [[]] * len(particle_type)
+    pattern_spectra_median_max = [[]] * len(particle_type)
+    pattern_spectra_variance_min = [[]] * len(particle_type)
+    pattern_spectra_variance_max = [[]] * len(particle_type)
     # for energy independend comparison
     pattern_spectra_total_mean_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
+    pattern_spectra_total_median_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
+    pattern_spectra_total_variance_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
     for p in range(len(particle_type)):
+        # create proper path
+        path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/"
+        os.makedirs(path_energy_distribution, exist_ok = True)
+        # plot energy distribution of data set
+        PlotEnergyDistribution(table, path_energy_distribution)
+
+        print(f"\n# starting analysis for {particle_type[p]} pattern spectra #")
         table_individual = table.loc[table["particle"] == p]
         table_individual = table_individual.reset_index(drop = True)
         pattern_spectra = [[]] * len(table_individual)
         for i in range(len(table_individual)):
             pattern_spectra[i] = table_individual["pattern spectrum"][i]
-            pattern_spectra_total_mean_gamma_proton[p] = np.add(pattern_spectra_total_mean_gamma_proton[p], pattern_spectra[i])
         pattern_spectra = np.asarray(pattern_spectra)
 
-        # normalise it to 1
-        pattern_spectra_total_mean_gamma_proton[p] = pattern_spectra_total_mean_gamma_proton[p] / len(pattern_spectra)
+        # calculate total mean
+        pattern_spectra_total_mean_gamma_proton[p] = np.mean(pattern_spectra, axis = 0)
+        # # calculate total median
+        pattern_spectra_total_median_gamma_proton[p] = np.median(pattern_spectra, axis = 0)
+        # # calculate total variance
+        pattern_spectra_total_variance_gamma_proton[p] = np.var(pattern_spectra, axis = 0)
+
+        # create own colour map
+        N = 256
+        vals = np.ones((N, 4))
+        vals[:, 0] = np.linspace(cstm_RdBu(6)[0], cstm_PuBu(12)[0], N)
+        vals[:, 1] = np.linspace(cstm_RdBu(6)[1], cstm_PuBu(12)[1], N)
+        vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
+        newcmp = ListedColormap(vals)
+
+        # create proper path
+        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
+        os.makedirs(path, exist_ok = True)
+
+        # plot total median, mean and variance
+        PlotPatternSpectraTotal(pattern_spectra_total_mean_gamma_proton[p], pattern_spectra_total_median_gamma_proton[p], pattern_spectra_total_variance_gamma_proton[p], particle_type[p], newcmp, args.attribute, path)
 
         # collect true energy
         energy_true = np.asarray(table_individual["true_energy"]) * 1e-3
@@ -180,19 +217,62 @@ elif args.mode == "separation":
         energy_true_binned = np.split(energy_true, indices)
         pattern_spectra_binned = np.split(pattern_spectra, indices)
 
-        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
-        os.makedirs(path, exist_ok = True)
-
-        # extract the normed sum of all pattern spectra in each specific energy bin
+        # extract the mean of all pattern spectra in each specific energy bin
         pattern_spectra_mean = ExtractPatternSpectraMean(number_energy_ranges, args.size, pattern_spectra_binned)
-        pattern_spectra_mean_min[p], pattern_spectra_mean_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean)
-        pattern_spectra_mean_gamma_proton[p] = pattern_spectra_mean
-        # subtract normed pattern spectrum of the first energy bin from all other normed pattern spectra of each other energy bin 
-        pattern_spectra_mean_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_mean)
-        # extract the min and max value of pattern_spectra_mean_difference to set the colourbar equally 
-        pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
-        # plot normed and difference pattern spectra
-        PlotPatternSpectra(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min[p], pattern_spectra_mean_max[p], pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type[p], path)
+        # extract the median of all pattern spectra in each specific energy bin
+        pattern_spectra_median = ExtractPatternSpectraMedian(number_energy_ranges, args.size, pattern_spectra_binned)
+        # extract the variance of all pattern spectra in each specific energy bin
+        pattern_spectra_variance = ExtractPatternSpectraVariance(number_energy_ranges, args.size, pattern_spectra_binned)
 
-    PlotPatternSpectraComparisonTotal(pattern_spectra_total_mean_gamma_proton, particle_type, args.attribute, path)
-    PlotPatternSpectraComparison(number_energy_ranges, pattern_spectra_mean_gamma_proton, bins, particle_type, path)
+        # determine the min and max mean pattern spectra value over all energy bins
+        pattern_spectra_mean_min[p], pattern_spectra_mean_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean)
+        # determine the min and max median pattern spectra value over all energy bins
+        pattern_spectra_median_min[p], pattern_spectra_median_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_median)
+        # determine the min and max variance pattern spectra value over all energy bins
+        pattern_spectra_variance_min[p], pattern_spectra_variance_max[p] = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_variance)
+
+        # add pattern_spectra_mean of gammas/protons to empty array for a comparison later
+        pattern_spectra_mean_gamma_proton[p] = pattern_spectra_mean
+        # add pattern_spectra_median of gammas/protons to empty array for a comparison later
+        pattern_spectra_median_gamma_proton[p] = pattern_spectra_median
+        # add pattern_spectra_variance of gammas/protons to empty array for a comparison later
+        pattern_spectra_variance_gamma_proton[p] = pattern_spectra_variance
+
+        # subtract mean pattern spectrum of the first energy bin from all other mean pattern spectra of each other energy bin to get mean difference pattern spectra 
+        pattern_spectra_mean_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_mean)
+        # subtract median pattern spectrum of the first energy bin from all other mean pattern spectra of each other energy bin to get median difference pattern spectra 
+        pattern_spectra_median_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_median)
+        # subtract variance pattern spectrum of the first energy bin from all other mean pattern spectra of each other energy bin to get variance difference pattern spectra 
+        pattern_spectra_variance_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_variance)
+
+        # extract the min and max value of pattern_spectra_mean_difference to set the color bar equally 
+        pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
+        # extract the min and max value of pattern_spectra_median_difference to set the color bar equally 
+        pattern_spectra_median_difference_min, pattern_spectra_median_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_median_difference)
+        # extract the min and max value of pattern_spectra_variance_difference to set the color bar equally 
+        pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_variance_difference)
+
+        # plot indivdual pixel distribution
+        PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned, number_energy_ranges, bins, particle_type[p], path)
+
+        # plot mean and mean difference pattern spectra
+        PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min[p], pattern_spectra_mean_max[p], pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+        # plot median and median difference pattern spectra
+        PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, pattern_spectra_median_min[p], pattern_spectra_median_max[p], pattern_spectra_median_difference, pattern_spectra_median_difference_min, pattern_spectra_median_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+        # plot variance and variance difference pattern spectra
+        PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, pattern_spectra_variance_min[p], pattern_spectra_variance_max[p], pattern_spectra_variance_difference, pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+
+    # Plot mean pattern spectra (gamma - proton) for the total energy range
+    PlotPatternSpectraMeanComparisonTotal(pattern_spectra_total_mean_gamma_proton, particle_type, args.attribute, path)
+    # Plot median pattern spectra (gamma - proton) for the total energy range
+    PlotPatternSpectraMedianComparisonTotal(pattern_spectra_total_median_gamma_proton, particle_type, args.attribute, path)
+    # Plot variance pattern spectra (gamma - proton) for the total energy range
+    # PlotPatternSpectraVarianceComparisonTotal(pattern_spectra_total_variance_gamma_proton, particle_type, args.attribute, path)
+
+
+    # Plot mean pattern spectra (gamma - proton) with binned energy
+    PlotPatternSpectraMeanComparison(number_energy_ranges, pattern_spectra_mean_gamma_proton, bins, particle_type, args.attribute, path)
+    # Plot median pattern spectra (gamma - proton) with binned energy
+    PlotPatternSpectraMedianComparison(number_energy_ranges, pattern_spectra_median_gamma_proton, bins, particle_type, args.attribute, path)
+    # Plot variance pattern spectra (gamma - proton) with binned energy
+    # PlotPatternSpectraVarianceComparison(number_energy_ranges, pattern_spectra_variance_gamma_proton, bins, particle_type, path)
