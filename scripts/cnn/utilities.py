@@ -11,6 +11,11 @@ from matplotlib.colors import SymLogNorm, LogNorm
 
 np.set_printoptions(threshold=sys.maxsize)
 
+def cstm_PuBu(x):
+    return plt.cm.PuBu((np.clip(x,2,10)-2)/8.)
+
+def cstm_RdBu(x):
+    return plt.cm.RdBu((np.clip(x,2,10)-2)/8.)
 
 def PlotLoss(epochs, loss_training, loss_validation, path):
     plt.figure()
@@ -527,7 +532,7 @@ def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column
         table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit[1])]
         table_gammaness_limit.reset_index(drop = True, inplace = True)
 
-        N = 5
+        N = 4
         fig, ax = plt.subplots(N, N)
         if particle_type[pt] == "gamma_diffuse":
             fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}")
@@ -545,59 +550,97 @@ def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column
         plt.savefig(path_total, dpi = 250)
         plt.close()
 
-def ExtractPatternSpectraSum(table_output, particle_type, size, gammaness_limit, string_table_column):
-    pattern_spectra_sum_normed = np.zeros(shape = (len(particle_type), size[0], size[1]))
+def ExtractPatternSpectraMean(table_output, particle_type, size, gammaness_limit, string_table_column):
+    pattern_spectra_mean = np.zeros(shape = (len(particle_type), size[0], size[1]))
     for pt in range(len(particle_type)):
-        table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit[1])]
+        if particle_type[pt] == "gamma_diffuse":
+            table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit[1])]
+        elif particle_type[pt] == "proton":
+            table_gammaness_limit = table_output[(table_output["true gammaness"] == pt) & (table_output["reconstructed gammaness"] >= gammaness_limit[2]) & (table_output["reconstructed gammaness"] <= gammaness_limit[3])]
 
         pattern_spectra_sum = table_gammaness_limit[string_table_column].sum()
-        pattern_spectra_sum_normed[pt] = (pattern_spectra_sum - np.min(pattern_spectra_sum))
-        pattern_spectra_sum_normed[pt] = pattern_spectra_sum_normed[pt] / np.max(pattern_spectra_sum_normed[pt])
+        pattern_spectra_mean[pt] = pattern_spectra_sum / len(table_gammaness_limit)
+        # pattern_spectra_sum_normed[pt] = (pattern_spectra_sum - np.min(pattern_spectra_sum))
+        # pattern_spectra_mean[pt] = pattern_spectra_mean[pt] / np.max(pattern_spectra_mean[pt])
 
-    return pattern_spectra_sum_normed
+    return pattern_spectra_mean
 
-def PlotPatternSpectraSum(pattern_spectra_sum_normed, particle_type, attribute, gammaness_limit, path):
+def ExtractPatternSpectraMeanGamma(table_output, size, gammaness_limit_gamma, string_table_column):
+    pattern_spectra_mean_gamma = np.zeros(shape = (2, size[0], size[1]))
+
+    table_gammaness_limit_correct = table_output[(table_output["true gammaness"] == 1) & (table_output["reconstructed gammaness"] >= gammaness_limit_gamma[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit_gamma[1])]
+
+    table_gammaness_limit_wrong = table_output[(table_output["true gammaness"] == 1) & (table_output["reconstructed gammaness"] >= gammaness_limit_gamma[2]) & (table_output["reconstructed gammaness"] <= gammaness_limit_gamma[3])]
+
+    pattern_spectra_sum_correct = table_gammaness_limit_correct[string_table_column].sum()
+    pattern_spectra_sum_wrong = table_gammaness_limit_wrong[string_table_column].sum()
+
+    pattern_spectra_mean_gamma[0] = pattern_spectra_sum_correct / len(table_gammaness_limit_correct)
+    pattern_spectra_mean_gamma[1] = pattern_spectra_sum_wrong / len(table_gammaness_limit_wrong)
+
+    return pattern_spectra_mean_gamma    
+
+def ExtractPatternSpectraMeanProton(table_output, size, gammaness_limit_proton, string_table_column):
+    pattern_spectra_mean_proton = np.zeros(shape = (2, size[0], size[1]))
+
+    table_gammaness_limit_correct = table_output[(table_output["true gammaness"] == 0) & (table_output["reconstructed gammaness"] >= gammaness_limit_proton[0]) & (table_output["reconstructed gammaness"] <= gammaness_limit_proton[1])]
+
+    table_gammaness_limit_wrong = table_output[(table_output["true gammaness"] == 0) & (table_output["reconstructed gammaness"] >= gammaness_limit_proton[2]) & (table_output["reconstructed gammaness"] <= gammaness_limit_proton[3])]
+
+    pattern_spectra_sum_correct = table_gammaness_limit_correct[string_table_column].sum()
+    pattern_spectra_sum_wrong = table_gammaness_limit_wrong[string_table_column].sum()
+
+    pattern_spectra_mean_proton[0] = pattern_spectra_sum_correct / len(table_gammaness_limit_correct)
+    pattern_spectra_mean_proton[1] = pattern_spectra_sum_wrong / len(table_gammaness_limit_wrong)
+
+    return pattern_spectra_mean_proton 
+
+def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gammaness_limit, cmap, path):
     for pt in range(len(particle_type)):
         plt.figure()
         if particle_type[pt] == "gamma_diffuse":
-            plt.title(f"{particle_type[pt]} normed sum - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
+            plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
             path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
         elif particle_type[pt] == "proton":
-            plt.title(f"{particle_type[pt]} normed sum - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
+            plt.title(f"{particle_type[pt]} mean - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
             path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
-        plt.imshow(pattern_spectra_sum_normed[pt])
-        plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
-        plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+        plt.imshow(pattern_spectra_mean[pt], cmap = cmap, norm = SymLogNorm(linthresh = 0.1, base = 10))
+        # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
+        # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+        plt.xlabel(f"(moment of inertia) / area$^2$", fontsize = 18)
+        plt.ylabel(f"area", fontsize = 18)
         plt.xticks([])
         plt.yticks([])
         cb = plt.colorbar()
-        cb.set_label(label='normed pixel flux', size = 18)
+        cb.set_label(label = "log$_{10}$(flux)", size = 18)
         cb.ax.tick_params(labelsize = 18) 
         plt.tight_layout()
         plt.savefig(path_total, dpi = 250)
         plt.close()
 
-def PlotPatternSpectraDifference(pattern_spectra_sum_normed, particle_type, attribute, gammaness_limit, path):
+def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attribute, gammaness_limit, path):
     # calculate the pattern spectra difference between gamma and proton events
-    pattern_spectra_sum_difference = pattern_spectra_sum_normed[0] - pattern_spectra_sum_normed[1]
-    pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max = np.min(pattern_spectra_sum_difference), np.max(pattern_spectra_sum_difference)
+    pattern_spectra_mean_difference = pattern_spectra_mean[0] - pattern_spectra_mean[1]
+    pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = np.min(pattern_spectra_mean_difference), np.max(pattern_spectra_mean_difference)
 
-    if abs(pattern_spectra_sum_difference_min) > abs(pattern_spectra_sum_difference_max):
-        pattern_spectra_sum_difference_max = abs(pattern_spectra_sum_difference_min)
-    elif abs(pattern_spectra_sum_difference_min) < abs(pattern_spectra_sum_difference_max):
-        pattern_spectra_sum_difference_min = - abs(pattern_spectra_sum_difference_max)
+    if abs(pattern_spectra_mean_difference_min) > abs(pattern_spectra_mean_difference_max):
+        pattern_spectra_mean_difference_max = abs(pattern_spectra_mean_difference_min)
+    elif abs(pattern_spectra_mean_difference_min) < abs(pattern_spectra_mean_difference_max):
+        pattern_spectra_mean_difference_min = - abs(pattern_spectra_mean_difference_max)
 
     plt.figure()
-    plt.title(f"pattern spectra sum difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
-    im = plt.imshow(pattern_spectra_sum_normed[0] - pattern_spectra_sum_normed[1], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.001, base = 10))
-    im.set_clim(pattern_spectra_sum_difference_min, pattern_spectra_sum_difference_max)
+    plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
+    im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.001, base = 10))
+    im.set_clim(pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max)
     # im.set_clim(-0.09, 0.09)    
-    plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
-    plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+    # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
+    # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
+    plt.xlabel(f"(moment of inertia) / area$^2$", fontsize = 18)
+    plt.ylabel(f"area", fontsize = 18)
     plt.xticks([])
     plt.yticks([])
     cb = plt.colorbar()
-    cb.set_label(label =  "pixel flux", size = 18)
+    cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
     plt.savefig(path + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png", dpi = 250)

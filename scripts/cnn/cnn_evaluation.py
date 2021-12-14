@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors
+from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 import pandas as pd
 import os
 import sys
@@ -205,12 +206,27 @@ for i in range(len(args.input[0])):
             PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column[i], args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_examples")
 
             # get normed sum pattern spectra
-            pattern_spectra_sum_normed_gammaness_limit = ExtractPatternSpectraSum(table_output, particle_type, args.size, args.gammaness_limit, string_table_column[i])
+            pattern_spectra_mean_gammaness_limit = ExtractPatternSpectraMean(table_output, particle_type, args.size, args.gammaness_limit, string_table_column[i])
+            # get correctly and wrongly classified gamma events
+            pattern_spectra_mean_gammaness_limit_gamma = ExtractPatternSpectraMeanGamma(table_output, args.size, [0.9, 1.0, 0.0, 0.1], string_table_column[i])
+            # get correctly and wrongly classified proton events
+            pattern_spectra_mean_gammaness_limit_proton = ExtractPatternSpectraMeanProton(table_output, args.size, [0.0, 0.1, 0.9, 1.0], string_table_column[i])
+            # create own colour map
+            N = 256
+            vals = np.ones((N, 4))
+            vals[:, 0] = np.linspace(cstm_RdBu(6)[0], cstm_PuBu(12)[0], N)
+            vals[:, 1] = np.linspace(cstm_RdBu(6)[1], cstm_PuBu(12)[1], N)
+            vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
+            newcmp = ListedColormap(vals)
             # plot normed sum of pattern spectra of missclassified events
-            PlotPatternSpectraSum(pattern_spectra_sum_normed_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_sum")
+            PlotPatternSpectraMean(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, newcmp, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_sum")
 
             # plot pattern spectra difference (gamma - proton) of missclassified events
-            PlotPatternSpectraDifference(pattern_spectra_sum_normed_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
+            # plot pattern spectra difference of correctly and wrongly classified gamma events
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_gamma, ["gamma_diffuse", "gamma_diffuse"], args.attribute, [0.9, 1.0, 0.0, 0.1], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_gamma_difference")
+            # plot pattern spectra difference of correctly and wrongly classified proton events
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_proton, ["proton", "proton"], args.attribute, [0.0, 0.1, 0.9, 1.0], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_proton_difference")
 
 
 if args.mode == "energy":
