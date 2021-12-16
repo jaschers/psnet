@@ -195,9 +195,44 @@ The CNN can be trained for signal/background (photon/proton) separation with the
 python dm-finder/scripts/cnn/cnn.py -m energy -i cta
 python dm-finder/scripts/cnn/cnn.py -m energy -i ps
 ```
+The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra section**. By default, the full data set of all runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv`` are considered. The energy range of the considered events can be specified with the ``-er <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-er 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The number of epochs for the CNN training can be chosen with the ``-e <number_epochs>`` argument. 
 
 #### Evaluation
 ```
 python dm-finder/scripts/cnn/cnn_evaluation.py -h
 ```
+The CNN evaluation script loads the output csv file that contains the performance of the CNN on the test data and evaluates the results. 
 
+##### Signal/background separation
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m separation -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
+```
+Specify ``-m separation`` in order to evaluate a CNN that was trained for signal/background separation. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-er`` option that you specified for the CNN training in the previous section. The gammaness limit ``-gl <g_min_gamma> <g_max_gamma> <g_min_proton> <g_max_proton>`` option is optional and can help to investigate wrongly classified events. The following plots will be extracted and and saved under ``dm-finder/cnn/<iact_images/pattern_spectra>/separation/results/<pattern_spectra_specifications>/<name>/``:
+* Gammaness distribution
+* Energy binned gammaness distribution
+* ROC curve
+* Loss of the CNN during training
+* Feature maps
+* Filters
+
+##### Energy reconstruction
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -er <energy_lower> <energy_upper>
+```
+Specify ``-m energy`` in order to evaluate a CNN that was trained for energy reconstruction. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-er`` option that you specified for the CNN training in the previous section. The following plots will be extracted and and saved under ``dm-finder/cnn/<iact_images/pattern_spectra>/energy/results/<pattern_spectra_specifications>/<name>/``:
+* Energy bias (energy accuracy)
+* Energy resolution
+* Relative energy error (total)
+* Relative energy error (energy binned)
+* Relative energy error (energy binned & bias corrected)
+* Total energy distribution
+* Loss of the CNN during training
+* Feature maps
+* Filters
+
+
+It is also possible to directly compare the results of several CNNs, e.g. via
+```
+python dm-finder/scripts/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -er <energy_lower> <energy_upper>
+```
+The corresponding plots are saved under ``dm-finder/cnn/comparison/``. 
