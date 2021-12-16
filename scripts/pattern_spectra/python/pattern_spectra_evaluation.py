@@ -7,6 +7,7 @@ import argparse
 from matplotlib import cm
 from matplotlib.colors import ListedColormap, LinearSegmentedColormap
 from utilities import *
+import random
 
 print("Packages successfully loaded")
 
@@ -99,19 +100,85 @@ elif args.mode == "separation":
 table.drop(table.loc[table["true_energy"] <= args.energy_range[0] * 1e3].index, inplace=True)
 table.drop(table.loc[table["true_energy"] >= args.energy_range[1] * 1e3].index, inplace=True)
 table.reset_index(inplace = True)
+table = table.sort_values(by = ["true_energy"], ignore_index = True)
 
 print("______________________________________________")
 if args.mode == "separation":
-    # shuffle data set
-    table = table.sample(frac=1).reset_index(drop=True)
     print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
-print("Total number of events after energy cut:", len(table))
+    print("Total number of events after energy cut:", len(table))
+    print("______________________________________________")
+
+    # plot original energy distribution of data set
+    path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/"
+    os.makedirs(path_energy_distribution, exist_ok = True)
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+
+    path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/"
+    os.makedirs(path_energy_distribution, exist_ok = True)
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+
+    # create same (similar) energy distribution for gammas and protons
+    # extract gamma and proton tables
+    table_gamma = table[table["particle"] == 1]
+    table_proton = table[table["particle"] == 0]
+    
+    # remove all entries from table (will be filled in later again)
+    table.drop(table.index[range(0, len(table))], inplace = True)
+    table.reset_index(drop = True, inplace = True)
+
+    # define proper energy ranges
+    number_energy_ranges_redistribution = 200 # number of energy ranges the whole energy range will be splitted
+    bins_redistribution = np.logspace(np.log10(args.energy_range[0] * 1e3), np.log10(args.energy_range[1] * 1e3), number_energy_ranges_redistribution + 1) 
+
+    # count the number of removed events
+    difference_total = 0
+    # for loop over energy ranges
+    for n in range(number_energy_ranges_redistribution):
+        # select gamma events in the corresponding energy range
+        table_gamma_split = table_gamma.loc[(table_gamma["true_energy"] >= bins_redistribution[n])]
+        table_gamma_split = table_gamma_split.loc[(table_gamma_split["true_energy"] <= bins_redistribution[n+1])]
+        table_gamma_split.reset_index(inplace = True)
+
+        # select proton events in the corresponding energy range
+        table_proton_split = table_proton.loc[(table_proton["true_energy"] >= bins_redistribution[n])]
+        table_proton_split = table_proton_split.loc[(table_proton_split["true_energy"] <= bins_redistribution[n+1])]
+        table_proton_split.reset_index(inplace = True)
+
+        # determine the number of different events between gammas and protons in the corresponding energy range
+        difference = np.abs(len(table_gamma_split) - len(table_proton_split))
+        # keep track of the total difference
+        difference_total += difference
+
+        # if number gamma events > number proton events -> remove gamma events
+        if len(table_gamma_split) > len(table_proton_split):
+            random_indices = random.sample(range(0, len(table_gamma_split)), difference)
+            table_gamma_split.drop(table_gamma_split.index[random_indices], inplace = True)
+            table_gamma_split.reset_index(drop = True, inplace = True)
+        # if number gamma events < number proton events -> remove proton events
+        elif len(table_gamma_split) < len(table_proton_split):
+            random_indices = random.sample(range(0, len(table_proton_split)), difference)
+            table_proton_split.drop(table_proton_split.index[random_indices], inplace = True)
+            table_proton_split.reset_index(drop = True, inplace = True)
+
+        # append the updated gamma and proton tables to the total table
+        table = table.append(table_gamma_split)
+        table = table.append(table_proton_split)
+        table.reset_index(drop = True, inplace = True)
+
+    print("Total number of gamma events after energy redistribution:", len(table.loc[table["particle"] == 1]))
+    print("Total number of proton events after energy redistribution:", len(table.loc[table["particle"] == 0]))
+    print("Total number of events after energy redistribution:", len(table))
+    print("______________________________________________")
+
 
 # sort table by energy
 table = table.sort_values(by = ["true_energy"], ignore_index = True)
 
 if args.mode == "energy":
+    print("Total number of events after energy cut:", len(table))
+    print("______________________________________________")
+
     # collect pattern spectra
     pattern_spectra = [[]] * len(table)
     for i in range(len(table)):
@@ -169,7 +236,7 @@ elif args.mode == "separation":
         path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/"
         os.makedirs(path_energy_distribution, exist_ok = True)
         # plot energy distribution of data set
-        PlotEnergyDistribution(table, path_energy_distribution)
+        PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.png")
 
         print(f"\n# starting analysis for {particle_type[p]} pattern spectra #")
         table_individual = table.loc[table["particle"] == p]

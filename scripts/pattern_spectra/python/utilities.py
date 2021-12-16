@@ -5,28 +5,22 @@ from matplotlib.colors import SymLogNorm, LogNorm
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
 
-def PlotEnergyDistribution(table, path):
+def PlotEnergyDistribution(table, energy_range, path):
 
     table_gamma = np.asarray(table[table["particle"] == 1].reset_index(drop = True)["true_energy"])
     table_proton = np.asarray(table[table["particle"] == 0].reset_index(drop = True)["true_energy"])
 
-    if np.min(table_gamma) < np.min(table_proton):
-        table_min = np.min(table_gamma)
-    else:
-        table_min = np.min(table_proton)
-    if np.max(table_gamma) > np.max(table_proton):
-        table_max = np.max(table_gamma)
-    else:
-        table_max = np.max(table_proton)
-
-    plt.hist(table_gamma, bins = np.logspace(np.log10(table_min), np.log10(table_max), 30), alpha = 0.5, label = "gamma")
-    plt.hist(table_proton, bins = np.logspace(np.log10(table_min), np.log10(table_max), 30), alpha = 0.5, label = "proton")
+    plt.figure()
+    plt.hist(table_gamma, bins = np.logspace(np.log10(energy_range[0] * 1e3), np.log10(energy_range[1] * 1e3), 51), alpha = 0.5, label = "gamma")
+    plt.hist(table_proton, bins = np.logspace(np.log10(energy_range[0] * 1e3), np.log10(energy_range[1] * 1e3), 51), alpha = 0.5, label = "proton")
+    # plt.hist(table_gamma, label = "gamma") #bins = np.logspace(np.log10(energy_range[0] * 1e3), np.log10(energy_range[1] * 1e3), 51), alpha = 0.5, label = "gamma")
+    # plt.hist(table_proton, label = "proton") #bins = np.logspace(np.log10(energy_range[0] * 1e3), np.log10(energy_range[1] * 1e3), 51), alpha = 0.5, label = "proton")
     plt.xlabel("True energy [GeV]")
     plt.ylabel("Number of events")
     plt.xscale("log")
     plt.yscale("log")
     plt.legend()
-    plt.savefig(path + "energy_distribution.png", dpi = 250)
+    plt.savefig(path, dpi = 250)
     plt.close()
 
 def cstm_PuBu(x):
