@@ -131,9 +131,18 @@ The pattern spectra are saved as matlab files into the ``dm-finder/data/gamma/pa
 ### Evaluation / investigation
 In order to use the GUI of the pattern spectra code to have a look at an individual pattern spectrum, one has to go into the ``xmaxtree`` directoy via ``cd dm-finder/scripts/pattern_spectra/xmaxtree`` and run ``./xmaxtree <filename>.pgm a 9, 0 dl 0, 0 dh 10, 10 m 2, 0 n 20, 20 f 3``. The input parameter can be adjusted according to your needs.
 
+The total data set of pattern spectra can be further investigated with the following script:
+
 ```
 python dm-finder/scripts/pattern_spectra/python/pattern_spectra_evaluation.py -h
 ```
+
+It evaluates the pattern spectra pixel distribution for different energies and primary particles. The following plots will be extracted and and saved under ``dm-finder/data/<particle_type>/info/pattern_spectra_distribution/<pattern_spectra_specifications>/``:
+* Mean pattern spectra 
+* Median pattern spectra
+* Variance of pattern spectra
+* Pixel distributions of pattern spectra
+* Comparison of gamma_diffuse and proton pattern spectra (only in separation mode)
 
 ### Convolutional neural network (CNN)
 Currently, the code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
