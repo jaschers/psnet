@@ -49,10 +49,11 @@ if args.telescope_mode == "mono":
     filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
-print("Runs:", run)
 
 if args.run != None:
     run = args.run[0]
+    
+print("Runs:", run)
 
 for r in range(len(run)): #len(run)
     print("Run", run[r])
