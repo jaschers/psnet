@@ -30,7 +30,7 @@ def cstm_RdBu(x):
     return plt.cm.RdBu((np.clip(x,2,10)-2)/8.)
 
 def ExtractPatternSpectraMean(number_energy_ranges, size, pattern_spectra_binned):
-    print("Extract mean pattern spectra...")
+    print("Extracting mean pattern spectra...")
     pattern_spectra_mean = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     for i in range(number_energy_ranges):
         pattern_spectra_mean[i] = np.mean(pattern_spectra_binned[i], axis = 0)
@@ -38,7 +38,7 @@ def ExtractPatternSpectraMean(number_energy_ranges, size, pattern_spectra_binned
     return pattern_spectra_mean
 
 def ExtractPatternSpectraMedian(number_energy_ranges, size, pattern_spectra_binned):
-    print("Extract median pattern spectra...")
+    print("Extracting median pattern spectra...")
     pattern_spectra_median = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     for i in range(number_energy_ranges):
         pattern_spectra_median[i] = np.median(pattern_spectra_binned[i], axis = 0)
@@ -46,7 +46,7 @@ def ExtractPatternSpectraMedian(number_energy_ranges, size, pattern_spectra_binn
     return pattern_spectra_median
 
 def ExtractPatternSpectraVariance(number_energy_ranges, size, pattern_spectra_binned):
-    print("Extract variance of pattern spectra...")
+    print("Extracting variance of pattern spectra...")
     pattern_spectra_variance = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
     for i in range(number_energy_ranges):
         pattern_spectra_variance[i] = np.var(pattern_spectra_binned[i], axis = 0)
@@ -79,7 +79,7 @@ def ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra):
     return(pattern_spectra_min, pattern_spectra_max)
 
 def PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type, cmap, attributes, path):
-    print("Plot mean pattern spectra...")
+    print("Plotting mean pattern spectra...")
     fig_mean, ax_mean = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_mean = ax_mean.ravel()
     fig_difference, ax_difference = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
@@ -131,7 +131,7 @@ def PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_s
     plt.close()
 
 def PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, pattern_spectra_median_min, pattern_spectra_median_max, pattern_spectra_median_difference, pattern_spectra_median_difference_min, pattern_spectra_median_difference_max, bins, particle_type, cmap, attributes, path):
-    print("Plot median pattern spectra...")
+    print("Plotting median pattern spectra...")
     fig_median, ax_median = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_median = ax_median.ravel()
     fig_difference, ax_difference = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
@@ -185,7 +185,7 @@ def PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, patte
     plt.close()
 
 def PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, pattern_spectra_variance_min, pattern_spectra_variance_max, pattern_spectra_variance_difference, pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max, bins, particle_type, cmap, attributes, path):
-    print("Plot variance of pattern spectra ...")
+    print("Plotting variance of pattern spectra ...")
     fig_variance, ax_variance = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
     ax_variance = ax_variance.ravel()
     fig_difference, ax_difference = plt.subplots(int(math.ceil(np.sqrt(number_energy_ranges))), int(math.ceil(np.sqrt(number_energy_ranges))))
@@ -316,7 +316,7 @@ def PlotPatternSpectraMedianComparison(number_energy_ranges, pattern_spectra_med
         # plot pattern spectra difference
         fig.suptitle(f"pattern spectra median difference - {particle_type[0]} - {particle_type[1]}")   
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax[i].imshow(pattern_spectra_median_gamma_proton_difference[i], cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.01, base = 10))
+        im = ax[i].imshow(pattern_spectra_median_gamma_proton_difference[i], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.01, base = 10))
         im.set_clim(pattern_spectra_median_difference_min, pattern_spectra_median_difference_max)
         ax[i].set_xticks([])
         ax[i].set_yticks([])
@@ -346,7 +346,7 @@ def PlotPatternSpectraMedianComparisonTotal(pattern_spectra_total_median_gamma_p
 
     plt.figure()
     plt.title(f"pattern spectra total median difference - {particle_type[0]} - {particle_type[1]}", fontsize = 10)
-    im = plt.imshow(pattern_spectra_total_median_gamma_proton_difference, cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(pattern_spectra_total_median_gamma_proton_difference, cmap = "RdBu", norm = SymLogNorm(linthresh = 0.01, base = 10))
     im.set_clim(pattern_spectra_sum_total_difference_min, pattern_spectra_sum_total_difference_max)
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
@@ -485,7 +485,7 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned,
             for j in range(shape[2]):
                 if j >= 5 and j <= 12 and i >= 0 and i <= 10: #i = y-axis, j = x-axis
                     # create a histogram for each pattern spectrum pixel
-                    ax[count].hist(pattern_spectra_binned_k[:,i,j], range = (np.min(pattern_spectra_binned_k), np.max(pattern_spectra_binned_k)))
+                    hist = ax[count].hist(pattern_spectra_binned_k[:,i,j], range = (np.min(pattern_spectra_binned_k), np.max(pattern_spectra_binned_k)))
                     ax[count].set_xlim(np.min(pattern_spectra_binned_k) - 1, np.max(pattern_spectra_binned_k) + 1)
                     ylim = ax[count].get_ylim()
                     ax[count].vlines(np.mean(pattern_spectra_binned_k[:,i,j]), ylim[0], ylim[1], color = "C1", linestyle = "--", linewidth = 0.8, label = "mean")
@@ -496,12 +496,21 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned,
                     # ax[count].set_yscale("log")
                     ax[count].set_yticks([])
                     count += 1
+
+                    ##### can be deleted if not used anymore ####
+                    # if k == number_energy_ranges - 1 and j == 8 and i == 7:
+                    #     # hist = np.histogram(pattern_spectra_binned_k[:,i,j], range = (np.min(pattern_spectra_binned_k), np.max(pattern_spectra_binned_k)))
+                    #     print(f"##################### i{i}, j{j} #####################")
+                    #     print(hist)
+
         #plt.tight_layout()
         plt.legend(fontsize = 4)
         fig.text(0.5, 0.04, "log$_{10}$(flux)", ha = "center")
         fig.text(0.04, 0.5, "Number of events (linear scale)", va = "center", rotation = "vertical")
         plt.savefig(path + f"pattern_spectra_PixelDistribution_selection_{np.round(bins[k], 1)}_{np.round(bins[k+1], 1)}TeV.png", dpi = 250)
         plt.close()
+
+
 
 
 def PlotPatternSpectraTotal(pattern_spectra_total_mean, pattern_spectra_total_median, pattern_spectra_total_variance, particle_type, cmap, attributes, path):
