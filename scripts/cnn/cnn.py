@@ -375,6 +375,25 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     #########################################
 
+    # #######################################
+
+    # # cnn architecture number 6 (cnn6) ###
+    # z = keras.layers.BatchNormalization()
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # z = keras.layers.Conv2D(256, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # # z = keras.layers.Conv2D(512, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+
+    # z = keras.layers.Flatten()(z)
+    # z = keras.layers.Dense(512, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    ########################################
+
     # define the loss function
     loss = "categorical_crossentropy"
 ##########################################################################################
