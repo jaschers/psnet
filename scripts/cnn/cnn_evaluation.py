@@ -115,19 +115,19 @@ for i in range(len(args.input[0])):
 
     ####################################### Filters and feature maps ########################################
     # define example run and load example data
-    run = 107
-    X, Y = LoadExampleData(run, string_input[i], args.particle_type, string_ps_input[i], string_input_short[i], string_data_type[i], string_table_column[i])
+    # run = 107
+    # X, Y = LoadExampleData(run, string_input[i], args.particle_type, string_ps_input[i], string_input_short[i], string_data_type[i], string_table_column[i])
 
     # load model
     model_path = f"dm-finder/cnn/{string_input[i]}/{args.mode}/model/" + string_ps_input[i] + "model" + string_data_type[i] + string_name[i] + ".h5"
     model = keras.models.load_model(model_path)
     
     # plot filters
-    PlotFilters(model, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "filters")
+    # PlotFilters(model, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "filters")
 
-    # plot feature maps for an example image
-    index_example = 39
-    PlotFeatureMaps(X, model, index_example, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "feature_maps")
+    # # plot feature maps for an example image
+    # index_example = 39
+    # PlotFeatureMaps(X, model, index_example, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "feature_maps")
     ##########################################################################################
 
     # load data file that contains E_true and E_rec from the test set
