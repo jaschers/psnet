@@ -26,10 +26,11 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 # Define expected arguments
 parser.add_argument("-m", "--mode", type = str, required = True, metavar = "-", choices = ["energy", "separation"], help = "CNN mode - energy reconstruction or gamma/proton separation [energy, separation]")
 parser.add_argument("-i", "--input", type = str, required = True, metavar = "-", choices = ["cta", "ps"], help = "input for the CNN [cta, ps]")
+parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta", "stereo_sum_ps"], help = "telescope mode [mono, stereo_sum_cta, stereo_sum_ps], default: stereo_sum_cta", default = "stereo_sum_cta")
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action='append', nargs='+')
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
-parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
+parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
@@ -70,13 +71,21 @@ else:
 if args.input == "cta":
     print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
-    string_input_short = "_images"
+    if args.telescope_mode == "stereo_sum_cta":
+        string_input_short = "_images"
+    elif args.telescope_mode == "mono":
+        string_input_short = "_images_mono"
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
     print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "pattern_spectra"
-    string_input_short = "_ps"
+    if args.telescope_mode == "stereo_sum_cta":
+        string_input_short = "_ps_float"
+    elif args.telescope_mode == "mono":
+        string_input_short = "_ps_float_mono"
+    elif args.telescope_mode == "stereo_sum_ps":
+        string_input_short = "_ps_float_stereo_sum"
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
     string_table_column = "pattern spectrum"
 ##########################################################################################
@@ -99,6 +108,8 @@ if args.mode == "energy":
     filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
     if args.test == "y":
         filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
+    if args.telescope_mode == "mono" and args.test != "y":
+        filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
     run = pd.read_csv(filename_run)
     run = run.to_numpy().reshape(len(run))
 
@@ -125,6 +136,8 @@ elif args.mode == "separation":
         filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
         if args.test == "y":
             filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+        if args.telescope_mode == "mono" and args.test != "y":
+            filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
         run = pd.read_csv(filename_run)
         run = run.to_numpy().reshape(len(run))
 
@@ -159,12 +172,11 @@ if args.mode == "separation":
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
 print("Total number of events after energy cut:", len(table))
 
-
 # input features
 X = [[]] * len(table)
 for i in range(len(table)):
     X[i] = table[string_table_column][i]
-X = np.asarray(X) 
+X = np.asarray(X)
 
 if args.mode == "energy":
     # output label: log10(true energy)
@@ -188,15 +200,22 @@ elif args.mode == "separation":
 X_shape = np.shape(X)
 X = X.reshape(-1, X_shape[1], X_shape[2], 1)
 
-# # hold out 10 percent as test data and extract the corresponding run, obs_id and event_id
+# # hold out 10 percent as test data and extract the corresponding run, obs_id, event_id (and tel_id)
 X_train, X_test = np.split(X, [int(-len(table) / 10)])
 Y_train, Y_test = np.split(Y, [int(-len(table) / 10)])
-run_test, obs_id_test, event_id_test = table.tail(int(len(table) / 10))["run"], table.tail(int(len(table) / 10))["obs_id"],  table.tail(int(len(table) / 10))["event_id"]
-run_test.reset_index(drop = True, inplace = True)
-obs_id_test.reset_index(drop = True, inplace = True)
-event_id_test.reset_index(drop = True, inplace = True)
-run_test, obs_id_test, event_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test)
-
+if args.telescope_mode != "mono":
+    run_test, obs_id_test, event_id_test = table.tail(int(len(table) / 10))["run"], table.tail(int(len(table) / 10))["obs_id"], table.tail(int(len(table) / 10))["event_id"]
+    run_test.reset_index(drop = True, inplace = True)
+    obs_id_test.reset_index(drop = True, inplace = True)
+    event_id_test.reset_index(drop = True, inplace = True)
+    run_test, obs_id_test, event_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test)
+elif args.telescope_mode == "mono":
+    run_test, obs_id_test, event_id_test, tel_id_test = table.tail(int(len(table) / 10))["run"], table.tail(int(len(table) / 10))["obs_id"], table.tail(int(len(table) / 10))["event_id"], table.tail(int(len(table) / 10))["tel_id"]
+    run_test.reset_index(drop = True, inplace = True)
+    obs_id_test.reset_index(drop = True, inplace = True)
+    event_id_test.reset_index(drop = True, inplace = True)
+    tel_id_test.reset_index(drop = True, inplace = True)
+    run_test, obs_id_test, event_id_test, tel_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test), np.asarray(tel_id_test)
 # # remove strange outlier
 # index = np.argmin(Y)
 # Y = np.delete(Y, index)
@@ -335,6 +354,46 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     # ########################################
 
+    ##########################################
+    # ### cnn architecture number 5 (cnn5) ###
+    # z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
+    #     kernel_size = (3,3), # size of filters 3x3
+    #     activation = "relu")(input1)
+    # zl = [z]
+
+    # for i in range(5):
+    #     z = keras.layers.Conv2D(16, 
+    #         kernel_size = (3,3), 
+    #         padding = "same", # padding, "same" = on, "valid" = off
+    #         activation = "relu")(z) 
+    #     zl.append(z)
+    #     z = keras.layers.concatenate(zl[:], axis=-1)
+
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    #########################################
+
+    # #######################################
+
+    # # cnn architecture number 6 (cnn6) ###
+    # z = keras.layers.BatchNormalization()
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # z = keras.layers.Conv2D(256, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+    # # z = keras.layers.Conv2D(512, kernel_size = (3,3), activation = "relu", padding = "same")(z)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
+
+    # z = keras.layers.Flatten()(z)
+    # z = keras.layers.Dense(512, activation = "relu")(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    ########################################
+
     # define the loss function
     loss = "categorical_crossentropy"
 ##########################################################################################
@@ -386,12 +445,21 @@ print("loss: %.5e" % losses)
 yp = model.predict(X_test, batch_size=128)
 
 if args.mode == "energy":
-    yp = yp[:, 0]  # remove unnecessary last axis
-    header = ["run", "obs_id", "event_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
+    if args.telescope_mode != "mono":
+        yp = yp[:, 0]  # remove unnecessary last axis
+        header = ["run", "obs_id", "event_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
+    elif args.telescope_mode == "mono":
+        yp = yp[:, 0]  # remove unnecessary last axis
+        header = ["run", "obs_id", "event_id", "tel_id", "log10(E_true / GeV)", "log10(E_rec / GeV)"]
 elif args.mode == "separation":
-    yp = yp[:, 1]  # get gammaness (or photon score)
-    Y_test = np.argmax(Y_test, axis = 1)
-    header = ["run", "obs_id", "event_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
+    if args.telescope_mode != "mono":
+        yp = yp[:, 1]  # get gammaness (or photon score)
+        Y_test = np.argmax(Y_test, axis = 1)
+        header = ["run", "obs_id", "event_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
+    elif args.telescope_mode == "mono":
+        yp = yp[:, 1]  # get gammaness (or photon score)
+        Y_test = np.argmax(Y_test, axis = 1)
+        header = ["run", "obs_id", "event_id", "tel_id", "true gammaness", "reconstructed gammaness", "E_true / GeV"]
 
 # create csv output file
 Y_test = np.reshape(Y_test, (len(Y_test), 1))
@@ -400,11 +468,21 @@ run_test = np.reshape(run_test, (len(run_test), 1)).astype(int)
 obs_id_test = np.reshape(obs_id_test, (len(obs_id_test), 1)).astype(int)
 event_id_test = np.reshape(event_id_test, (len(event_id_test), 1)).astype(int)
 
+if args.telescope_mode == "mono":
+    tel_id_test = np.reshape(tel_id_test, (len(tel_id_test), 1)).astype(int)
+
 if args.mode == "energy":
-    table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp))
+    if args.telescope_mode != "mono":
+        table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp))
+    elif args.telescope_mode == "mono":
+        table_output = np.hstack((run_test, obs_id_test, event_id_test, tel_id_test, Y_test, yp))
 elif args.mode == "separation":
-    energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
-    table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp, energy_true_test))
+    if args.telescope_mode != "mono":
+        energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
+        table_output = np.hstack((run_test, obs_id_test, event_id_test, Y_test, yp, energy_true_test))
+    elif args.telescope_mode == "mono":
+        energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
+        table_output = np.hstack((run_test, obs_id_test, event_id_test, tel_id_test, Y_test, yp, energy_true_test))
 
 pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_data_type + string_name + ".csv", index = None, header = header)
 ##########################################################################################

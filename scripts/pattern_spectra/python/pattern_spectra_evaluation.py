@@ -26,8 +26,10 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 # Define expected arguments
 parser.add_argument("-m", "--mode", type = str, required = True, metavar = "-", choices = ["energy", "separation"], help = "CNN mode - energy or gamma/proton separation [energy, separation]")
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
+parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta", "stereo_sum_ps"], help = "telescope mode [mono, stereo_sum_cta, stereo_sum_ps], default: stereo_sum_cta", default = "stereo_sum_cta")
+parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float32"], help = "data type of the output images [int8, float32], default: float32", default = "float32")
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action="append", nargs="+")
-parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in GeV, default: 0.02 300", default = [0.02, 300], nargs = 2)
+parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in GeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
@@ -42,18 +44,24 @@ args = parser.parse_args()
 
 
 ######################################## Define some strings based on the input of the user ########################################
-print(f"################### Input summary ################### \nMode: {args.mode} \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \n")
+print(f"################### Input summary ################### \nMode: {args.mode} \nParticle type: {args.particle_type} \nTelescope mode: {args.telescope_mode} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \n")
 string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
+if args.telescope_mode == "stereo_sum_cta":
+    string_telescope_mode = "_ps_float"
+elif args.telescope_mode == "mono":
+    string_telescope_mode = "_ps_float_mono"
+elif args.telescope_mode == "stereo_sum_ps":
+    string_telescope_mode = "_ps_float_stereo_sum"
 ##########################################################################################
 
 
 ######################################## Load and prepare dataset ########################################
 # import data
 if args.mode == "energy":
-    filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
     if args.test == "y":
-            filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
-    run = pd.read_csv(filename_run)
+            filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
+    run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
     if args.run != None:
@@ -62,7 +70,7 @@ if args.mode == "energy":
     table = pd.DataFrame()
     for r in range(len(run)): # len(run)
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/pattern_spectra/input/{args.particle_type}/" + string_ps_input + run_filename + "_ps.h5"
+        input_filename = f"dm-finder/cnn/pattern_spectra/input/{args.particle_type}/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
         table_individual_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
         table = table.append(table_individual_run, ignore_index = True)
@@ -71,19 +79,20 @@ if args.mode == "energy":
 
 elif args.mode == "separation":
     particle_type = np.array(["gamma_diffuse", "proton"])
+    gammaness = np.array([1, 0])
 
     table = pd.DataFrame()
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
-        filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
+        filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
         if args.test == "y":
-            filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
-        run = pd.read_csv(filename_run)
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+        run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
         for r in range(len(run)):
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-            input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type[p]}/" + string_ps_input + run_filename + "_ps.h5"
+            input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type[p]}/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
             table_individual_run = pd.read_hdf(input_filename)
             print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_individual_run))
             if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
@@ -110,11 +119,12 @@ if args.mode == "separation":
     print("______________________________________________")
 
     # plot original energy distribution of data set
-    path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/"
+
+    path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
     PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
 
-    path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/"
+    path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
     PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
 
@@ -201,7 +211,7 @@ if args.mode == "energy":
     energy_true_binned = np.split(energy_true, indices)
     pattern_spectra_binned = np.split(pattern_spectra, indices)
 
-    path = f"dm-finder/data/{args.particle_type}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
+    path = f"dm-finder/data/{args.particle_type}/info/pattern_spectra_distribution" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
     os.makedirs(path, exist_ok = True)
 
     # extract the normed sum of all pattern spectra in each specific energy bin
@@ -212,8 +222,17 @@ if args.mode == "energy":
     pattern_spectra_mean_difference = ExtractPatternSpectraDifference(number_energy_ranges, args.size, pattern_spectra_mean)
     # extract the min and max value of pattern_spectra_mean_difference to set the colourbar equally 
     pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
+    
+    # create own colour map
+    N = 256
+    vals = np.ones((N, 4))
+    vals[:, 0] = np.linspace(cstm_RdBu(6)[0], cstm_PuBu(12)[0], N)
+    vals[:, 1] = np.linspace(cstm_RdBu(6)[1], cstm_PuBu(12)[1], N)
+    vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
+    newcmp = ListedColormap(vals)
+
     # plot normed and difference pattern spectra
-    PlotPatternSpectra(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, args.particle_type, path)
+    PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, args.particle_type, newcmp, args.attribute, path)
 
 
 elif args.mode == "separation":
@@ -233,19 +252,38 @@ elif args.mode == "separation":
     pattern_spectra_total_variance_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
     for p in range(len(particle_type)):
         # create proper path
-        path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/"
+        path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/{args.telescope_mode}/"
         os.makedirs(path_energy_distribution, exist_ok = True)
         # plot energy distribution of data set
         PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.png")
 
         print(f"\n# starting analysis for {particle_type[p]} pattern spectra #")
-        table_individual = table.loc[table["particle"] == p]
+        table_individual = table.loc[table["particle"] == gammaness[p]]
         table_individual = table_individual.reset_index(drop = True)
         pattern_spectra = [[]] * len(table_individual)
         for i in range(len(table_individual)):
             pattern_spectra[i] = table_individual["pattern spectrum"][i]
-        pattern_spectra = np.asarray(pattern_spectra)
+        pattern_spectra = np.asarray(pattern_spectra, dtype = np.float32)
 
+        # print(table["obs_id"].unique())
+        # print("Zero pixel value events:")
+        # count = 0
+        # for i in range(len(table_individual)):
+        #     if table_individual["pattern spectrum"][i][5][10] == 0 and table_individual["true_energy"][i] > 55.5e3:
+        #         print(table_individual.iloc[[i]])
+        #         count += 1
+        #     if count > 20:
+        #         break
+    
+        # print("Non-zero pixel value events:")
+        # count = 0
+        # for i in range(len(table_individual)):
+        #     if table_individual["pattern spectrum"][i][5][10] > 0 and table_individual["true_energy"][i] > 55.5e3:
+        #         print(table_individual.iloc[[i]])
+        #         count += 1
+        #     if count > 20:
+        #         break
+            
         # calculate total mean
         pattern_spectra_total_mean_gamma_proton[p] = np.mean(pattern_spectra, axis = 0)
         # # calculate total median
@@ -262,7 +300,7 @@ elif args.mode == "separation":
         newcmp = ListedColormap(vals)
 
         # create proper path
-        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" 
+        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
         os.makedirs(path, exist_ok = True)
 
         # plot total median, mean and variance

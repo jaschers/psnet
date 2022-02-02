@@ -482,7 +482,7 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     # plot the ROC curve
     plt.figure()
     plt.grid(alpha = 0.3)
-    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0}".format(np.round(area_under_ROC_curve, 3)))
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f} \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}".format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
