@@ -249,3 +249,4 @@ if args.mode == "energy":
         # plot energy resolution comparison
         PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".png")
 
+print("CNN evaluation completed!")
