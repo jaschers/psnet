@@ -45,8 +45,6 @@ print(f"################### Input summary ################### \nParticle type: {
 
 # load data
 filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
-if args.telescope_mode == "mono":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -275,11 +273,11 @@ for r in range(len(run)): #len(run)
         # save combined telescope images
         for i in tqdm(range(len(complete_table_tel_combined))): # len(complete_table_tel_combined)
             # create directory in which the images will be saved
-            path = f"dm-finder/data/{args.particle_type}/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
-            try:
-                os.makedirs(path)
-            except OSError:
-                pass
+            # path = f"dm-finder/data/{args.particle_type}/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
+            # try:
+            #     os.makedirs(path)
+            # except OSError:
+            #     pass
 
             # print("obs_id:", complete_table_tel_combined["obs_id"][i])
             # print("event_id:", complete_table_tel_combined["event_id"][i])

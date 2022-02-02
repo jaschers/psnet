@@ -68,8 +68,6 @@ print(f"################### Input summary ################### \nParticle type: {
 ##########################################################################################
 
 filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
-if args.telescope_mode == "mono":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
 if args.test == "y":
     filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
 run = pd.read_csv(filename_run_csv)
