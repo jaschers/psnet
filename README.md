@@ -77,11 +77,11 @@ python dm-finder/scripts/iact_images/create_iact_images.py -h
 to get basic instructions on how to use the script. This script creates Cherenkov images of gamma/diffuse-gamma/proton events simulated for CTA. The images are saved in tif and pgm format and stored in a HDF table. One can choose between int8 and float64 images. 
 Examples: 
 ```sh
-python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64
+python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -tm stereo_sum_cta
 ``` 
-creates float CTA images from gamma-ray events from the data runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv``. CTA images from one particular run can be created by adding the ``-r`` command, e.g 
+creates float CTA images from gamma-ray events from the data runs listed in ``dm-finder/scripts/run_lists/gamma_run_list.csv`` in the ``stereo_sum_cta`` telescope mode (all individual telescope images of each event are summed up). CTA images from one particular run can be created by adding the ``-r`` command, e.g 
 ```sh
-python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -dt float64 -r 100
+python dm-finder/scripts/iact_images/create_iact_images.py -pt gamma -tm stereo_sum_cta -r 100
 ``` 
 will create CTA images from data run 100. The images are saved into the ``dm-finder/data/gamma/images`` directory.
 
