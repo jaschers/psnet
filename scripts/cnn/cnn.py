@@ -69,7 +69,7 @@ else:
 #     string_energy_range = ""
 
 if args.input == "cta":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nParticle type: {args.particle_type} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
     if args.telescope_mode == "stereo_sum_cta":
         string_input_short = "_images"
@@ -78,7 +78,7 @@ if args.input == "cta":
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "pattern_spectra"
     if args.telescope_mode == "stereo_sum_cta":
         string_input_short = "_ps_float"
@@ -105,21 +105,24 @@ os.makedirs(path_output, exist_ok = True)
 ######################################## Load and prepare dataset ########################################
 # import data
 if args.mode == "energy":
-    filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
     if args.test == "y":
-        filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
-    if args.telescope_mode == "mono" and args.test != "y":
-        filename_run = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
-    run = pd.read_csv(filename_run)
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_test.csv"
+    elif args.telescope_mode == "mono":
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono.csv"
+    else: 
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list.csv"
+    run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
     if args.run != None:
         run = args.run[0]
 
+    print(filename_run_csv)
+
     table = pd.DataFrame()
     for r in range(len(run)): # len(run)
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/{string_input}/input/{args.particle_type}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
+        input_filename = f"dm-finder/cnn/{string_input}/input/gamma/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
 
         table_individual_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
@@ -133,13 +136,16 @@ elif args.mode == "separation":
     table = pd.DataFrame()
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
-        filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
         if args.test == "y":
-            filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
-        if args.telescope_mode == "mono" and args.test != "y":
-            filename_run = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
-        run = pd.read_csv(filename_run)
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+        elif args.telescope_mode == "mono":
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
+        else: 
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
+        run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
+
+        print(filename_run_csv)
 
         for r in range(len(run)):
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"

@@ -67,9 +67,12 @@ args = parser.parse_args()
 print(f"################### Input summary ################### \nParticle type: {args.particle_type} \nData type: {args.data_type} \nTelescope mode: {args.telescope_mode} \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter}")
 ##########################################################################################
 
-filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
 if args.test == "y":
     filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
+elif (args.telescope_mode == "mono" and args.particle_type == "gamma") or (args.telescope_mode == "stereo_sum_ps" and args.particle_type == "gamma"):
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
+else: 
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 

@@ -44,7 +44,10 @@ print(f"################### Input summary ################### \nParticle type: {
 # ----------------------------------------------------------------------
 
 # load data
-filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+if args.telescope_mode == "mono" and args.particle_type == "gamma":
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
+else: 
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -332,6 +335,11 @@ for r in range(len(run)): #len(run)
                 # os.system("convert " + image_filename_tif + ".tif " + image_filename_pgm + ".pgm")
                 ###### these lines has to be uncommented if the float CTA images are not used for the pattern spectra extraction ######
 
+            if run[r] == 10 and i <= 50:
+                path_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/obs_id_{complete_table['obs_id'][i]}/tif/"
+                os.makedirs(path_tif, exist_ok = True)
+                output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}.tif"
+                GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
 
             # implement image into table
             table["image"][i] = image

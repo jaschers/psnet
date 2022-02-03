@@ -44,7 +44,7 @@ args = parser.parse_args()
 
 
 ######################################## Define some strings based on the input of the user ########################################
-print(f"################### Input summary ################### \nMode: {args.mode} \nParticle type: {args.particle_type} \nTelescope mode: {args.telescope_mode} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \n")
+print(f"################### Input summary ################### \nMode: {args.mode} \nTelescope mode: {args.telescope_mode} \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \n")
 string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
 if args.telescope_mode == "stereo_sum_cta":
     string_telescope_mode = "_ps_float"
@@ -58,9 +58,12 @@ elif args.telescope_mode == "stereo_sum_ps":
 ######################################## Load and prepare dataset ########################################
 # import data
 if args.mode == "energy":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
     if args.test == "y":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_test.csv"
+    elif args.telescope_mode == "mono" or args.telescope_mode == "stereo_sum_ps":
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono.csv"
+    else: 
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
@@ -70,7 +73,7 @@ if args.mode == "energy":
     table = pd.DataFrame()
     for r in range(len(run)): # len(run)
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/pattern_spectra/input/{args.particle_type}/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
+        input_filename = f"dm-finder/cnn/pattern_spectra/input/gamma/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
         table_individual_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
         table = table.append(table_individual_run, ignore_index = True)
@@ -84,9 +87,12 @@ elif args.mode == "separation":
     table = pd.DataFrame()
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
-        filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
         if args.test == "y":
             filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+        elif args.telescope_mode == "mono":
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
+        else: 
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
@@ -211,7 +217,7 @@ if args.mode == "energy":
     energy_true_binned = np.split(energy_true, indices)
     pattern_spectra_binned = np.split(pattern_spectra, indices)
 
-    path = f"dm-finder/data/{args.particle_type}/info/pattern_spectra_distribution" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
+    path = f"dm-finder/data/gamma/info/pattern_spectra_distribution" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
     os.makedirs(path, exist_ok = True)
 
     # extract the normed sum of all pattern spectra in each specific energy bin
