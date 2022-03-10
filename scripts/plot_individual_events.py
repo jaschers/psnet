@@ -63,7 +63,6 @@ elif args.input == "ps":
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
     string_table_column = "pattern spectrum"
 ##########################################################################################
-
 run_filename = f"{args.particle_type}_20deg_0deg_run{args.run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 input_filename = f"dm-finder/cnn/{string_input}/input/{args.particle_type}/" + string_ps_input + run_filename + string_input_short + ".h5"
 
@@ -81,15 +80,21 @@ print(table)
 if args.input == "ps":
     path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/tif/"
 
-    if args.tel_id == "None":
+    if args.tel_id == None:
         filename_tif = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"
     else:
         filename_tif = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}" + "__tel_id_" + f"{table['tel_id'][0]}"
+        
 
     os.makedirs(path_tif, exist_ok = True)
 
     plt.figure()
-    plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", fontsize = 16, pad = 20)
+
+    if args.tel_id == None:
+        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", fontsize = 16, pad = 20)
+    else:
+        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", fontsize = 16, pad = 20)
+
     plt.imshow(table["pattern spectrum"][0], cmap = "Greys_r")
     plt.annotate('', xy=(0, -0.05), xycoords='axes fraction', xytext=(1, -0.05), arrowprops=dict(arrowstyle="<-", color='black'))
     plt.annotate('', xy=(-0.05, 1), xycoords='axes fraction', xytext=(-0.05, 0), arrowprops=dict(arrowstyle="<-", color='black'))
@@ -101,13 +106,14 @@ if args.input == "ps":
     plt.xticks([], [])
     plt.yticks([], [])
     plt.tight_layout()
+    print(path_tif + filename_tif)
     plt.savefig(path_tif + filename_tif + ".tif", dpi = 150)
     plt.close()
 
 elif args.input == "cta":
     path_tif = f"dm-finder/data/{args.particle_type}/images/" + run_filename + "/float" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/tif/"
 
-    if args.tel_id == "None":
+    if args.tel_id == None:
         filename_tif = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"
     else:
         filename_tif = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}" + "__tel_id_" + f"{table['tel_id'][0]}"
