@@ -106,7 +106,7 @@ if args.input == "ps":
     plt.xticks([], [])
     plt.yticks([], [])
     plt.tight_layout()
-    print(path_tif + filename_tif)
+    print(path_tif + filename_tif + ".tif")
     plt.savefig(path_tif + filename_tif + ".tif", dpi = 150)
     plt.close()
 
