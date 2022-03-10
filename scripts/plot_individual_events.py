@@ -121,7 +121,12 @@ elif args.input == "cta":
     os.makedirs(path_tif, exist_ok = True)
 
     plt.figure()
-    plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", fontsize = 16, pad = 20)
+
+    if args.tel_id == None:
+        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", fontsize = 16, pad = 20)
+    else:
+        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", fontsize = 16, pad = 20)
+
     plt.imshow(table["image"][0], cmap = "Greys_r") 
     cbar = plt.colorbar()
     cbar.set_label(label = "photon count")
@@ -132,5 +137,6 @@ elif args.input == "cta":
     bbox_inches = None
     pad_inches = 0.1
     plt.tight_layout()
+    print(path_tif + filename_tif + ".tif")
     plt.savefig(path_tif + filename_tif + ".tif", bbox_inches = bbox_inches, pad_inches = pad_inches, dpi = 150)
     plt.close()
