@@ -242,11 +242,16 @@ if args.mode == "energy":
             if args.input[0][i] == "ps":
                 string_comparison += "_" + string_ps_input[i][:-1]
                 break
-                
+
+        args_input_unique = np.unique(args.input[0])
+        
         # plot energy accuracy comparison
         PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_" + string_comparison + ".png")
 
         # plot energy resolution comparison
         PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".png")
+
+        # plot mean energy resolution
+        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".png")
 
 print("CNN evaluation completed!")

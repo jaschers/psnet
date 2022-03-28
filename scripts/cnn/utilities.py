@@ -181,7 +181,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     # error = np.array([])
     # for k in range(len(sigma_all[0])):
     #     row = [row_k[k] for row_k in sigma_all]
-    #     mean = np.append(mean, np.mean(row))
+    #     mean = np.append(mean, nan(row))
     #     error = np.append(error, np.std(row))
     bins_central = np.array([])
     for b in range(len(bins) - 1):
@@ -193,6 +193,48 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
     # plt.plot(bins_central, mean, linestyle = "--", label = "Mean", color = "black")
     # plt.fill_between(bins_central, mean - error, mean + error, color = "grey", alpha = 0.25)
+    plt.xlabel("Energy [TeV]")
+    plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
+    plt.xscale("log")
+    # plt.ylim(0.2, 0.60)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
+    table = []
+    for k in range(len(args_input)):
+        table.append([args_input[k], sigma_all[k]])
+
+    table = pd.DataFrame(table, columns=["input", "energy resolution"])
+
+    table_mean = []
+    args_input_unique = np.unique(args_input)
+    for k in range(len(args_input_unique)):
+        table_k = table.copy()
+        table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
+        # print(table_k["energy resolution"].to_numpy())
+        # print(np.mean(table_k["energy resolution"].to_numpy(), axis = 0))
+        # print(np.nanmean(table_k["energy resolution"].to_numpy(), axis = 0))
+        # print(np.std(table_k["energy resolution"].to_numpy(), axis = 0))
+        # print(np.nanstd(table_k["energy resolution"].to_numpy(), axis = 0))
+        table_mean.append([args_input_unique[k], np.mean(table_k["energy resolution"].dropna().to_numpy(), axis = 0), np.std(table_k["energy resolution"].dropna().to_numpy(), axis = 0)])
+    table_mean = pd.DataFrame(table_mean, columns=["input", "mean energy resolution", "std energy resolution"])
+
+
+    bins_central = np.array([])
+    for b in range(len(bins) - 1):
+        bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
+
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    for i in range(len(args_input_unique)):
+        table_mean_i = table_mean.copy()
+        mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
+        std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
+        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = args_input_unique[i])
+        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, color = "grey", alpha = 0.25)
     plt.xlabel("Energy [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
