@@ -198,7 +198,7 @@ if args.mode == "energy":
     # collect pattern spectra
     pattern_spectra = [[]] * len(table)
     for i in range(len(table)):
-        pattern_spectra[i] = table["pattern spectrum"][i]
+        pattern_spectra[i] = table["pattern spectrum"][i].astype(np.float32)
     pattern_spectra = np.asarray(pattern_spectra) 
 
     # collect true energy
