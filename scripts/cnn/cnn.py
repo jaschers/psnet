@@ -235,28 +235,28 @@ Y_shape = np.shape(Y_train)
 input1 = keras.layers.Input(shape = X_shape[1:])
 
 if args.mode == "energy":
-    # # ## cnn architecture number 1 (cnn1) ###
-    # # define a suitable network 
-    # z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
-    #     kernel_size = (3,3), # size of filters 3x3
-    #     activation = "relu")(input1)
-    # zl = [z]
+    # ## cnn architecture number 1 (cnn1) ###
+    # define a suitable network 
+    z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
+        kernel_size = (3,3), # size of filters 3x3
+        activation = "relu")(input1)
+    zl = [z]
 
-    # for i in range(5):
-    #     z = keras.layers.Conv2D(16, 
-    #         kernel_size = (3,3), 
-    #         padding = "same", # padding, "same" = on, "valid" = off
-    #         activation = "relu")(z) 
-    #     zl.append(z)
-    #     z = keras.layers.concatenate(zl[:], axis=-1)
+    for i in range(5):
+        z = keras.layers.Conv2D(16, 
+            kernel_size = (3,3), 
+            padding = "same", # padding, "same" = on, "valid" = off
+            activation = "relu")(z) 
+        zl.append(z)
+        z = keras.layers.concatenate(zl[:], axis=-1)
 
-    # z = keras.layers.GlobalAveragePooling2D()(z)
-    # z = keras.layers.Dense(8, activation = "relu")(z)
+    z = keras.layers.GlobalAveragePooling2D()(z)
+    z = keras.layers.Dense(8, activation = "relu")(z)
 
-    # output = keras.layers.Dense(1, name = "energy")(z)
+    output = keras.layers.Dense(1, name = "energy")(z)
 
-    # # define the loss function
-    # loss = "mse"
+    # define the loss function
+    loss = "mse"
 
     # # ## cnn architecture number 2 (cnn2), based on VGG13 (Pietro Grespan) ###
     # z = keras.layers.BatchNormalization()(input1)
@@ -283,27 +283,27 @@ if args.mode == "energy":
 
     # ## cnn architecture number 3 (cnn3) ###
     # define a suitable network 
-    z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
-        kernel_size = (3,3), # size of filters 3x3
-        activation = "relu", padding = "same")(input1)
-    zl = [z]
+    # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
+    #     kernel_size = (3,3), # size of filters 3x3
+    #     activation = "relu", padding = "same")(input1)
+    # zl = [z]
 
-    for i in range(5):
-        z = keras.layers.Conv2D(32, 
-            kernel_size = (3,3), 
-            padding = "same", # padding, "same" = on, "valid" = off
-            activation = "relu")(z) 
-        zl.append(z)
-        z = keras.layers.concatenate(zl[:], axis=-1)
+    # for i in range(5):
+    #     z = keras.layers.Conv2D(32, 
+    #         kernel_size = (3,3), 
+    #         padding = "same", # padding, "same" = on, "valid" = off
+    #         activation = "relu")(z) 
+    #     zl.append(z)
+    #     z = keras.layers.concatenate(zl[:], axis=-1)
 
-    z = keras.layers.GlobalAveragePooling2D()(z)
-    z = keras.layers.Dense(16, activation = "relu")(z)
-    z = keras.layers.Dense(8, activation = "relu")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
 
-    output = keras.layers.Dense(1, name = "energy")(z)
+    # output = keras.layers.Dense(1, name = "energy")(z)
 
-    # define the loss function
-    loss = "mse"
+    # # define the loss function
+    # loss = "mse"
 
 elif args.mode == "separation":
 
@@ -330,17 +330,17 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation = 'softmax', name = "gammaness")(z)
     # #######################################
 
-    # # cnn architecture number 2 (cnn2) ###
-    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
-    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
-    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
-    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # cnn architecture number 2 (cnn2) ###
+    z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
+    z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
+    z = keras.layers.GlobalAveragePooling2D()(z)
 
-    # z = keras.layers.Dense(64, activation = "relu")(z)
-    # z = keras.layers.Dense(32, activation = "relu")(z)
-    # z = keras.layers.Dense(16, activation = "relu")(z)
+    z = keras.layers.Dense(64, activation = "relu")(z)
+    z = keras.layers.Dense(32, activation = "relu")(z)
+    z = keras.layers.Dense(16, activation = "relu")(z)
 
-    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     ########################################
 
     # #######################################
@@ -475,24 +475,24 @@ elif args.mode == "separation":
     ########################################
     # ## cnn architecture number 8 (cnn8) ###
     # define a suitable network 
-    z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
-        kernel_size = (3,3), # size of filters 3x3
-        activation = "relu", padding = "same")(input1)
-    zl = [z]
+    # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
+    #     kernel_size = (3,3), # size of filters 3x3
+    #     activation = "relu", padding = "same")(input1)
+    # zl = [z]
 
-    for i in range(5):
-        z = keras.layers.Conv2D(32, 
-            kernel_size = (3,3), 
-            padding = "same", # padding, "same" = on, "valid" = off
-            activation = "relu")(z) 
-        zl.append(z)
-        z = keras.layers.concatenate(zl[:], axis=-1)
+    # for i in range(5):
+    #     z = keras.layers.Conv2D(32, 
+    #         kernel_size = (3,3), 
+    #         padding = "same", # padding, "same" = on, "valid" = off
+    #         activation = "relu")(z) 
+    #     zl.append(z)
+    #     z = keras.layers.concatenate(zl[:], axis=-1)
 
-    z = keras.layers.GlobalAveragePooling2D()(z)
-    z = keras.layers.Dense(16, activation = "relu")(z)
-    z = keras.layers.Dense(8, activation = "relu")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
 
-    output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     ########################################
 
     # define the loss function
