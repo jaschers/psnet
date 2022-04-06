@@ -242,6 +242,9 @@ if args.mode == "energy":
             if args.input[0][i] == "ps":
                 string_comparison += "_" + string_ps_input[i][:-1]
                 break
+        
+        if len(string_comparison) > 200:
+            string_comparison = string_comparison[:200]
 
         args_input_unique = np.unique(args.input[0])
         
