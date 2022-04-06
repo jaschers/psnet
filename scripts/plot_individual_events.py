@@ -105,6 +105,14 @@ if args.input == "ps":
     # plt.axis('off')
     plt.xticks([], [])
     plt.yticks([], [])
+
+    # for i in range(len(table["pattern spectrum"][0][0])):
+    #     for j in range(len(table["pattern spectrum"][0][1])):
+    #         if np.round(table["pattern spectrum"][0][i, j], 1) <= 0.65:
+    #             text = plt.text(j, i, np.round(table["pattern spectrum"][0][i, j], 1), ha="center", va="center", color="white", fontsize = 6)
+    #         else:
+    #             text = plt.text(j, i, np.round(table["pattern spectrum"][0][i, j], 1), ha="center", va="center", color="black", fontsize = 6)
+
     plt.tight_layout()
     print(path_tif + filename_tif + ".tif")
     plt.savefig(path_tif + filename_tif + ".tif", dpi = 150)
