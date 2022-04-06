@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from ctapipe.visualization import CameraDisplay
 import numpy as np
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-
+import os
 
 def GetEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
     """[summary]
@@ -148,4 +148,46 @@ def PlotImages(number_energy_ranges, size, bins, image_binned, path):
     fig_normed.savefig(path + "image_sum_normed.png", dpi = 250)
     fig_difference.tight_layout()
     fig_difference.savefig(path + "image_sum_difference.png", dpi = 250)
+    # plt.show()
+
+def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, number_energy_ranges, particle_type):
+    # prepare energy binning
+    sst_energy_min = energy_range[0] # TeV
+    sst_energy_max = energy_range[1] # TeV
+    bins_energy = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
+
+    # prepare hillas_ellipticity binning
+    bins_ellipticity = np.linspace(np.min(table[hillas_parameter]), np.max(table[hillas_parameter]), 50)
+
+    os.makedirs(f"dm-finder/data/{particle_type}/info/hillas", exist_ok = True)
+
+    fig, ax = plt.subplots(int(np.sqrt(number_energy_ranges)), int(np.sqrt(number_energy_ranges)))
+    fig.set_size_inches(12, 8)
+    ax = ax.ravel()
+    for i in range(number_energy_ranges):
+        table_copy = table.copy()
+        table_copy.drop(table_copy.loc[table_copy["true_energy"] <= bins_energy[i]].index, inplace=True)
+        table_copy.drop(table_copy.loc[table_copy["true_energy"] >= bins_energy[i+1]].index, inplace=True)
+        table_copy.reset_index()
+        # print(table_copy)
+        mean = np.mean(table_copy[hillas_parameter])
+        # median = np.median(table_copy[hillas_parameter])
+        ax[i].set_title(f"{np.round(bins_energy[i], 1)} - {np.round(bins_energy[i+1], 1)} TeV")
+        ax[i].hist(table_copy[hillas_parameter], bins = bins_ellipticity)
+        if hillas_parameter == "hillas_intensity":
+            ax[i].set_yscale('log')
+        ymin, ymax = ax[i].get_ylim()
+        ax[i].vlines(mean, ymin, ymax, color = "black", linestyle = "--", label = f"$\mu = {np.round(mean, 1)}$")
+        # ax[i].vlines(median, ymin, ymax, color = "black", linestyle = "--", label = f"$\mu = {np.round(median, 1)}$")
+        ax[i].set_ylim(ymin, ymax)
+        ax[i].legend()
+    xlim = (np.min(table[hillas_parameter]) - 1, np.max(table[hillas_parameter]) + 5)
+    ax[-2].set_xlabel(hillas_parameter)
+    ax[3].set_ylabel("number of events")
+    # plt.setp(ax, xlim = xlim)
+    plt.tight_layout()
+    plt.savefig(f"dm-finder/data/{particle_type}/info/hillas/{hillas_parameter}_dist.png", dpi = 250)
+    # plt.show()
+
+    # sns.pairplot(table, kind="hist")
     # plt.show()
