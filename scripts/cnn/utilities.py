@@ -95,7 +95,7 @@ def MedianSigma68(energy_true_binned, energy_rec_binned, bins):
 
   
 def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, path):
-    fig, ax = plt.subplots(5, 3)
+    fig, ax = plt.subplots(3, 3)
     ax = ax.ravel()
     sigma_collection = np.array([])
     for j in range(len(energy_true_binned)):
@@ -403,7 +403,7 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     plt.grid(alpha = 0.3)
     plt.hist(gammaness_gammas, label = "true photons", bins = np.linspace(0, 1, 31), alpha = 0.6)
     plt.hist(gammaness_protons, label = "true protons", bins = np.linspace(0, 1, 31), alpha = 0.6)
-    plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
+    # plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
     plt.xlabel("Gammaness")
     plt.ylabel("Number events")
     # plt.yscale("log")
@@ -490,7 +490,7 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
         ax[i].hist(gammaness_protons, label = "true protons", alpha = 0.6)
         ylim = ax[i].get_ylim()
         ax[i].set_xlim(-0.05, 1.05)
-        ax[i].text(0, 0.8 * ylim[1], f"AOC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
+        ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
         ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
         ax[i].tick_params(axis = 'both', which = 'major', labelsize = 10)
 
@@ -524,7 +524,7 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     # plot the ROC curve
     plt.figure()
     plt.grid(alpha = 0.3)
-    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f} \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}".format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
@@ -660,7 +660,7 @@ def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gamma
         plt.savefig(path_total, dpi = 250)
         plt.close()
 
-def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attribute, gammaness_limit, path):
+def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes, gammaness_limit, path):
     # calculate the pattern spectra difference between gamma and proton events
     pattern_spectra_mean_difference = pattern_spectra_mean[0] - pattern_spectra_mean[1]
     pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = np.min(pattern_spectra_mean_difference), np.max(pattern_spectra_mean_difference)
@@ -672,15 +672,19 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attribute,
 
     plt.figure()
     plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
-    im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu", norm = SymLogNorm(linthresh = 0.001, base = 10))
+    im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.001, base = 10))
     im.set_clim(pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max)
     # im.set_clim(-0.09, 0.09)    
     # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
     # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
-    plt.xlabel(f"(moment of inertia) / area$^2$", fontsize = 18)
-    plt.ylabel(f"area", fontsize = 18)
+    plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
+    plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
     plt.xticks([])
     plt.yticks([])
+    # plt.annotate('', xy=(0, -0.1), xycoords='axes fraction', xytext=(1, -0.1), arrowprops=dict(arrowstyle="<-", color='black'))
+    # plt.annotate('', xy=(-0.1, 1), xycoords='axes fraction', xytext=(-0.1, 0), arrowprops=dict(arrowstyle="<-", color='black'))
+    # plt.xlabel(f"a {attributes[0]}", labelpad = 10, fontsize = 18)
+    # plt.ylabel(f"a {attributes[1]}", labelpad = 10, fontsize = 18)
     cb = plt.colorbar()
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
