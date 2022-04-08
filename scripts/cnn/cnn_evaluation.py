@@ -16,6 +16,7 @@ import logging
 import time
 
 plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.family':'Times New Roman'})
 pd.options.mode.chained_assignment = None 
 
 ######################################## argparse setup ########################################
