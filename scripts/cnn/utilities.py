@@ -229,12 +229,20 @@ def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
 
     plt.figure()
     plt.grid(alpha = 0.2)
+    # colors = [(87/235, 148/235, 160/235), (207/235, 78/235, 84/235), (132/235, 152/235, 163/235)]
+    # colors = ["#a0b1ba", "#a6761d"]
+    # colors = ["#82a8b3", "#f5d17f"]
+    # colors = ["#227aa1", "#edc339"] # blue, yellow
+    colors = ["#143d59", "#f4b41a"] # blue, yellow (favourite)
+    # colors = ["#455073", "#c0904d"] # blue, gold (not bad)
+    # colors = ["#3d4c41", "#999999"] # green, grey (not bad either, but a bit too similar)
+    labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = args_input_unique[i])
-        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, color = "grey", alpha = 0.25)
+        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors[i])
+        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors[i], alpha = 0.3)
     plt.xlabel("Energy [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
