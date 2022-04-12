@@ -132,7 +132,7 @@ def PlotEnergyAccuracy(median, bins, path):
     plt.figure()
     plt.grid(alpha = 0.2)
     plt.errorbar(bins_central, median, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".")
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
     plt.tight_layout()
@@ -148,7 +148,7 @@ def PlotEnergyResolution(sigma, bins, path):
     plt.figure()
     plt.grid(alpha = 0.2)
     plt.errorbar(bins_central, sigma, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".")
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     plt.tight_layout()
@@ -165,12 +165,51 @@ def PlotEnergyAccuracyComparison(median_all, bins, label, path):
     plt.grid(alpha = 0.2)
     for i in range(len(median_all)):
         plt.errorbar(bins_central, median_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
     plt.ylim(ymin, 1.2 * ymax)
     plt.legend(loc = "upper right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
+    table = []
+    for k in range(len(args_input)):
+        table.append([args_input[k], median_all[k]])
+
+    table = pd.DataFrame(table, columns=["input", "energy accuracy"])
+
+    table_mean = []
+    args_input_unique = np.unique(args_input)
+    for k in range(len(args_input_unique)):
+        table_k = table.copy()
+        table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
+        table_mean.append([args_input_unique[k], np.mean(table_k["energy accuracy"].dropna().to_numpy(), axis = 0), np.std(table_k["energy accuracy"].dropna().to_numpy(), axis = 0)])
+    table_mean = pd.DataFrame(table_mean, columns=["input", "mean energy accuracy", "std energy accuracy"])
+
+    bins_central = np.array([])
+    for b in range(len(bins) - 1):
+        bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
+
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    colors = ["#143d59", "#f4b41a"] # blue, yellow (favourite)
+    labels = ["CTA images", "Pattern spectra"]
+    for i in range(len(args_input_unique)):
+        table_mean_i = table_mean.copy()
+        mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
+        std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
+        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors[i])
+        plt.fill_between(bins_central, mean_energy_accuracy - std_energy_accuracy, mean_energy_accuracy + std_energy_accuracy, facecolor = colors[i], alpha = 0.3)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
+    plt.xscale("log")
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(ymin, 1.2 * ymax)
+    plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -193,7 +232,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
     # plt.plot(bins_central, mean, linestyle = "--", label = "Mean", color = "black")
     # plt.fill_between(bins_central, mean - error, mean + error, color = "grey", alpha = 0.25)
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     # plt.ylim(0.2, 0.60)
@@ -202,7 +241,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
+def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path):
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], sigma_all[k]])
@@ -243,7 +282,7 @@ def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
         plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors[i])
         plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors[i], alpha = 0.3)
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     # plt.ylim(0.2, 0.60)

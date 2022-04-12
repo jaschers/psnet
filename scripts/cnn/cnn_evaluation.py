@@ -16,7 +16,8 @@ import logging
 import time
 
 plt.rcParams.update({'font.size': 14})
-plt.rcParams.update({'font.family':'Times New Roman'})
+plt.rcParams.update({'font.family':'serif'})
+plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 pd.options.mode.chained_assignment = None 
 
 ######################################## argparse setup ########################################
@@ -252,10 +253,13 @@ if args.mode == "energy":
         # plot energy accuracy comparison
         PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_" + string_comparison + ".png")
 
+        # plot mean energy resolution
+        PlotEnergyAccuracyComparisonMean(median_all, bins, label[0], args.input[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_mean_" + string_comparison + ".png")
+
         # plot energy resolution comparison
         PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".png")
 
         # plot mean energy resolution
-        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".png")
+        PlotEnergyResolutionComparisonMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".png")
 
 print("CNN evaluation completed!")
