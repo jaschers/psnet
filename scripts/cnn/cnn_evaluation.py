@@ -38,6 +38,7 @@ parser.add_argument("-l", "--label", type = str, required = False, metavar = "-"
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
+parser.add_argument("-s", "--suffix", type = str, required = False, metavar = "-", help = "suffix for the output filenames")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
@@ -236,17 +237,23 @@ if args.mode == "energy":
     if len(args.input[0]) > 1:
         os.makedirs(f"dm-finder/cnn/comparison/", exist_ok = True)
 
-        string_comparison = ""
-        for i in range(len(args.input[0])):
-            string_comparison += args.input[0][i] + string_name[i] + "_"
+        if args.suffix == None:
+            string_comparison = ""
+            for i in range(len(args.input[0])):
+                string_comparison += args.input[0][i] + string_name[i] + "_"
 
-        for i in range(len(args.input[0])):
-            if args.input[0][i] == "ps":
-                string_comparison += "_" + string_ps_input[i][:-1]
-                break
+            for i in range(len(args.input[0])):
+                if args.input[0][i] == "ps":
+                    string_comparison += "_" + string_ps_input[i][:-1]
+                    break
+            
+            if len(string_comparison) > 200:
+                string_comparison = string_comparison[:200]
+        else:
+            string_comparison = args.suffix
+            print(string_comparison)
+
         
-        if len(string_comparison) > 200:
-            string_comparison = string_comparison[:200]
 
         args_input_unique = np.unique(args.input[0])
         
