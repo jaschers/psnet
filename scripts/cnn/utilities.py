@@ -691,3 +691,10 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes
     plt.tight_layout()
     plt.savefig(path + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png", dpi = 250)
     plt.close()
+
+def SaveCSV(y, bins, y_label, path):
+    table = pd.DataFrame()
+    table["E_min [TeV]"] = bins[:-1]
+    table["E_max [TeV]"] = bins[1:]
+    table[f"{y_label}"] = y
+    table.to_csv(path)
