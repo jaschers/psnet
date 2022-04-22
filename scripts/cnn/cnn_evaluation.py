@@ -184,6 +184,11 @@ for i in range(len(args.input[0])):
     
         # plot energy resolution
         PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.png")
+
+        # save energy accuracy & resolution in csv files
+        SaveCSV(median, bins, "accuracy", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
+        SaveCSV(sigma, bins, "resolution", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.csv")
+        
     
     elif args.mode == "separation":
         particle_type = np.array(["gamma_diffuse", "proton"])
