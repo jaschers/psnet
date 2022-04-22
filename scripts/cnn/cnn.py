@@ -232,14 +232,14 @@ elif args.telescope_mode == "mono":
 ######################################## Define a model ########################################
 X_shape = np.shape(X_train)
 Y_shape = np.shape(Y_train)
-input1 = keras.layers.Input(shape = X_shape[1:])
+input = keras.layers.Input(shape = X_shape[1:])
 
 if args.mode == "energy":
     # ## cnn architecture number 1 (cnn1) ###
     # define a suitable network 
     z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
         kernel_size = (3,3), # size of filters 3x3
-        activation = "relu")(input1)
+        activation = "relu")(input)
     zl = [z]
 
     for i in range(5):
@@ -259,7 +259,7 @@ if args.mode == "energy":
     loss = "mse"
 
     # # ## cnn architecture number 2 (cnn2), based on VGG13 (Pietro Grespan) ###
-    # z = keras.layers.BatchNormalization()(input1)
+    # z = keras.layers.BatchNormalization()(input)
     # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(z)
     # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(z)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
@@ -285,7 +285,7 @@ if args.mode == "energy":
     # define a suitable network 
     # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
-    #     activation = "relu", padding = "same")(input1)
+    #     activation = "relu", padding = "same")(input)
     # zl = [z]
 
     # for i in range(5):
@@ -312,7 +312,7 @@ elif args.mode == "separation":
     # z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
     #     padding = "same", 
-    #     activation = "relu")(input1)
+    #     activation = "relu")(input)
     # zl = [z]
 
     # for i in range(1):
@@ -331,7 +331,7 @@ elif args.mode == "separation":
     # #######################################
 
     # cnn architecture number 2 (cnn2) ###
-    z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input)
     z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
     z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
     z = keras.layers.GlobalAveragePooling2D()(z)
@@ -346,7 +346,7 @@ elif args.mode == "separation":
     # #######################################
 
     # # cnn architecture number 3 (cnn3) ###
-    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input)
     # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu")(z)
     # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu")(z)
     # z = keras.layers.Flatten()(z)
@@ -366,7 +366,7 @@ elif args.mode == "separation":
 
     ######################################## 
     # # cnn architecture number 2 (cnn4) ###
-    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(input)
     # zl = [z]
     # # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(z)
     # # z = keras.layers.MaxPooling2D(pool_size = (2, 2), strides = 2, padding = "same")(z)
@@ -393,7 +393,7 @@ elif args.mode == "separation":
 
     ########################################
     # ### fnn architecture number 1 (fnn1) ###
-    # z = keras.layers.Flatten()(input1)
+    # z = keras.layers.Flatten()(input)
     # z = keras.layers.Dense(564, activation = "relu")(z)
     # z = keras.layers.Dense(564, activation = "relu")(z)
     # z = keras.layers.Dense(256, activation = "relu")(z)
@@ -412,7 +412,7 @@ elif args.mode == "separation":
     # ### cnn architecture number 5 (cnn5) ###
     # z = keras.layers.Conv2D(4, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
-    #     activation = "relu")(input1)
+    #     activation = "relu")(input)
     # zl = [z]
 
     # for i in range(5):
@@ -433,7 +433,7 @@ elif args.mode == "separation":
 
     # # cnn architecture number 6 (cnn6) ###
     # z = keras.layers.BatchNormalization()
-    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(input1)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), activation = "relu", padding = "same")(input)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
     # z = keras.layers.Conv2D(128, kernel_size = (3,3), activation = "relu", padding = "same")(z)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides=None, padding="valid")(z)
@@ -450,7 +450,7 @@ elif args.mode == "separation":
 
     # ########################################
     # # ## cnn architecture number 2 (cnn7), based on VGG13 (Pietro Grespan) ###
-    # z = keras.layers.BatchNormalization()(input1)
+    # z = keras.layers.BatchNormalization()(input)
     # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(z)
     # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(z)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
@@ -477,7 +477,7 @@ elif args.mode == "separation":
     # define a suitable network 
     # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
-    #     activation = "relu", padding = "same")(input1)
+    #     activation = "relu", padding = "same")(input)
     # zl = [z]
 
     # for i in range(5):
@@ -495,13 +495,67 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
     ########################################
 
+    ########################################
+    ## cnn architecture number 9 (cnn9) ###
+    # define a suitable network 
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")(input)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), padding = "same", activation = "relu")(z) 
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), padding = "same", activation = "relu")(z) 
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), padding = "same", activation = "relu")(z) 
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+
+    # z = keras.layers.Conv2D(256, kernel_size = (3,3), padding = "same", activation = "relu")(z) 
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+
+    # z = keras.layers.Flatten()(z)
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    ########################################
+
+    #######################################
+    # ## cnn-rnn architecture number 1 (cnn-rnn1) ###
+    # # define a suitable network 
+    # model_cnn = keras.models.Sequential()
+
+    # model_cnn = keras.layers.Conv2D(16, kernel_size = (3,3), activation = "relu", padding = "same")
+
+    # for i in range(5):
+    #     model_cnn = keras.layers.Conv2D(32, kernel_size = (3,3), padding = "same", activation = "relu")(model_cnn)
+    #     model_cnn = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 1, padding="same")(model_cnn)
+
+    # model_cnn = keras.layers.Flatten()(model_cnn)
+
+    # model = keras.models.Sequential()
+    # model = keras.layers.TimeDistributed(model_cnn)(input)
+
+    # z = keras.layers.LSTM(units = 32, return_sequences = True)(z)
+    # z = keras.layers.Dropout(0.2)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.2)(z)
+
+    # output = keras.layers.Dense(2, activation='softmax', name = "gammaness")(z)
+    #######################################
+
     # define the loss function
     loss = "categorical_crossentropy"
 ##########################################################################################
 
 
 ######################################## Train the model ########################################
-model = keras.models.Model(inputs=input1, outputs=output)
+model = keras.models.Model(inputs=input, outputs=output)
 
 print(model.summary())
 
