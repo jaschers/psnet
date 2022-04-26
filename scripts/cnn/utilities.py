@@ -4,12 +4,39 @@ import numpy as np
 import pandas as pd
 from keras.callbacks import CSVLogger
 from keras.models import Model
+from keras.layers import Input, Add, Dense, Activation, BatchNormalization, Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, MaxPool2D, ReLU, Dropout
 import matplotlib.patches as mpatches
 import sys
 from tqdm import tqdm
 from matplotlib.colors import SymLogNorm, LogNorm
 
 np.set_printoptions(threshold=sys.maxsize)
+
+def ResBlock(z, kernelsizes, filters, increase_dim = False):
+    # https://github.com/priya-dwivedi/Deep-Learning/blob/master/resnet_keras/Residual_Networks_yourself.ipynb
+    # https://stackoverflow.com/questions/64792460/how-to-code-a-residual-block-using-two-layers-of-a-basic-cnn-algorithm-built-wit
+    # https://towardsdatascience.com/understanding-and-coding-a-resnet-in-keras-446d7ff84d33
+
+    z_shortcut = z
+    kernelsize_1, kernelsize_2 = kernelsizes
+    filters_1, filters_2 = filters
+
+    fz = Conv2D(filters_1, kernelsize_1, activation="relu")(z)
+    fz = BatchNormalization()(fz)
+    fz = Conv2D(filters_1, kernelsize_2, activation = "relu", padding = "same")(fz)
+    fz = BatchNormalization()(fz)
+    fz = Conv2D(filters_2, kernelsize_1)(fz)
+
+    if increase_dim == True:
+        z_shortcut = Conv2D(filters_2, (1, 1))(z_shortcut)
+        z_shortcut = BatchNormalization()(z_shortcut)
+
+    out = Add()([z_shortcut, fz])
+    out = ReLU()(out)
+    out = BatchNormalization()(out)
+    out = MaxPooling2D(pool_size=(3, 3), strides = 1)(out)
+    
+    return out
 
 def cstm_PuBu(x):
     return plt.cm.PuBu((np.clip(x,2,10)-2)/8.)
