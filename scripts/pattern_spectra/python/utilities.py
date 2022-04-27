@@ -5,8 +5,8 @@ from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
 
-cmap_mean_pattern_spectra = LinearSegmentedColormap.from_list("", ["#f6f6f6", "#143d59"])
-cmap_mean_pattern_spectra_difference = LinearSegmentedColormap.from_list("", ["#c60012", "#f6f6f6", "#143d59"])
+cmap_mean_pattern_spectra = LinearSegmentedColormap.from_list("", ["#f6f6f6", "#00C6B4", "#143d59"])
+cmap_mean_pattern_spectra_difference = LinearSegmentedColormap.from_list("", ["#93000F", "#f6f6f6", "#143d59"])
 
 def PlotEnergyDistribution(table, energy_range, path):
 

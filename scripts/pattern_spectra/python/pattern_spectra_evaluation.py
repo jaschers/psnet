@@ -154,12 +154,12 @@ if args.mode == "separation":
         # select gamma events in the corresponding energy range
         table_gamma_split = table_gamma.loc[(table_gamma["true_energy"] >= bins_redistribution[n])]
         table_gamma_split = table_gamma_split.loc[(table_gamma_split["true_energy"] <= bins_redistribution[n+1])]
-        table_gamma_split.reset_index(inplace = True)
+        table_gamma_split.reset_index(inplace = True, drop = True)
 
         # select proton events in the corresponding energy range
         table_proton_split = table_proton.loc[(table_proton["true_energy"] >= bins_redistribution[n])]
         table_proton_split = table_proton_split.loc[(table_proton_split["true_energy"] <= bins_redistribution[n+1])]
-        table_proton_split.reset_index(inplace = True)
+        table_proton_split.reset_index(inplace = True, drop = True)
 
         # determine the number of different events between gammas and protons in the corresponding energy range
         difference = np.abs(len(table_gamma_split) - len(table_proton_split))

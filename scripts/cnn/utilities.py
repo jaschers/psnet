@@ -14,8 +14,8 @@ np.set_printoptions(threshold=sys.maxsize)
 # define some colors and cmaps
 color_single = "#143d59"
 # colors_categorial = ["#143d59", "#e49d23"] # blue, yellow
-colors_categorial = ["#501e00", "#e49d23"] # brown, yellow
-colors_categorial_hist = ["#143d59", "#c60012"]
+colors_categorial = ["#143d59", "#00c6b4"] # blue, turquoise
+colors_categorial_hist = ["#143d59", "#93000F"]
 cmap_energy_scattering = LinearSegmentedColormap.from_list("", ['#143d59', '#00c6b4', "#fff7d6"])
 
 def cstm_PuBu(x):
