@@ -128,9 +128,9 @@ def PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_s
         ax_difference[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig_mean.tight_layout()
-    fig_mean.savefig(path + "pattern_spectra_mean.png", dpi = 250)
+    fig_mean.savefig(path + "pattern_spectra_mean.pdf", dpi = 250)
     fig_difference.tight_layout()
-    fig_difference.savefig(path + "pattern_spectra_mean_difference.png", dpi = 250)
+    fig_difference.savefig(path + "pattern_spectra_mean_difference.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, pattern_spectra_median_min, pattern_spectra_median_max, pattern_spectra_median_difference, pattern_spectra_median_difference_min, pattern_spectra_median_difference_max, bins, particle_type, attributes, path):
@@ -182,9 +182,9 @@ def PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, patte
         ax_difference[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig_median.tight_layout()
-    fig_median.savefig(path + "pattern_spectra_median.png", dpi = 250)
+    fig_median.savefig(path + "pattern_spectra_median.pdf", dpi = 250)
     fig_difference.tight_layout()
-    fig_difference.savefig(path + "pattern_spectra_median_difference.png", dpi = 250)
+    fig_difference.savefig(path + "pattern_spectra_median_difference.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, pattern_spectra_variance_min, pattern_spectra_variance_max, pattern_spectra_variance_difference, pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max, bins, particle_type, attributes, path):
@@ -236,9 +236,9 @@ def PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, p
         ax_difference[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig_variance.tight_layout()
-    fig_variance.savefig(path + "pattern_spectra_variance.png", dpi = 250)
+    fig_variance.savefig(path + "pattern_spectra_variance.pdf", dpi = 250)
     fig_difference.tight_layout()
-    fig_difference.savefig(path + "pattern_spectra_variance_difference.png", dpi = 250)
+    fig_difference.savefig(path + "pattern_spectra_variance_difference.pdf", dpi = 250)
     plt.close()
 
 
@@ -273,7 +273,7 @@ def PlotPatternSpectraMeanComparison(number_energy_ranges, pattern_spectra_mean_
         ax[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig.tight_layout()
-    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_mean_comparison.png", dpi = 250)
+    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_mean_comparison.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraMeanComparisonTotal(pattern_spectra_total_median_gamma_proton, particle_type, attributes, path):
@@ -299,7 +299,7 @@ def PlotPatternSpectraMeanComparisonTotal(pattern_spectra_total_median_gamma_pro
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_mean_comparison_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_mean_comparison_total.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraMedianComparison(number_energy_ranges, pattern_spectra_median_gamma_proton, bins, particle_type, attributes, path):
@@ -333,7 +333,7 @@ def PlotPatternSpectraMedianComparison(number_energy_ranges, pattern_spectra_med
         ax[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig.tight_layout()
-    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_median_comparison.png", dpi = 250)
+    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_median_comparison.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraMedianComparisonTotal(pattern_spectra_total_median_gamma_proton, particle_type, attributes, path):
@@ -359,7 +359,7 @@ def PlotPatternSpectraMedianComparisonTotal(pattern_spectra_total_median_gamma_p
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_median_comparison_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_median_comparison_total.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraVarianceComparison(number_energy_ranges, pattern_spectra_variance_gamma_proton, bins, particle_type, attributes, path):
@@ -393,7 +393,7 @@ def PlotPatternSpectraVarianceComparison(number_energy_ranges, pattern_spectra_v
         ax[i].set_ylabel(f"a {attributes[1]}", labelpad = 10)
 
     fig.tight_layout()
-    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_variance_comparison.png", dpi = 250)
+    fig.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_variance_comparison.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraVarianceComparisonTotal(pattern_spectra_total_variance_gamma_proton, particle_type, attributes, path):
@@ -419,7 +419,7 @@ def PlotPatternSpectraVarianceComparisonTotal(pattern_spectra_total_variance_gam
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_variance_comparison_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_{particle_type[0]}_{particle_type[1]}_variance_comparison_total.pdf", dpi = 250)
     plt.close()
 
 def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned, number_energy_ranges, bins,particle_type, path):
@@ -448,7 +448,7 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned,
     #plt.tight_layout()
     fig.text(0.5, 0.04, "log$_{10}$(flux)", ha="center")
     fig.text(0.04, 0.5, "Number of events (linear scale)", va="center", rotation="vertical")
-    plt.savefig(path + f"pattern_spectra_PixelDistribution_full.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_PixelDistribution_full.pdf", dpi = 250)
     plt.close()
 
     fig, ax = plt.subplots(11, 8) # only show 'interesting' distributions
@@ -474,7 +474,7 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned,
     plt.legend(fontsize = 4)
     fig.text(0.5, 0.04, "log$_{10}$(flux)", ha = "center")
     fig.text(0.04, 0.5, "Number of events (linear scale)", va = "center", rotation = "vertical")
-    plt.savefig(path + f"pattern_spectra_PixelDistribution_selection.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_PixelDistribution_selection.pdf", dpi = 250)
     plt.close()
 
     # plot the pixel distrubtion for the different energy ranges
@@ -510,7 +510,7 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned,
         plt.legend(fontsize = 4)
         fig.text(0.5, 0.04, "log$_{10}$(flux)", ha = "center")
         fig.text(0.04, 0.5, "Number of events (linear scale)", va = "center", rotation = "vertical")
-        plt.savefig(path + f"pattern_spectra_PixelDistribution_selection_{np.round(bins[k], 1)}_{np.round(bins[k+1], 1)}TeV.png", dpi = 250)
+        plt.savefig(path + f"pattern_spectra_PixelDistribution_selection_{np.round(bins[k], 1)}_{np.round(bins[k+1], 1)}TeV.pdf", dpi = 250)
         plt.close()
 
 
@@ -529,7 +529,7 @@ def PlotPatternSpectraTotal(pattern_spectra_total_mean, pattern_spectra_total_me
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_mean_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_mean_total.pdf", dpi = 250)
     plt.close()
 
     plt.figure()
@@ -543,7 +543,7 @@ def PlotPatternSpectraTotal(pattern_spectra_total_mean, pattern_spectra_total_me
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_median_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_median_total.pdf", dpi = 250)
     plt.close()
 
     plt.figure()
@@ -557,7 +557,7 @@ def PlotPatternSpectraTotal(pattern_spectra_total_mean, pattern_spectra_total_me
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_variance_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_variance_total.pdf", dpi = 250)
     plt.close()
 
 
@@ -582,5 +582,5 @@ def PlotPatternSpectraTotal(pattern_spectra_total_mean, pattern_spectra_total_me
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
     plt.tight_layout()
-    plt.savefig(path + f"pattern_spectra_meanVSmedian_total.png", dpi = 250)
+    plt.savefig(path + f"pattern_spectra_meanVSmedian_total.pdf", dpi = 250)
     plt.close()

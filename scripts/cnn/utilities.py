@@ -27,8 +27,8 @@ def cstm_RdBu(x):
 def PlotLoss(epochs, loss_training, loss_validation, path):
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.plot(epochs, loss_training, label = "Training")
-    plt.plot(epochs, loss_validation, label = "Validation")
+    plt.plot(epochs + 1, loss_training, label = "Training", color = colors_categorial[0])
+    plt.plot(epochs + 1, loss_validation, label = "Validation", color = colors_categorial[1])
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
@@ -570,7 +570,7 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     # plot the ROC curve
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3)), color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")

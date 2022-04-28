@@ -114,7 +114,7 @@ for i in range(len(args.input[0])):
     table_history = pd.read_csv(history_path)
 
     # plot loss history
-    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.png")
+    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
 
     ####################################### Filters and feature maps ########################################
     # define example run and load example data
@@ -146,7 +146,7 @@ for i in range(len(args.input[0])):
         energy_rec = np.asarray((10**table_output["log10(E_rec / GeV)"] * 1e-3))
 
         # create 2D energy scattering plot
-        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.png")
+        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
@@ -167,13 +167,13 @@ for i in range(len(args.input[0])):
         sigma_total = np.std(relative_energy_error_toal)
         
         # save relative energy error histogram (total)
-        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.png")
+        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.pdf")
 
         # save relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.png")
+        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.pdf")
 
         # save corrected relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.png")
+        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.pdf")
 
         # get median and sigma68 values (binned)
         median, sigma = MedianSigma68(energy_true_binned, energy_rec_binned, bins)
@@ -183,10 +183,10 @@ for i in range(len(args.input[0])):
         sigma_all[i] = sigma
 
         # plot energy accuracy
-        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.png")
+        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.pdf")
     
         # plot energy resolution
-        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.png")
+        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.pdf")
     
     elif args.mode == "separation":
         particle_type = np.array(["gamma_diffuse", "proton"])
@@ -194,11 +194,11 @@ for i in range(len(args.input[0])):
         gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
         energy_true = np.asarray(table_output["E_true / GeV"])
 
-        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.png")
+        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
 
-        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.png")
+        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.pdf")
 
-        PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.png")
+        PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
         # Plot wrongly classified CTA images / pattern spectra
         if args.gammaness_limit != [0.0, 0.0, 0.0, 0.0]:
@@ -258,15 +258,15 @@ if args.mode == "energy":
         args_input_unique = np.unique(args.input[0])
         
         # plot energy accuracy comparison
-        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_" + string_comparison + ".png")
+        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyAccuracyComparisonMean(median_all, bins, label[0], args.input[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_mean_" + string_comparison + ".png")
+        PlotEnergyAccuracyComparisonMean(median_all, bins, label[0], args.input[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
 
         # plot energy resolution comparison
-        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".png")
+        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyResolutionComparisonMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".png")
+        PlotEnergyResolutionComparisonMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".pdf")
 
 print("CNN evaluation completed!")

@@ -128,11 +128,11 @@ if args.mode == "separation":
 
     path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
-    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.pdf")
 
     path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
-    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.pdf")
 
     # create same (similar) energy distribution for gammas and protons
     # extract gamma and proton tables
@@ -261,7 +261,7 @@ elif args.mode == "separation":
         path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/{args.telescope_mode}/"
         os.makedirs(path_energy_distribution, exist_ok = True)
         # plot energy distribution of data set
-        PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.png")
+        PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.pdf")
 
         print(f"\n# starting analysis for {particle_type[p]} pattern spectra #")
         table_individual = table.loc[table["particle"] == gammaness[p]]
