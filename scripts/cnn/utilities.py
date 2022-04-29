@@ -642,9 +642,9 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
     plt.grid(alpha = 0.3)
     for i in range(len(true_positive_rate_all)):
         if input[i] == "cta":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], color = colors_categorial[0],label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
         elif input[i] == "ps":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], color = colors_categorial[1],label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
