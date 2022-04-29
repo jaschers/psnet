@@ -184,7 +184,7 @@ for i in range(len(table)):
     X[i] = table[string_table_column][i]
 X = np.asarray(X)
 
-test_split_percentage = 1 / 5
+test_split_percentage = 1 / 10
 
 if args.mode == "energy":
     # output label: log10(true energy)
@@ -211,6 +211,10 @@ X = X.reshape(-1, X_shape[1], X_shape[2], 1)
 # # hold out 10 percent as test data and extract the corresponding run, obs_id, event_id (and tel_id)
 X_train, X_test = np.split(X, [int(-len(table) * test_split_percentage)])
 Y_train, Y_test = np.split(Y, [int(-len(table) * test_split_percentage)])
+
+print("Number training events: ", len(X_train))
+print("Number test events: ", len(X_test))
+
 if args.telescope_mode != "mono":
     run_test, obs_id_test, event_id_test = table.tail(int(len(table) * test_split_percentage))["run"], table.tail(int(len(table) * test_split_percentage))["obs_id"], table.tail(int(len(table) * test_split_percentage))["event_id"]
     run_test.reset_index(drop = True, inplace = True)
@@ -281,7 +285,7 @@ if args.mode == "energy":
     # loss = "mse"
 
     # ## cnn architecture number 3 (cnn3) ###
-    # define a suitable network 
+    # # define a suitable network 
     # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
     #     activation = "relu", padding = "same")(input)
@@ -298,6 +302,29 @@ if args.mode == "energy":
     # z = keras.layers.GlobalAveragePooling2D()(z)
     # z = keras.layers.Dense(16, activation = "relu")(z)
     # z = keras.layers.Dense(8, activation = "relu")(z)
+
+    # output = keras.layers.Dense(1, name = "energy")(z)
+
+    #######################################
+
+    # # cnn architecture number 9 (cnn9) ###
+    # # define a suitable network 
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(input)
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
 
     # output = keras.layers.Dense(1, name = "energy")(z)
 
@@ -451,15 +478,75 @@ if args.mode == "energy":
 
     # ########################################
 
+    # #######################################
+    # ## thin resnet architecture number 6 (trn6) ###
+    # z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # # z = Flatten()(z)
+    # # z = keras.layers.Dense(64, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(32, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # output = keras.layers.Dense(1, name = "energy")(z)
+
+    # ########################################
+
+    # #######################################
+    # ## thin resnet architecture number 7 (trn7) ###
+    # z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # # z = Flatten()(z)
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # # z = keras.layers.Dropout(0.1)(z)
+    # output = keras.layers.Dense(1, name = "energy")(z)
+
+    # #######################################
+
     #######################################
-    ## thin resnet architecture number 6 (trn6) ###
+    ## thin resnet architecture number 8 (trn8) ###
     z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
-    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
@@ -469,17 +556,17 @@ if args.mode == "energy":
     # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
     z = keras.layers.GlobalAveragePooling2D()(z)
     # z = Flatten()(z)
-    # z = keras.layers.Dense(64, activation = "relu")(z)
+    z = keras.layers.Dense(64, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    z = keras.layers.Dense(32, activation = "relu")(z)
     # z = keras.layers.Dropout(0.1)(z)
-    # z = keras.layers.Dense(32, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
-    z = keras.layers.Dense(16, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
-    z = keras.layers.Dense(8, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
     output = keras.layers.Dense(1, name = "energy")(z)
 
-    ########################################
+    #######################################
 
     # define the loss function
     loss = "mse"
@@ -522,7 +609,7 @@ elif args.mode == "separation":
     # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
     ########################################
 
-    # #######################################
+    #######################################
 
     # # cnn architecture number 3 (cnn3) ###
     # z = keras.layers.Conv2D(4, kernel_size = (3,3), activation = "relu", padding = "same")(input)
@@ -541,7 +628,7 @@ elif args.mode == "separation":
     # z = keras.layers.Dense(16, activation = "relu")(z)
 
     # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
-    ######################################## 
+    ####################################### 
 
     ######################################## 
     # # cnn architecture number 2 (cnn4) ###
@@ -651,9 +738,9 @@ elif args.mode == "separation":
 
     # ########################################
 
-    ########################################
-    ### cnn architecture number 8 (cnn8) ###
-    # define a suitable network 
+    ######################################
+    # ## cnn architecture number 8 (cnn8) ###
+    # # # define a suitable network 
     # z = keras.layers.Conv2D(16, # number of filters, the dimensionality of the output space
     #     kernel_size = (3,3), # size of filters 3x3
     #     activation = "relu", padding = "same")(input)
@@ -672,6 +759,31 @@ elif args.mode == "separation":
     # z = keras.layers.Dense(8, activation = "relu")(z)
 
     # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
+
+    # ########################################
+    # # cnn architecture number 9 (cnn9) ###
+    # # define a suitable network 
+    # z = keras.layers.Conv2D(16, kernel_size = (3,3), strides = 1, padding = "same", activation = "relu")(input)
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(32, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(64, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.Conv2D(128, kernel_size = (3,3), strides = 1, activation = "relu")(z)
+    # z = keras.layers.AveragePooling2D(pool_size=(2, 2), strides = 1)(z)
+    
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+
+    # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
+
+    # ########################################
+
     ########################################
     # # ## thin resnet architecture number 1 (trn1) ###
     # z = keras.layers.Conv2D(64, kernel_size = (7, 7), activation = "relu", padding = "same")(input)
@@ -822,15 +934,75 @@ elif args.mode == "separation":
 
     # ########################################
 
-    #######################################
-    ## thin resnet architecture number 6 (trn6) ###
+    # #######################################
+    # ## thin resnet architecture number 6 (trn6) ###
+    # z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # # z = Flatten()(z)
+    # # z = keras.layers.Dense(64, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(32, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
+
+    # ########################################
+
+    # #######################################
+    # ## thin resnet architecture number 7 (trn7) ###
+    # z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
+    # # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512], increase_dim = True)
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    # z = keras.layers.GlobalAveragePooling2D()(z)
+    # # z = keras.layers.Flatten()(z)
+    # z = keras.layers.Dense(64, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # # z = keras.layers.Dropout(0.1)(z)
+    # # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # # z = keras.layers.Dropout(0.1)(z)
+    # output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
+
+    # ########################################
+
+    ########################################
+    ## thin resnet architecture number 8 (trn8) ###
     z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
     # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
     z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
-    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
     # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
@@ -840,19 +1012,19 @@ elif args.mode == "separation":
     # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
     z = keras.layers.GlobalAveragePooling2D()(z)
     # z = Flatten()(z)
-    # z = keras.layers.Dense(64, activation = "relu")(z)
+    z = keras.layers.Dense(64, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    z = keras.layers.Dense(32, activation = "relu")(z)
     # z = keras.layers.Dropout(0.1)(z)
-    # z = keras.layers.Dense(32, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
-    z = keras.layers.Dense(16, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
-    z = keras.layers.Dense(8, activation = "relu")(z)
-    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
     output = keras.layers.Dense(2, activation="softmax", name = "gammaness")(z)
 
-    ########################################
+    #######################################
 
-    # define the loss function
+    # # define the loss function
     loss = "categorical_crossentropy"
 ##########################################################################################
 
@@ -880,7 +1052,7 @@ fit = model.fit(X_train,
     batch_size = 32,
     epochs = args.epochs,
     verbose = 2,
-    validation_split = 0.2,
+    validation_split = 0.1,
     callbacks = [CSVLogger(history_path)])
 
 # end timer and print training time
