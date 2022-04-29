@@ -128,11 +128,11 @@ if args.mode == "separation":
 
     path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
-    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.pdf")
 
     path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
-    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.png")
+    PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_original.pdf")
 
     # create same (similar) energy distribution for gammas and protons
     # extract gamma and proton tables
@@ -154,12 +154,12 @@ if args.mode == "separation":
         # select gamma events in the corresponding energy range
         table_gamma_split = table_gamma.loc[(table_gamma["true_energy"] >= bins_redistribution[n])]
         table_gamma_split = table_gamma_split.loc[(table_gamma_split["true_energy"] <= bins_redistribution[n+1])]
-        table_gamma_split.reset_index(inplace = True)
+        table_gamma_split.reset_index(inplace = True, drop = True)
 
         # select proton events in the corresponding energy range
         table_proton_split = table_proton.loc[(table_proton["true_energy"] >= bins_redistribution[n])]
         table_proton_split = table_proton_split.loc[(table_proton_split["true_energy"] <= bins_redistribution[n+1])]
-        table_proton_split.reset_index(inplace = True)
+        table_proton_split.reset_index(inplace = True, drop = True)
 
         # determine the number of different events between gammas and protons in the corresponding energy range
         difference = np.abs(len(table_gamma_split) - len(table_proton_split))
@@ -229,16 +229,16 @@ if args.mode == "energy":
     # extract the min and max value of pattern_spectra_mean_difference to set the colourbar equally 
     pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max = ExtractPatternSpectraMinMax(number_energy_ranges, pattern_spectra_mean_difference)
     
-    # create own colour map
-    N = 256
-    vals = np.ones((N, 4))
-    vals[:, 0] = np.linspace(cstm_RdBu(6)[0], cstm_PuBu(12)[0], N)
-    vals[:, 1] = np.linspace(cstm_RdBu(6)[1], cstm_PuBu(12)[1], N)
-    vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
-    newcmp = ListedColormap(vals)
+    # # create own colour map
+    # N = 256
+    # vals = np.ones((N, 4))
+    # vals[:, 0] = np.linspace(cstm_RdBu(6)[0], cstm_PuBu(12)[0], N)
+    # vals[:, 1] = np.linspace(cstm_RdBu(6)[1], cstm_PuBu(12)[1], N)
+    # vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
+    # newcmp = ListedColormap(vals)
 
     # plot normed and difference pattern spectra
-    PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, args.particle_type, newcmp, args.attribute, path)
+    PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min, pattern_spectra_mean_max, pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, args.particle_type, args.attribute, path)
 
 
 elif args.mode == "separation":
@@ -261,7 +261,7 @@ elif args.mode == "separation":
         path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/{args.telescope_mode}/"
         os.makedirs(path_energy_distribution, exist_ok = True)
         # plot energy distribution of data set
-        PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.png")
+        PlotEnergyDistribution(table, args.energy_range, path_energy_distribution + "energy_distribution_redistributed.pdf")
 
         print(f"\n# starting analysis for {particle_type[p]} pattern spectra #")
         table_individual = table.loc[table["particle"] == gammaness[p]]
@@ -310,7 +310,7 @@ elif args.mode == "separation":
         os.makedirs(path, exist_ok = True)
 
         # plot total median, mean and variance
-        PlotPatternSpectraTotal(pattern_spectra_total_mean_gamma_proton[p], pattern_spectra_total_median_gamma_proton[p], pattern_spectra_total_variance_gamma_proton[p], particle_type[p], newcmp, args.attribute, path)
+        PlotPatternSpectraTotal(pattern_spectra_total_mean_gamma_proton[p], pattern_spectra_total_median_gamma_proton[p], pattern_spectra_total_variance_gamma_proton[p], particle_type[p], args.attribute, path)
 
         # collect true energy
         energy_true = np.asarray(table_individual["true_energy"]) * 1e-3
@@ -367,11 +367,11 @@ elif args.mode == "separation":
         PlotPatternSpectraPixelDistribution(pattern_spectra, pattern_spectra_binned, number_energy_ranges, bins, particle_type[p], path)
 
         # plot mean and mean difference pattern spectra
-        PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min[p], pattern_spectra_mean_max[p], pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+        PlotPatternSpectraMean(number_energy_ranges, pattern_spectra_mean, pattern_spectra_mean_min[p], pattern_spectra_mean_max[p], pattern_spectra_mean_difference, pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max, bins, particle_type[p], args.attribute, path)
         # plot median and median difference pattern spectra
-        PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, pattern_spectra_median_min[p], pattern_spectra_median_max[p], pattern_spectra_median_difference, pattern_spectra_median_difference_min, pattern_spectra_median_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+        PlotPatternSpectraMedian(number_energy_ranges, pattern_spectra_median, pattern_spectra_median_min[p], pattern_spectra_median_max[p], pattern_spectra_median_difference, pattern_spectra_median_difference_min, pattern_spectra_median_difference_max, bins, particle_type[p], args.attribute, path)
         # plot variance and variance difference pattern spectra
-        PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, pattern_spectra_variance_min[p], pattern_spectra_variance_max[p], pattern_spectra_variance_difference, pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max, bins, particle_type[p], newcmp, args.attribute, path)
+        PlotPatternSpectraVariance(number_energy_ranges, pattern_spectra_variance, pattern_spectra_variance_min[p], pattern_spectra_variance_max[p], pattern_spectra_variance_difference, pattern_spectra_variance_difference_min, pattern_spectra_variance_difference_max, bins, particle_type[p], args.attribute, path)
 
     # Plot mean pattern spectra (gamma - proton) for the total energy range
     PlotPatternSpectraMeanComparisonTotal(pattern_spectra_total_mean_gamma_proton, particle_type, args.attribute, path)

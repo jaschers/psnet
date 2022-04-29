@@ -16,6 +16,8 @@ import logging
 import time
 
 plt.rcParams.update({'font.size': 14})
+plt.rcParams.update({'font.family':'serif'})
+plt.rcParams["mathtext.fontset"] = 'dejavuserif'
 pd.options.mode.chained_assignment = None 
 
 ######################################## argparse setup ########################################
@@ -36,6 +38,7 @@ parser.add_argument("-l", "--label", type = str, required = False, metavar = "-"
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
+parser.add_argument("-s", "--suffix", type = str, required = False, metavar = "-", help = "suffix for the output filenames")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = int, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = int, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
@@ -112,7 +115,7 @@ for i in range(len(args.input[0])):
     table_history = pd.read_csv(history_path)
 
     # plot loss history
-    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.png")
+    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
 
     ####################################### Filters and feature maps ########################################
     # define example run and load example data
@@ -144,7 +147,7 @@ for i in range(len(args.input[0])):
         energy_rec = np.asarray((10**table_output["log10(E_rec / GeV)"] * 1e-3))
 
         # create 2D energy scattering plot
-        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.png")
+        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
@@ -165,13 +168,13 @@ for i in range(len(args.input[0])):
         sigma_total = np.std(relative_energy_error_toal)
         
         # save relative energy error histogram (total)
-        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.png")
+        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.pdf")
 
         # save relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.png")
+        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.pdf")
 
         # save corrected relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.png")
+        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.pdf")
 
         # get median and sigma68 values (binned)
         median, sigma = MedianSigma68(energy_true_binned, energy_rec_binned, bins)
@@ -181,10 +184,10 @@ for i in range(len(args.input[0])):
         sigma_all[i] = sigma
 
         # plot energy accuracy
-        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.png")
+        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.pdf")
     
         # plot energy resolution
-        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.png")
+        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.pdf")
 
         # save energy accuracy & resolution in csv files
         SaveCSV(median, bins, "accuracy", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
@@ -197,13 +200,13 @@ for i in range(len(args.input[0])):
         gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
         energy_true = np.asarray(table_output["E_true / GeV"])
 
-        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.png")
+        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
 
-        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.png")
+        PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.pdf")
 
         true_positive_rate, false_positive_rate, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
-        PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.png")
+        PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
         true_positive_rate_all[i] = true_positive_rate
         false_positive_rate_all[i] = false_positive_rate
@@ -246,26 +249,34 @@ if args.mode == "energy":
     if len(args.input[0]) > 1:
         os.makedirs(f"dm-finder/cnn/comparison/energy", exist_ok = True)
 
-        string_comparison = ""
-        for i in range(len(args.input[0])):
-            string_comparison += args.input[0][i] + string_name[i] + "_"
+        if args.suffix == None:
+            string_comparison = ""
+            for i in range(len(args.input[0])):
+                string_comparison += args.input[0][i] + string_name[i] + "_"
 
-        for i in range(len(args.input[0])):
-            if args.input[0][i] == "ps":
-                string_comparison += "_" + string_ps_input[i][:-1]
-                break
+            for i in range(len(args.input[0])):
+                if args.input[0][i] == "ps":
+                    string_comparison += "_" + string_ps_input[i][:-1]
+                    break
+            
+            if len(string_comparison) > 200:
+                string_comparison = string_comparison[:200]
+        else:
+            string_comparison = args.suffix
+            print(string_comparison)
+
         
         if len(string_comparison) > 200:
             string_comparison = string_comparison[:200]
         
         # plot energy accuracy comparison
-        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".png")
+        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
 
         # plot energy resolution comparison
-        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".png")
+        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".png")
+        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
 
 if (args.mode == "separation") and (len(args.input[0]) > 1):
     os.makedirs(f"dm-finder/cnn/comparison/separation", exist_ok = True)
@@ -282,7 +293,7 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     if len(string_comparison) > 200:
         string_comparison = string_comparison[:200]
 
-    PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".png")
+    PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
 
 
 print("CNN evaluation completed!")

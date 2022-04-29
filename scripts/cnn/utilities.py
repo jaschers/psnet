@@ -8,9 +8,16 @@ from keras.layers import Input, Add, Dense, Activation, BatchNormalization, Flat
 import matplotlib.patches as mpatches
 import sys
 from tqdm import tqdm
-from matplotlib.colors import SymLogNorm, LogNorm
+from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
 
 np.set_printoptions(threshold=sys.maxsize)
+
+# define some colors and cmaps
+color_single = "#143d59"
+# colors_categorial = ["#143d59", "#e49d23"] # blue, yellow
+colors_categorial = ["#143d59", "#00c6b4"] # blue, turquoise
+colors_categorial_hist = ["#143d59", "#93000F"]
+cmap_energy_scattering = LinearSegmentedColormap.from_list("", ['#143d59', '#00c6b4', "#fff7d6"])
 
 # def ResBlock(z, kernelsizes, filters, increase_dim = False):
 #     # https://github.com/priya-dwivedi/Deep-Learning/blob/master/resnet_keras/Residual_Networks_yourself.ipynb
@@ -73,8 +80,8 @@ def cstm_RdBu(x):
 def PlotLoss(epochs, loss_training, loss_validation, path):
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.plot(epochs, loss_training, label = "Training")
-    plt.plot(epochs, loss_validation, label = "Validation")
+    plt.plot(epochs + 1, loss_training, label = "Training", color = colors_categorial[0])
+    plt.plot(epochs + 1, loss_validation, label = "Validation", color = colors_categorial[1])
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
@@ -87,7 +94,7 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
     x = np.linspace(np.min(energy_true), np.max(energy_true), 100)
     plt.plot(x, x, color="black")
     # plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
-    plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = "viridis", norm = matplotlib.colors.LogNorm())
+    plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = cmap_energy_scattering, norm = matplotlib.colors.LogNorm())
     cbar = plt.colorbar()
     cbar.set_label('Number of events')
     plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
@@ -98,7 +105,7 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
 def PlotRelativeEnergyError(relative_energy_error_single, mean, sigma_total, path):
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.hist(relative_energy_error_single, bins = np.linspace(np.min(relative_energy_error_single), np.max(relative_energy_error_single), 40))
+    plt.hist(relative_energy_error_single, bins = np.linspace(np.min(relative_energy_error_single), np.max(relative_energy_error_single), 40), color = color_single)
     # plt.yscale("log")
     plt.xlabel("($E_\mathrm{rec} - E_\mathrm{true})/ E_\mathrm{true}$")
     plt.ylabel("Number of events")
@@ -116,7 +123,7 @@ def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, p
         sigma = np.std(relative_energy_error)
         ax[j].set_title(f"{np.round(bins[j], 2)} TeV < $E_{{true}}$ < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
         ax[j].grid(alpha = 0.2)
-        ax[j].hist(relative_energy_error, bins = np.linspace(np.min(relative_energy_error), np.max(relative_energy_error), 40))
+        ax[j].hist(relative_energy_error, bins = np.linspace(np.min(relative_energy_error), np.max(relative_energy_error), 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median$ = %.3f$" % median)
         ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
@@ -163,7 +170,7 @@ def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned
         
         ax[j].set_title(f"{np.round(bins[j], 2)} TeV < E < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
         ax[j].grid(alpha = 0.2)
-        ax[j].hist(relative_energy_error_corrected, bins = np.linspace(np.min(relative_energy_error_corrected), np.max(relative_energy_error_corrected), 40))
+        ax[j].hist(relative_energy_error_corrected, bins = np.linspace(np.min(relative_energy_error_corrected), np.max(relative_energy_error_corrected), 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(sigma_single, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7,  label = "$\sigma_{68} = %.3f$" % sigma_single)
         ax[j].tick_params(axis='both', which='major', labelsize = 6)
@@ -184,8 +191,8 @@ def PlotEnergyAccuracy(median, bins, path):
 
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.errorbar(bins_central, median, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".")
-    plt.xlabel("Energy [TeV]")
+    plt.errorbar(bins_central, median, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
     plt.tight_layout()
@@ -200,8 +207,8 @@ def PlotEnergyResolution(sigma, bins, path):
 
     plt.figure()
     plt.grid(alpha = 0.2)
-    plt.errorbar(bins_central, sigma, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".")
-    plt.xlabel("Energy [TeV]")
+    plt.errorbar(bins_central, sigma, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     plt.tight_layout()
@@ -218,12 +225,50 @@ def PlotEnergyAccuracyComparison(median_all, bins, label, path):
     plt.grid(alpha = 0.2)
     for i in range(len(median_all)):
         plt.errorbar(bins_central, median_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
-    plt.xlabel("Energy [TeV]")
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
     plt.ylim(ymin, 1.2 * ymax)
     plt.legend(loc = "upper right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
+    table = []
+    for k in range(len(args_input)):
+        table.append([args_input[k], median_all[k]])
+
+    table = pd.DataFrame(table, columns=["input", "energy accuracy"])
+
+    table_mean = []
+    args_input_unique = np.unique(args_input)
+    for k in range(len(args_input_unique)):
+        table_k = table.copy()
+        table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
+        table_mean.append([args_input_unique[k], np.mean(table_k["energy accuracy"].dropna().to_numpy(), axis = 0), np.std(table_k["energy accuracy"].dropna().to_numpy(), axis = 0)])
+    table_mean = pd.DataFrame(table_mean, columns=["input", "mean energy accuracy", "std energy accuracy"])
+
+    bins_central = np.array([])
+    for b in range(len(bins) - 1):
+        bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
+
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    labels = ["CTA images", "Pattern spectra"]
+    for i in range(len(args_input_unique)):
+        table_mean_i = table_mean.copy()
+        mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
+        std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
+        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors_categorial[i])
+        plt.fill_between(bins_central, mean_energy_accuracy - std_energy_accuracy, mean_energy_accuracy + std_energy_accuracy, facecolor = colors_categorial[i], alpha = 0.3)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
+    plt.xscale("log")
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(ymin, 1.2 * ymax)
+    plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -245,8 +290,8 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     for i in range(len(sigma_all)):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
     # plt.plot(bins_central, mean, linestyle = "--", label = "Mean", color = "black")
-    # plt.fill_between(bins_central, mean - error, mean + error, color = "grey", alpha = 0.25)
-    plt.xlabel("Energy [TeV]")
+    # plt.fill_between(bins_central, mean - error, mean + error, color = "black", alpha = 0.25)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     # plt.ylim(0.2, 0.60)
@@ -255,7 +300,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
+def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path):
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], sigma_all[k]])
@@ -282,13 +327,14 @@ def PlotEnergyResolutionMean(args_input, sigma_all, bins, label, path):
 
     plt.figure()
     plt.grid(alpha = 0.2)
+    labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = args_input_unique[i])
-        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, color = "grey", alpha = 0.25)
-    plt.xlabel("Energy [TeV]")
+        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors_categorial[i])
+        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors_categorial[i], alpha = 0.3)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     # plt.ylim(0.2, 0.60)
@@ -453,9 +499,9 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
     fig, ax = plt.subplots(1)
-    plt.grid(alpha = 0.3)
-    plt.hist(gammaness_gammas, label = "true photons", bins = np.linspace(0, 1, 31), alpha = 0.6)
-    plt.hist(gammaness_protons, label = "true protons", bins = np.linspace(0, 1, 31), alpha = 0.6)
+    plt.grid(alpha = 0.2)
+    plt.hist(gammaness_gammas, label = "true photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
+    plt.hist(gammaness_protons, label = "true protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
     # plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
     plt.xlabel("Gammaness")
     plt.ylabel("Number events")
@@ -522,7 +568,7 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
 
     fig, ax = plt.subplots(3, 2)
     ax = ax.ravel()
-    plt.grid(alpha = 0.3)
+    plt.grid(alpha = 0.2)
     for i in range(number_energy_ranges):
         # define true gammaness as boolean
         gammaness_true_bool = gammaness_true_binned[i].astype(bool)
@@ -539,12 +585,12 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
         area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        ax[i].hist(gammaness_gammas, label = "true photons", alpha = 0.6)
-        ax[i].hist(gammaness_protons, label = "true protons", alpha = 0.6)
+        ax[i].hist(gammaness_gammas, label = "true photons", alpha = 0.8, color = colors_categorial_hist[0])
+        ax[i].hist(gammaness_protons, label = "true protons", alpha = 0.8, color = colors_categorial_hist[1])
         ylim = ax[i].get_ylim()
         ax[i].set_xlim(-0.05, 1.05)
-        ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
-        ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
+        # ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
+        # ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
         ax[i].tick_params(axis = 'both', which = 'major', labelsize = 10)
 
     ax[-1].set_xlabel("Gammaness", fontsize = 10)
@@ -580,8 +626,8 @@ def ROC(gammaness_true, gammaness_rec):
 def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path):
     # plot the ROC curve
     plt.figure()
-    plt.grid(alpha = 0.3)
-    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.grid(alpha = 0.2)
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3)), color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
