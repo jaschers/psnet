@@ -272,11 +272,14 @@ if args.mode == "energy":
         # plot energy accuracy comparison
         PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
 
+        PlotEnergyAccuracyComparisonMean(median_all, bins, label[0], args.input[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
+
         # plot energy resolution comparison
         PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
+        PlotEnergyResolutionComparisonMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
+
 
 if (args.mode == "separation") and (len(args.input[0]) > 1):
     os.makedirs(f"dm-finder/cnn/comparison/separation", exist_ok = True)
