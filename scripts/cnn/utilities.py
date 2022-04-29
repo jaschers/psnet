@@ -97,8 +97,8 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
     plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = cmap_energy_scattering, norm = matplotlib.colors.LogNorm())
     cbar = plt.colorbar()
     cbar.set_label('Number of events')
-    plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
-    plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
+    plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{TeV})$")
+    plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{TeV})$")
     plt.savefig(path, dpi = 250)
     plt.close()
 

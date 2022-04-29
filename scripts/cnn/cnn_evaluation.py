@@ -147,7 +147,7 @@ for i in range(len(args.input[0])):
         energy_rec = np.asarray((10**table_output["log10(E_rec / GeV)"] * 1e-3))
 
         # create 2D energy scattering plot
-        PlotEnergyScattering2D(table_output["log10(E_true / GeV)"], table_output["log10(E_rec / GeV)"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
+        PlotEnergyScattering2D(np.log10(energy_true), np.log10(energy_rec), f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
