@@ -97,8 +97,8 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
     plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = cmap_energy_scattering, norm = matplotlib.colors.LogNorm())
     cbar = plt.colorbar()
     cbar.set_label('Number of events')
-    plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{TeV})$")
-    plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{TeV})$")
+    plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
+    plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
     plt.savefig(path, dpi = 250)
     plt.close()
 
@@ -123,7 +123,7 @@ def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, p
         sigma = np.std(relative_energy_error)
         ax[j].set_title(f"{np.round(bins[j], 2)} TeV < $E_{{true}}$ < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
         ax[j].grid(alpha = 0.2)
-        ax[j].hist(relative_energy_error, bins = np.linspace(np.min(relative_energy_error), np.max(relative_energy_error), 40), color = color_single)
+        ax[j].hist(relative_energy_error, bins = np.linspace(-1, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median$ = %.3f$" % median)
         ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
@@ -170,7 +170,7 @@ def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned
         
         ax[j].set_title(f"{np.round(bins[j], 2)} TeV < E < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
         ax[j].grid(alpha = 0.2)
-        ax[j].hist(relative_energy_error_corrected, bins = np.linspace(np.min(relative_energy_error_corrected), np.max(relative_energy_error_corrected), 40), color = color_single)
+        ax[j].hist(relative_energy_error_corrected, bins = np.linspace(0, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(sigma_single, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7,  label = "$\sigma_{68} = %.3f$" % sigma_single)
         ax[j].tick_params(axis='both', which='major', labelsize = 6)
