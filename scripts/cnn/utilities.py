@@ -555,8 +555,8 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PlotROC(gammaness_true, gammaness_rec, path):
-    # define true gammaness as boolean
+def ROC(gammaness_true, gammaness_rec):
+     # define true gammaness as boolean
     gammaness_true_bool = gammaness_true.astype(bool)
     gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
     # extract gammaness of true gamma-ray events
@@ -570,14 +570,35 @@ def PlotROC(gammaness_true, gammaness_rec, path):
     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
     true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
     true_negative_rate_50, false_negative_rate_50 = NegativeRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
-    print("Correctly classified photons: ", true_positive_rate_50[0])
-    print("Correctly classified protons: ", true_negative_rate_50[0])
+    # print("Correctly classified photons: ", true_positive_rate_50[0])
+    # print("Correctly classified protons: ", true_negative_rate_50[0])
     area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
+    return(true_positive_rate, false_positive_rate, area_under_ROC_curve)
+
+
+def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path):
     # plot the ROC curve
     plt.figure()
     plt.grid(alpha = 0.3)
     plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
+    plt.xlabel("False positive rate")
+    plt.ylabel("True positive rate")
+    plt.legend(loc = "lower right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, input, path):
+    # plot the ROC curve
+    plt.figure()
+    plt.grid(alpha = 0.3)
+    for i in range(len(true_positive_rate_all)):
+        if input[i] == "cta":
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+        elif input[i] == "ps":
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
@@ -744,3 +765,10 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes
     plt.tight_layout()
     plt.savefig(path + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png", dpi = 250)
     plt.close()
+
+def SaveCSV(y, bins, y_label, path):
+    table = pd.DataFrame()
+    table["E_min [TeV]"] = bins[:-1]
+    table["E_max [TeV]"] = bins[1:]
+    table[f"{y_label}"] = y
+    table.to_csv(path)

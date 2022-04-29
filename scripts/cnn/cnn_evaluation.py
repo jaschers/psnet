@@ -99,8 +99,9 @@ else:
 print(string_summary)
 ##########################################################################################
 
-median_all = [[]] * len(args.input[0])
-sigma_all = [[]] * len(args.input[0])
+median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
+
+true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 for i in range(len(args.input[0])):
     # create folder
@@ -184,6 +185,11 @@ for i in range(len(args.input[0])):
     
         # plot energy resolution
         PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.png")
+
+        # save energy accuracy & resolution in csv files
+        SaveCSV(median, bins, "accuracy", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
+        SaveCSV(sigma, bins, "resolution", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.csv")
+        
     
     elif args.mode == "separation":
         particle_type = np.array(["gamma_diffuse", "proton"])
@@ -195,7 +201,13 @@ for i in range(len(args.input[0])):
 
         PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.png")
 
-        PlotROC(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.png")
+        true_positive_rate, false_positive_rate, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
+
+        PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.png")
+
+        true_positive_rate_all[i] = true_positive_rate
+        false_positive_rate_all[i] = false_positive_rate
+        area_under_ROC_curve_all[i] = area_under_ROC_curve
 
         # Plot wrongly classified CTA images / pattern spectra
         if args.gammaness_limit != [0.0, 0.0, 0.0, 0.0]:
@@ -232,7 +244,7 @@ for i in range(len(args.input[0])):
 if args.mode == "energy":
     # if more than two inputs are given -> compare the results
     if len(args.input[0]) > 1:
-        os.makedirs(f"dm-finder/cnn/comparison/", exist_ok = True)
+        os.makedirs(f"dm-finder/cnn/comparison/energy", exist_ok = True)
 
         string_comparison = ""
         for i in range(len(args.input[0])):
@@ -245,16 +257,32 @@ if args.mode == "energy":
         
         if len(string_comparison) > 200:
             string_comparison = string_comparison[:200]
-
-        args_input_unique = np.unique(args.input[0])
         
         # plot energy accuracy comparison
-        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_accuracy_" + string_comparison + ".png")
+        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".png")
 
         # plot energy resolution comparison
-        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_" + string_comparison + ".png")
+        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".png")
 
         # plot mean energy resolution
-        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/" + "energy_resolution_mean_" + string_comparison + ".png")
+        PlotEnergyResolutionMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".png")
+
+if (args.mode == "separation") and (len(args.input[0]) > 1):
+    os.makedirs(f"dm-finder/cnn/comparison/separation", exist_ok = True)
+
+    string_comparison = ""
+    for i in range(len(args.input[0])):
+        string_comparison += args.input[0][i] + string_name[i] + "_"
+
+    for i in range(len(args.input[0])):
+        if args.input[0][i] == "ps":
+            string_comparison += "_" + string_ps_input[i][:-1]
+            break
+    
+    if len(string_comparison) > 200:
+        string_comparison = string_comparison[:200]
+
+    PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".png")
+
 
 print("CNN evaluation completed!")
