@@ -568,6 +568,36 @@ if args.mode == "energy":
 
     #######################################
 
+    #######################################
+    ## thin resnet architecture number 9 (trn9) ###
+    z = keras.layers.Conv2D(16, kernel_size = (3, 3), activation = "relu", padding = "same")(input)
+    # z = keras.layers.MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64], increase_dim = True)
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [32, 64])
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128], increase_dim = True)
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [64, 128])
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256], increase_dim = True)
+    z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [128, 256])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512], increase_dim = True)
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # z = ResBlock(z, kernelsizes = [(1, 1), (3, 3)], filters = [256, 512])
+    # z = MaxPooling2D(pool_size=(2, 2), strides = 2, padding="same")(z)
+    z = keras.layers.GlobalAveragePooling2D()(z)
+    # z = Flatten()(z)
+    z = keras.layers.Dense(64, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    z = keras.layers.Dense(32, activation = "relu")(z)
+    # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(16, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    # z = keras.layers.Dense(8, activation = "relu")(z)
+    # # z = keras.layers.Dropout(0.1)(z)
+    output = keras.layers.Dense(1, name = "energy")(z)
+
+    #######################################
+
     # define the loss function
     loss = "mse"
 
