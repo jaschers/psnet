@@ -55,22 +55,22 @@ def ResBlock(z, kernelsizes, filters, increase_dim = False):
     filters_1, filters_2 = filters
 
     fz = Conv2D(filters_1, kernelsize_1)(z)
-    fz = BatchNormalization(axis = 3)(fz)
-    fz = ReLU()(fz)
+    # fz = BatchNormalization()(fz)
+    fz = LeakyReLU()(fz)
 
     fz = Conv2D(filters_1, kernelsize_2, padding = "same")(fz)
-    fz = BatchNormalization(axis = 3)(fz)
-    fz = ReLU()(fz)
+    # fz = BatchNormalization()(fz)
+    fz = LeakyReLU()(fz)
     
     fz = Conv2D(filters_2, kernelsize_1)(fz)
-    fz = BatchNormalization(axis = 3)(fz)
+    # fz = BatchNormalization()(fz)
 
     if increase_dim == True:
         z_shortcut = Conv2D(filters_2, (1, 1))(z_shortcut)
-        z_shortcut = BatchNormalization(axis = 3)(z_shortcut)
+        # z_shortcut = BatchNormalization()(z_shortcut)
 
     out = Add()([fz, z_shortcut])
-    out = ReLU()(out)
+    out = LeakyReLU()(out)
     # out = MaxPooling2D(pool_size=(3, 3), strides = 1)(out)
     
     return out
