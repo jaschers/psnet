@@ -130,8 +130,8 @@ def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, p
         ax[j].hist(relative_energy_error, bins = np.linspace(-1, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median$ = %.3f$" % median)
-        ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
-        ax[j].vlines(median + sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7)
+        # ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
+        # ax[j].vlines(median + sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7)
         ax[j].tick_params(axis='both', which='major', labelsize = 6)
         ax[j].legend(fontsize = 6)
         ymax = 1.6 * ymax
@@ -149,7 +149,7 @@ def MedianSigma68(energy_true_binned, energy_rec_binned, bins):
         relative_energy_error = (energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] 
         median = np.median(relative_energy_error)
         median_collection = np.append(median_collection, median)
-        relative_energy_error_corrected = np.abs((energy_rec_binned[j] - energy_true_binned[j] - median) / energy_true_binned[j])
+        relative_energy_error_corrected = np.abs((energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] - median)
         relative_energy_error_corrected = np.sort(relative_energy_error_corrected)
         index_68 = int(len(relative_energy_error_corrected) * 0.68)
         sigma_single = relative_energy_error_corrected[index_68]
@@ -165,7 +165,7 @@ def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned
     for j in range(len(energy_true_binned)):
         relative_energy_error = (energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] 
         median = np.median(relative_energy_error)
-        relative_energy_error_corrected = np.abs((energy_rec_binned[j] - energy_true_binned[j] - median) / energy_true_binned[j])
+        relative_energy_error_corrected = np.abs((energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] - median)
         relative_energy_error_corrected = np.sort(relative_energy_error_corrected)
         index_68 = int(len(relative_energy_error_corrected) * 0.68)
 
