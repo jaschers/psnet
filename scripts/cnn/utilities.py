@@ -261,11 +261,12 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
     plt.figure()
     plt.grid(alpha = 0.2)
     labels = ["CTA images", "Pattern spectra"]
+    markers = [".", "v"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
         std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors_categorial[i])
+        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], label = labels[i], color = colors_categorial[i])
         plt.fill_between(bins_central, mean_energy_accuracy - std_energy_accuracy, mean_energy_accuracy + std_energy_accuracy, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
@@ -332,11 +333,12 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     plt.figure()
     plt.grid(alpha = 0.2)
     labels = ["CTA images", "Pattern spectra"]
+    markers = [".", "v"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", label = labels[i], color = colors_categorial[i])
+        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], label = labels[i], color = colors_categorial[i])
         plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
@@ -504,8 +506,8 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
 
     fig, ax = plt.subplots(1)
     plt.grid(alpha = 0.2)
-    plt.hist(gammaness_gammas, label = "true photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
-    plt.hist(gammaness_protons, label = "true protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
+    plt.hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
+    plt.hist(gammaness_protons, label = "True protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
     # plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
     plt.xlabel("Gammaness")
     plt.ylabel("Number events")
@@ -589,8 +591,8 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
         area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        ax[i].hist(gammaness_gammas, label = "true photons", alpha = 0.8, color = colors_categorial_hist[0])
-        ax[i].hist(gammaness_protons, label = "true protons", alpha = 0.8, color = colors_categorial_hist[1])
+        ax[i].hist(gammaness_gammas, label = "True photons", alpha = 0.8, color = colors_categorial_hist[0])
+        ax[i].hist(gammaness_protons, label = "True protons", alpha = 0.8, color = colors_categorial_hist[1])
         ylim = ax[i].get_ylim()
         ax[i].set_xlim(-0.05, 1.05)
         # ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
@@ -644,12 +646,13 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
     # plot the ROC curve
     plt.figure()
     plt.grid(alpha = 0.3)
+    linestyles = ["-.", "--"]
     for i in range(len(true_positive_rate_all)):
         if input[i] == "cta":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], color = colors_categorial[0],label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
         elif input[i] == "ps":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], color = colors_categorial[1],label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-    plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
+            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "-")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
     plt.legend(loc = "lower right")
