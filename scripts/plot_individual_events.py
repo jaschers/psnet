@@ -101,7 +101,7 @@ if args.input == "ps":
     plt.xlabel(f"attribute {args.attribute[0]}", labelpad = 20, fontsize = 16)
     plt.ylabel(f"attribute {args.attribute[1]}", labelpad = 20, fontsize = 16)
     cbar = plt.colorbar()
-    cbar.set_label(label = "log$_{10}$(flux)", fontsize = 16)
+    cbar.set_label(label = r"log$_{10}$($\Phi$)", fontsize = 16)
     # plt.axis('off')
     plt.xticks([], [])
     plt.yticks([], [])
