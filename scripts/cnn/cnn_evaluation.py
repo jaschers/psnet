@@ -16,8 +16,8 @@ import logging
 import time
 
 plt.rcParams.update({'font.size': 14})
-plt.rcParams.update({'font.family':'serif'})
-plt.rcParams["mathtext.fontset"] = 'dejavuserif'
+plt.rcParams.update({'font.family':'Times New Roman'}) #serif
+plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
 pd.options.mode.chained_assignment = None 
 
 ######################################## argparse setup ########################################

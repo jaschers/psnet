@@ -261,12 +261,13 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
     plt.figure()
     plt.grid(alpha = 0.2)
     labels = ["CTA images", "Pattern spectra"]
-    markers = [".", "v"]
+    markers = [".", "s"]
+    markersizes = [8, 4]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
         std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], label = labels[i], color = colors_categorial[i])
+        plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
         plt.fill_between(bins_central, mean_energy_accuracy - std_energy_accuracy, mean_energy_accuracy + std_energy_accuracy, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
@@ -332,13 +333,14 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
 
     plt.figure()
     plt.grid(alpha = 0.2)
-    labels = ["CTA images", "Pattern spectra"]
-    markers = [".", "v"]
+    labels = [r"CTA images $\Phi$", "Pattern spectra"]
+    markers = [".", "s"]
+    markersizes = [8, 4]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], label = labels[i], color = colors_categorial[i])
+        plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
         plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
@@ -645,7 +647,7 @@ def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
 def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, input, path):
     # plot the ROC curve
     plt.figure()
-    plt.grid(alpha = 0.3)
+    plt.grid(alpha = 0.2)
     linestyles = ["-.", "--"]
     for i in range(len(true_positive_rate_all)):
         if input[i] == "cta":
