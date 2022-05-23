@@ -15,10 +15,14 @@ from keras.models import Model
 import logging
 import time
 
-plt.rcParams.update({'font.size': 14})
-plt.rcParams.update({'font.family':'serif'}) #serif
-plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
-pd.options.mode.chained_assignment = None 
+plt.rcParams.update({'font.size': 8})
+# plt.rcParams.update({'font.family':'serif'}) #serif
+# plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
+# pd.options.mode.chained_assignment = None 
+
+plt.rc('text', usetex=True )
+plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
+plt.rcParams['mathtext.fontset'] = 'cm'
 
 ######################################## argparse setup ########################################
 script_version=0.1

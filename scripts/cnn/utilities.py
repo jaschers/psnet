@@ -12,12 +12,31 @@ from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
 
 np.set_printoptions(threshold=sys.maxsize)
 
+plt.rcParams.update({'font.size': 8})
+fontsize_plots = 8
+# plt.rcParams.update({'font.family':'serif'}) #serif
+# plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
+# pd.options.mode.chained_assignment = None 
+
+plt.rc('text', usetex=True )
+plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
+plt.rcParams['mathtext.fontset'] = 'cm'
+
 # define some colors and cmaps
 color_single = "#143d59"
 # colors_categorial = ["#143d59", "#e49d23"] # blue, yellow
 colors_categorial = ["#143d59", "#00c6b4"] # blue, turquoise
 colors_categorial_hist = ["#143d59", "#93000F"]
 cmap_energy_scattering = LinearSegmentedColormap.from_list("", ['#143d59', '#00c6b4', "#fff7d6"])
+
+cm_conversion_factor = 1/2.54  # centimeters in inches
+single_column_fig_size = (8.85679 * cm_conversion_factor, 8.85679 * 3/4 * cm_conversion_factor)
+double_column_fig_size = (18.34621 * cm_conversion_factor, 18.34621 * 3/4 * cm_conversion_factor)
+double_column_squeezed_fig_size = (18.34621 * cm_conversion_factor, 18.34621 * 1/2 * cm_conversion_factor)
+
+markers = [".", "s"]
+markersizes = [6, 3]
+# hatches = ["xxx", "..."]
 
 # def ResBlock(z, kernelsizes, filters, increase_dim = False):
 #     # https://github.com/priya-dwivedi/Deep-Learning/blob/master/resnet_keras/Residual_Networks_yourself.ipynb
@@ -82,27 +101,30 @@ def cstm_RdBu(x):
     return plt.cm.RdBu((np.clip(x,2,10)-2)/8.)
 
 def PlotLoss(epochs, loss_training, loss_validation, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(epochs + 1, loss_training, label = "Training", color = colors_categorial[0])
     plt.plot(epochs + 1, loss_validation, label = "Validation", color = colors_categorial[1])
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
     plt.legend()
+    plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
 
 def PlotEnergyScattering2D(energy_true, energy_rec, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     x = np.linspace(np.min(energy_true), np.max(energy_true), 100)
-    plt.plot(x, x, color="black")
+    plt.plot(x, x, color="black", label = "$E_\mathrm{rec} = E_\mathrm{true}$")
     # plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
     plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = cmap_energy_scattering, norm = matplotlib.colors.LogNorm())
     cbar = plt.colorbar()
     cbar.set_label('Number of events')
-    plt.xlabel("$\log_{10}(E_\mathrm{true}/\mathrm{GeV})$")
-    plt.ylabel("$\log_{10}(E_\mathrm{rec}/\mathrm{GeV})$")
+    plt.xlabel("$\log_{10}(E_\mathrm{true}$ $\mathrm{[TeV]})$")
+    plt.ylabel("$\log_{10}(E_\mathrm{rec}$ $\mathrm{[TeV]})$")
+    plt.legend(loc = "upper left")
+    plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
 
@@ -120,24 +142,25 @@ def PlotRelativeEnergyError(relative_energy_error_single, mean, sigma_total, pat
 
 def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, path):
     fig, ax = plt.subplots(3, 3)
+    fig.set_size_inches(double_column_squeezed_fig_size)
     ax = ax.ravel()
     for j in range(len(energy_true_binned)):
         relative_energy_error = (energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] 
         median = np.median(relative_energy_error)
         sigma = np.std(relative_energy_error)
-        ax[j].set_title(f"{np.round(bins[j], 2)} TeV < $E_{{true}}$ < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
+        ax[j].set_title("{0:.1f} TeV ".format(np.round(bins[j], 1)) + "$< E_\mathrm{true} <$" + " {0:.1f} TeV".format(np.round(bins[j+1], 1)), fontsize = fontsize_plots)
         ax[j].grid(alpha = 0.2)
         ax[j].hist(relative_energy_error, bins = np.linspace(-1, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
-        ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median$ = %.3f$" % median)
+        ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median $ = {0:.3f}$".format(np.round(median, 3)))
         # ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
         # ax[j].vlines(median + sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7)
-        ax[j].tick_params(axis='both', which='major', labelsize = 6)
-        ax[j].legend(fontsize = 6)
+        ax[j].tick_params(axis='both', which='major')
+        ax[j].legend()
         ymax = 1.6 * ymax
         ax[j].set_ylim(ymin, ymax)
-    ax[-2].set_xlabel("$(E_\mathrm{rec} - E_\mathrm{true}) / E_\mathrm{true}$", fontsize = 6)
-    ax[3].set_ylabel("Number of events", fontsize = 6)
+    ax[-2].set_xlabel("$\Delta E / E_\mathrm{true}$")
+    ax[3].set_ylabel("Number of events")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -160,6 +183,7 @@ def MedianSigma68(energy_true_binned, energy_rec_binned, bins):
   
 def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, path):
     fig, ax = plt.subplots(3, 3)
+    fig.set_size_inches(double_column_squeezed_fig_size)
     ax = ax.ravel()
     sigma_collection = np.array([])
     for j in range(len(energy_true_binned)):
@@ -172,17 +196,17 @@ def PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned
         sigma_single = relative_energy_error_corrected[index_68]
         sigma_collection = np.append(sigma_collection, sigma_single)
         
-        ax[j].set_title(f"{np.round(bins[j], 2)} TeV < E < {np.round(bins[j+1], 2)} TeV", fontsize = 6)
+        ax[j].set_title("{0:.1f} TeV ".format(np.round(bins[j], 1)) + "$< E_\mathrm{true} <$" + " {0:.1f} TeV".format(np.round(bins[j+1], 1)), fontsize = fontsize_plots)
         ax[j].grid(alpha = 0.2)
         ax[j].hist(relative_energy_error_corrected, bins = np.linspace(0, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(sigma_single, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7,  label = "$\sigma_{68} = %.3f$" % sigma_single)
-        ax[j].tick_params(axis='both', which='major', labelsize = 6)
-        ax[j].legend(fontsize = 6)
+        ax[j].tick_params(axis='both', which='major', labelsize = fontsize_plots)
+        ax[j].legend(fontsize = fontsize_plots)
         ymax = 1.3 * ymax
         ax[j].set_ylim(ymin, ymax)
-    ax[-2].set_xlabel("$(E_\mathrm{rec} - E_\mathrm{true}) / E_\mathrm{true}$", fontsize = 6)
-    ax[3].set_ylabel("Number of events", fontsize = 6)
+    ax[-2].set_xlabel("$|\Delta E / E_\mathrm{true}|_{\mathrm{corr}}$")
+    ax[3].set_ylabel("Number of events", fontsize = fontsize_plots)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -258,11 +282,9 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     labels = ["CTA images", "Pattern spectra"]
-    markers = [".", "s"]
-    markersizes = [8, 4]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
@@ -331,11 +353,9 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    labels = [r"CTA images $\Phi$", "Pattern spectra"]
-    markers = [".", "s"]
-    markersizes = [8, 4]
+    labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
