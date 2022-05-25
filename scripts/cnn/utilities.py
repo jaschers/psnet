@@ -26,7 +26,8 @@ plt.rcParams['mathtext.fontset'] = 'cm'
 color_single = "#143d59"
 # colors_categorial = ["#143d59", "#e49d23"] # blue, yellow
 colors_categorial = ["#143d59", "#00c6b4"] # blue, turquoise
-colors_categorial_hist = ["#143d59", "#93000F"]
+# colors_categorial_hist = ["#143d59", "#93000F"]
+colors_categorial_hist = ["#143d59", "#00c6b4"]
 cmap_energy_scattering = LinearSegmentedColormap.from_list("", ['#143d59', '#00c6b4', "#fff7d6"])
 
 cm_conversion_factor = 1/2.54  # centimeters in inches
@@ -526,7 +527,7 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     # extract gammaness of true proton events
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
-    fig, ax = plt.subplots(1)
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
     plt.hist(gammaness_protons, label = "True protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
@@ -538,7 +539,7 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     # patch = mpatches.Patch(color = 'white', label = r"total - acc = {0} $\%$".format(np.round(true_positive_rate_total * 100, 2)))
     # handles.append(patch) 
     # plt.legend(handles = handles, framealpha = 0.95)
-    plt.legend(framealpha = 0.95)
+    plt.legend(framealpha = 0.95, loc = "upper center")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -666,7 +667,7 @@ def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
 
 def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, input, path):
     # plot the ROC curve
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     linestyles = ["-.", "--"]
     for i in range(len(true_positive_rate_all)):
