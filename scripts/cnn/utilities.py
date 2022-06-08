@@ -582,7 +582,7 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
     gammaness_true = np.asarray(table_output["true gammaness"])
     gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
 
-    number_energy_ranges = 6 # number of energy ranges the whole energy range will be splitted
+    number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
     sst_energy_min = energy_range[0] # TeV
     sst_energy_max = energy_range[1] # TeV
     bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
@@ -595,7 +595,8 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
     gammaness_true_binned = np.split(gammaness_true, indices)
     gammaness_rec_binned = np.split(gammaness_rec, indices)
 
-    fig, ax = plt.subplots(3, 2)
+    fig, ax = plt.subplots(3, 3)
+    fig.set_size_inches(double_column_squeezed_fig_size)
     ax = ax.ravel()
     plt.grid(alpha = 0.2)
     for i in range(number_energy_ranges):
@@ -613,18 +614,18 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
         true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
         area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
-        ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        ax[i].hist(gammaness_gammas, label = "True photons", alpha = 0.8, color = colors_categorial_hist[0])
-        ax[i].hist(gammaness_protons, label = "True protons", alpha = 0.8, color = colors_categorial_hist[1])
+        ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : fontsize_plots})
+        ax[i].hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
+        ax[i].hist(gammaness_protons, label = "True protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
         ylim = ax[i].get_ylim()
         ax[i].set_xlim(-0.05, 1.05)
         # ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
         # ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
-        ax[i].tick_params(axis = 'both', which = 'major', labelsize = 10)
+        ax[i].tick_params(axis = 'both', which = 'major')
 
-    ax[-1].set_xlabel("Gammaness", fontsize = 10)
-    ax[-2].set_xlabel("Gammaness", fontsize = 10)
-    ax[2].set_ylabel("Number events", fontsize = 10)
+    #ax[-1].set_xlabel("Gammaness", fontsize = 10)
+    ax[-2].set_xlabel("Gammaness")
+    ax[3].set_ylabel("Number events")
     # plt.legend(framealpha = 0.95, fontsize = 10)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)

@@ -12,7 +12,7 @@ plt.rcParams['mathtext.fontset'] = 'cm'
 
 cm_conversion_factor = 1/2.54  # centimeters in inches
 single_column_fig_size = (8.85679 * cm_conversion_factor, 8.85679 * 3/4 * cm_conversion_factor)
-single_column_half_fig_size = (8.85679 * cm_conversion_factor / 2, 8.85679 * 3/4 * cm_conversion_factor / 2)
+single_column_75p_fig_size = (8.85679 * cm_conversion_factor * 0.75, 8.85679 * 3/4 * cm_conversion_factor * 0.75)
 
 ######################################## argparse setup ########################################
 script_version=0.1
@@ -97,12 +97,12 @@ if args.input == "ps":
 
     os.makedirs(path_pdf, exist_ok = True)
 
-    plt.figure(figsize = single_column_fig_size)
+    plt.figure(figsize = single_column_75p_fig_size)
 
-    if args.tel_id == None:
-        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", pad = 20)
-    else:
-        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", pad = 20)
+    # if args.tel_id == None:
+    #     plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", pad = 20)
+    # else:
+    #     plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", pad = 20)
 
     plt.imshow(table["pattern spectrum"][0], cmap = "Greys_r")
     plt.annotate('', xy=(0, -0.05), xycoords='axes fraction', xytext=(1, -0.05), arrowprops=dict(arrowstyle="<-", color='black'))
@@ -137,12 +137,12 @@ elif args.input == "cta":
 
     os.makedirs(path_pdf, exist_ok = True)
 
-    plt.figure(figsize = single_column_fig_size)
+    plt.figure(figsize = single_column_75p_fig_size)
 
-    if args.tel_id == None:
-        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", pad = 20)
-    else:
-        plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", pad = 20)
+    # if args.tel_id == None:
+    #     plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}", pad = 20)
+    # else:
+    #     plt.title("obs " + f"{table['obs_id'][0]}" + " - event " + f"{table['event_id'][0]}" + " - tel " + f"{table['tel_id'][0]}", pad = 20)
 
     plt.imshow(table["image"][0], cmap = "Greys_r") 
     cbar = plt.colorbar()
@@ -151,6 +151,8 @@ elif args.input == "cta":
     plt.ylabel("y")
     plt.xticks([0, 10, 20, 30, 40])
     plt.yticks([0, 10, 20, 30, 40])
+    # plt.xticks([0, 20, 40])
+    # plt.yticks([0, 20, 40])
     bbox_inches = None
     pad_inches = 0.1
     plt.tight_layout()
