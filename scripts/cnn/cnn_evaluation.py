@@ -15,7 +15,7 @@ from keras.models import Model
 import logging
 import time
 
-plt.rcParams.update({'font.size': 8})
+plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
 # plt.rcParams.update({'font.family':'serif'}) #serif
 # plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
 # pd.options.mode.chained_assignment = None 
@@ -302,5 +302,6 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
 
     PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
 
+    MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 
 print("CNN evaluation completed!")

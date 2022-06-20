@@ -12,8 +12,8 @@ from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
 
 np.set_printoptions(threshold=sys.maxsize)
 
-plt.rcParams.update({'font.size': 8})
-fontsize_plots = 8
+plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
+fontsize_plots = 8 # 8 (paper), 10 (poster)
 # plt.rcParams.update({'font.family':'serif'}) #serif
 # plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
 # pd.options.mode.chained_assignment = None 
@@ -291,7 +291,15 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
         mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
         std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
         plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
-        plt.fill_between(bins_central, mean_energy_accuracy - std_energy_accuracy, mean_energy_accuracy + std_energy_accuracy, facecolor = colors_categorial[i], alpha = 0.3)
+        bins_central_fill = np.append(bins_central, bins[-1])
+        bins_central_fill = np.insert(bins_central_fill, 0, bins[0])
+        filling_lower = mean_energy_accuracy - std_energy_accuracy
+        filling_lower = np.append(filling_lower, filling_lower[-1])
+        filling_lower = np.insert(filling_lower, 0, filling_lower[0])
+        filling_upper = mean_energy_accuracy + std_energy_accuracy
+        filling_upper = np.append(filling_upper, filling_upper[-1])
+        filling_upper = np.insert(filling_upper, 0, filling_upper[0])
+        plt.fill_between(bins_central_fill, filling_lower, filling_upper, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
@@ -362,7 +370,15 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
         plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
-        plt.fill_between(bins_central, mean_energy_resolution - std_energy_resolution, mean_energy_resolution + std_energy_resolution, facecolor = colors_categorial[i], alpha = 0.3)
+        bins_central_fill = np.append(bins_central, bins[-1])
+        bins_central_fill = np.insert(bins_central_fill, 0, bins[0])
+        filling_lower = mean_energy_resolution - std_energy_resolution
+        filling_lower = np.append(filling_lower, filling_lower[-1])
+        filling_lower = np.insert(filling_lower, 0, filling_lower[0])
+        filling_upper = mean_energy_resolution + std_energy_resolution
+        filling_upper = np.append(filling_upper, filling_upper[-1])
+        filling_upper = np.insert(filling_upper, 0, filling_upper[0])
+        plt.fill_between(bins_central_fill, filling_lower, filling_upper, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
@@ -683,6 +699,23 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
+
+def MeanStdAUC(area_under_ROC_curve_all, input):
+    area_under_ROC_curve_all_cta = np.array([])
+    area_under_ROC_curve_all_ps = np.array([])
+    for i in range(len(input)):
+        if input[i] == "cta":
+            area_under_ROC_curve_all_cta = np.append(area_under_ROC_curve_all_cta, area_under_ROC_curve_all[i])
+        elif input[i] == "ps":
+            area_under_ROC_curve_all_ps = np.append(area_under_ROC_curve_all_ps, area_under_ROC_curve_all[i])
+
+    area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std = np.mean(area_under_ROC_curve_all_cta), np.std(area_under_ROC_curve_all_cta, ddof = 1)
+    area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std = np.mean(area_under_ROC_curve_all_ps), np.std(area_under_ROC_curve_all_ps, ddof = 1)
+
+    print("CTA images AUC value: {0:.3f} +- {1:.3f}".format( area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std))
+    print("CTA images AUC value: {0:.3f} +- {1:.3f}".format( area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std))
+
+
 
 def ExtendTable(table_output, string_table_column, string_input, string_ps_input, string_input_short, string_data_type):
     # sort the table by run, obs_id and event_id
