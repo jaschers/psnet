@@ -5,7 +5,7 @@ import pandas as pd
 import argparse
 import os
 
-plt.rcParams.update({'font.size': 8})
+plt.rcParams.update({'font.size': 8}) # 8 (paper), 11 (poster)
 plt.rc('text', usetex=True )
 plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
 plt.rcParams['mathtext.fontset'] = 'cm'
