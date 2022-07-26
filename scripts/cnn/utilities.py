@@ -113,6 +113,26 @@ def PlotLoss(epochs, loss_training, loss_validation, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
+def PlotLossComparison(epochs_all, loss_train_all, loss_val_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    linestyles = ["-.", "--"]
+
+    for i in range(len(epochs_all)):
+        if input[i] == "cta":
+            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[0], label = "CTA images (training)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[0], label = "CTA images (validation)", alpha = 1.0) 
+        elif input[i] == "ps":
+            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[1], label = "Pattern spectra (training)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Pattern spectra (validation)", alpha = 1.0) 
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
 def PlotEnergyScattering2D(energy_true, energy_rec, path):
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
@@ -560,7 +580,7 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PositiveRates(x, y, thresholds):
+def PositiveRates(x, y, thresholds): # x = gammaness_gammas, y = gammaness_protons, thresholds = gammaness thresholds
     true_positive_rate = np.array([])
     false_positive_rate = np.array([])
 
@@ -570,7 +590,7 @@ def PositiveRates(x, y, thresholds):
 
     return(true_positive_rate, false_positive_rate)
 
-def NegativeRates(x, y, thresholds):
+def NegativeRates(x, y, thresholds): # x = gammaness_gammas, y = gammaness_protons, thresholds = gammaness thresholds
     true_negative_rate = np.array([])
     false_negative_rate = np.array([])
 
@@ -581,7 +601,7 @@ def NegativeRates(x, y, thresholds):
     return(true_negative_rate, false_negative_rate)
 
 # area under ROC curve (Riemann integral)
-def AreaUnderROCCurve(x, y):
+def AreaUnderROCCurve(x, y): # x = gammaness_gammas, y = gammaness_protons
     x = x[::-1]
     y = y[::-1]
     area_under_ROC_curve = np.sum(y[1:] * np.diff(x))
@@ -682,6 +702,71 @@ def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
     plt.savefig(path, dpi = 250)
     plt.close()
 
+def AccuracyGammaness(gammaness_true, gammaness_rec):
+    # define true gammaness as boolean
+    gammaness_true_bool = gammaness_true.astype(bool)
+    gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
+    # extract gammaness of true gamma-ray events
+    gammaness_gammas = gammaness_rec[gammaness_true_bool]
+    # extract gammaness of true proton events
+    gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
+
+    # calculate the true positive rate for gamma rays and protons depending on the threshold
+    thresholds = np.linspace(0, 1.0, 10000)
+
+    # create empty array for accuracy gammaness to be filled in
+    accuracy_gammaness = np.array([])
+    for i in range(len(thresholds)):
+        # calculate accuracy (TP+TN) / (P+N) for each gammaness threshold
+        accuracy_gammaness_i = (len(gammaness_gammas[gammaness_gammas >= thresholds[i]]) + len(gammaness_protons[gammaness_protons < thresholds[i]])) / (len(gammaness_gammas) + len(gammaness_protons))
+        # fill empty array with values
+        accuracy_gammaness = np.append(accuracy_gammaness, accuracy_gammaness_i)
+    
+    return(accuracy_gammaness, thresholds)
+
+def PlotAccuracyGammaness(accuracy_gammaness, thresholds, path):
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.plot(thresholds, accuracy_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.xlabel("Gammaness")
+    plt.ylabel("Accuracy")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PrecisionGammaness(gammaness_true, gammaness_rec):
+    # define true gammaness as boolean
+    gammaness_true_bool = gammaness_true.astype(bool)
+    gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
+    # extract gammaness of true gamma-ray events
+    gammaness_gammas = gammaness_rec[gammaness_true_bool]
+    # extract gammaness of true proton events
+    gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
+
+    # calculate the true positive rate for gamma rays and protons depending on the threshold
+    thresholds = np.linspace(0, 1.0, 10000)
+
+    # create empty array for precision gammaness to be filled in
+    precision_gammaness = np.array([])
+
+    for i in range(len(thresholds)):
+        if len(gammaness_gammas[gammaness_gammas >= thresholds[i]]) + len(gammaness_protons[gammaness_protons >= thresholds[i]]) != 0: # to avoid devision by zero
+            precision_gammaness_i = len(gammaness_gammas[gammaness_gammas >= thresholds[i]]) / (len(gammaness_gammas[gammaness_gammas >= thresholds[i]]) + len(gammaness_protons[gammaness_protons >= thresholds[i]]))
+            precision_gammaness = np.append(precision_gammaness, precision_gammaness_i)
+            threshold_cut = i + 1
+    
+    return(precision_gammaness, threshold_cut)
+
+def PlotPrecisionGammaness(precision_gammaness, thresholds, path):
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.plot(thresholds, precision_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.xlabel("Gammaness")
+    plt.ylabel("Precision")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
 def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, input, path):
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
@@ -700,6 +785,40 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
     plt.savefig(path, dpi = 250)
     plt.close()
 
+def PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    linestyles = ["-.", "--"]
+    for i in range(len(accuracy_gammaness_all)):
+        if input[i] == "cta":
+            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+        elif input[i] == "ps":
+            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.xlabel("Gammaness")
+    plt.ylabel("Accuracy")
+    plt.legend(loc = "lower center")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotPrecisionGammanessComparison(precision_gammaness_all, thresholds_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    linestyles = ["-.", "--"]
+    for i in range(len(precision_gammaness_all)):
+        if input[i] == "cta":
+            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+        elif input[i] == "ps":
+            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.xlabel("Gammaness")
+    plt.ylabel("Precision")
+    plt.legend(loc = "lower right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
 def MeanStdAUC(area_under_ROC_curve_all, input):
     area_under_ROC_curve_all_cta = np.array([])
     area_under_ROC_curve_all_ps = np.array([])
@@ -712,8 +831,8 @@ def MeanStdAUC(area_under_ROC_curve_all, input):
     area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std = np.mean(area_under_ROC_curve_all_cta), np.std(area_under_ROC_curve_all_cta, ddof = 1)
     area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std = np.mean(area_under_ROC_curve_all_ps), np.std(area_under_ROC_curve_all_ps, ddof = 1)
 
-    print("CTA images AUC value: {0:.3f} +- {1:.3f}".format( area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std))
-    print("CTA images AUC value: {0:.3f} +- {1:.3f}".format( area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std))
+    print("CTA images AUC value: {0:.3f} +- {1:.3f}".format(area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std))
+    print("Pattern spectra AUC value: {0:.3f} +- {1:.3f}".format(area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std))
 
 
 

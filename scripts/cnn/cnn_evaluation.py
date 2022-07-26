@@ -108,7 +108,7 @@ print(string_summary)
 
 median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
-true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
+epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 for i in range(len(args.input[0])):
     # create folder
@@ -120,6 +120,10 @@ for i in range(len(args.input[0])):
 
     # plot loss history
     PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
+
+    epochs_all[i] = table_history["epoch"] + 1
+    loss_train_all[i] = table_history["loss"]
+    loss_val_all[i] = table_history["val_loss"]
 
     ####################################### Filters and feature maps ########################################
     # define example run and load example data
@@ -212,9 +216,25 @@ for i in range(len(args.input[0])):
 
         PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
+        # prepare accuracy vs gammaness threshold plot
+        accuracy_gammaness, thresholds = AccuracyGammaness(gammaness_true, gammaness_rec)
+
+        # plot accuracy vs gammaness threshold plot
+        PlotAccuracyGammaness(accuracy_gammaness, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/accuracy_gammaness.pdf")
+
+        # prepare precision vs gammaness treshold plot
+        precision_gammaness, threshold_cut = PrecisionGammaness(gammaness_true, gammaness_rec)
+
+        # plot precision vs gammaness treshold plot
+        PlotPrecisionGammaness(precision_gammaness, thresholds[:threshold_cut], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/precision_gammaness.pdf")
+
         true_positive_rate_all[i] = true_positive_rate
         false_positive_rate_all[i] = false_positive_rate
         area_under_ROC_curve_all[i] = area_under_ROC_curve
+        accuracy_gammaness_all[i] = accuracy_gammaness
+        precision_gammaness_all[i] = precision_gammaness
+        threshold_cut_all[i] = thresholds[:threshold_cut]
+        thresholds_all[i] = thresholds
 
         # Plot wrongly classified CTA images / pattern spectra
         if args.gammaness_limit != [0.0, 0.0, 0.0, 0.0]:
@@ -273,6 +293,9 @@ if args.mode == "energy":
         if len(string_comparison) > 200:
             string_comparison = string_comparison[:200]
         
+        # plot Loss comparison
+        PlotLossComparison(epochs_all, loss_train_all, loss_val_all, args.input[0], f"dm-finder/cnn/comparison/energy/" + "loss_comparison_" + string_comparison + ".pdf")
+
         # plot energy accuracy comparison
         PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
 
@@ -300,7 +323,13 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     if len(string_comparison) > 200:
         string_comparison = string_comparison[:200]
 
+    PlotLossComparison(epochs_all, loss_train_all, loss_val_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "loss_comparison_" + string_comparison + ".pdf")
+
     PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
+
+    PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
+
+    PlotPrecisionGammanessComparison(precision_gammaness_all, threshold_cut_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
 
     MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 
