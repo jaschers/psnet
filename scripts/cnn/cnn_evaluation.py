@@ -108,7 +108,7 @@ print(string_summary)
 
 median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
-epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
+epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all, area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 for i in range(len(args.input[0])):
     # create folder
@@ -212,7 +212,7 @@ for i in range(len(args.input[0])):
 
         PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness_energy_binned.pdf")
 
-        true_positive_rate, false_positive_rate, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
+        true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
         PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
@@ -228,8 +228,12 @@ for i in range(len(args.input[0])):
         # plot precision vs gammaness treshold plot
         PlotPrecisionGammaness(precision_gammaness, thresholds[:threshold_cut], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/precision_gammaness.pdf")
 
+        PlotPurityGammaness(true_positive_rate, false_positive_rate, rejection_power, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/purity_gammaness.pdf")
+
         true_positive_rate_all[i] = true_positive_rate
         false_positive_rate_all[i] = false_positive_rate
+        true_negative_rate_all[i] = true_negative_rate
+        false_negative_rate_all[i] = false_negative_rate
         area_under_ROC_curve_all[i] = area_under_ROC_curve
         accuracy_gammaness_all[i] = accuracy_gammaness
         precision_gammaness_all[i] = precision_gammaness
@@ -330,6 +334,8 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
 
     PlotPrecisionGammanessComparison(precision_gammaness_all, threshold_cut_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
+
+    PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "purity_gammaness_comparison_" + string_comparison + ".pdf")
 
     MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 

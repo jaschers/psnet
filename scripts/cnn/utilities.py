@@ -682,11 +682,13 @@ def ROC(gammaness_true, gammaness_rec):
     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
     true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
     true_negative_rate_50, false_negative_rate_50 = NegativeRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
+    rejection_power = np.divide(1, false_positive_rate)
+    # rejection_power = 1 / true_negative_rate[true_negative_rate == 0] = None
     # print("Correctly classified photons: ", true_positive_rate_50[0])
     # print("Correctly classified protons: ", true_negative_rate_50[0])
     area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
-    return(true_positive_rate, false_positive_rate, area_under_ROC_curve)
+    return(true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve)
 
 
 def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path):
@@ -698,6 +700,20 @@ def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
     plt.legend(loc = "lower right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotPurityGammaness(true_positive_rate, false_positive_rate, rejection_power, thresholds, path):
+    # plot the "efficiency" curve
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.plot(thresholds, true_positive_rate, label = "TPR", color = colors_categorial[0]) 
+    plt.plot(thresholds, false_positive_rate, label = "FPR", color = colors_categorial[1]) 
+    # plt.plot(thresholds, rejection_power, label = "RP", color = "black") 
+    plt.xlabel("Gammaness")
+    # plt.ylabel("True positive rate")
+    plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -815,6 +831,26 @@ def PlotPrecisionGammanessComparison(precision_gammaness_all, thresholds_all, in
     plt.xlabel("Gammaness")
     plt.ylabel("Precision")
     plt.legend(loc = "lower right")
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    linestyles = ["-.", "--"]
+
+    for i in range(len(thresholds_all)):
+        if input[i] == "cta":
+            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[0], label = "CTA images (TPR)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = "CTA images (FPR)", alpha = 1.0) 
+        elif input[i] == "ps":
+            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[1], label = "Pattern spectra (TPR)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Pattern spectra (FPR)", alpha = 1.0) 
+    plt.xlabel("Gammaness")
+    # plt.ylabel("Loss")
+    plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
