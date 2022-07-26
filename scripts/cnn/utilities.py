@@ -635,6 +635,8 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
     fig.set_size_inches(double_column_squeezed_fig_size)
     ax = ax.ravel()
     plt.grid(alpha = 0.2)
+    accuracy_energy = np.array([])
+    area_under_ROC_curve_energy = np.array([])
     for i in range(number_energy_ranges):
         # define true gammaness as boolean
         gammaness_true_bool = gammaness_true_binned[i].astype(bool)
@@ -646,9 +648,23 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
         gammaness_protons = gammaness_rec_binned[i][gammaness_true_bool_inverted]
 
         # calculate the true positive rate for gamma rays and protons depending on the threshold
-        thresholds = np.linspace(0, 1, 10000)
+        thresholds = np.linspace(0, 1.0, 9999)
+        # calculate rates to determine AUC
         true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
+        true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
         area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
+        area_under_ROC_curve_energy = np.append(area_under_ROC_curve_energy, area_under_ROC_curve)
+
+        # # find threshold index where gammaness == 0.5
+        # thresholds_index_gammaness = np.argwhere(thresholds == 0.5)[0][0]
+        # # determine rates for gammaness == 0.5
+        # true_positive_rate_single, false_positive_rate_single, true_negative_rate_single, false_negative_rate_single = true_positive_rate[thresholds_index_gammaness], false_positive_rate[thresholds_index_gammaness], true_negative_rate[thresholds_index_gammaness], false_negative_rate[thresholds_index_gammaness]
+
+        # determine accuracy for gammaness == 0.5
+        gammaness_cut = 0.5
+        accuracy = (len(gammaness_gammas[gammaness_gammas >= gammaness_cut]) + len(gammaness_protons[gammaness_protons < gammaness_cut])) / (len(gammaness_gammas) + len(gammaness_protons))
+        accuracy_energy = np.append(accuracy_energy, accuracy)
+
 
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : fontsize_plots})
         ax[i].hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
@@ -664,8 +680,35 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
     ax[3].set_ylabel("Number events")
     # plt.legend(framealpha = 0.95, fontsize = 10)
     plt.tight_layout()
-    plt.savefig(path, dpi = 250)
+    plt.savefig(path + "gammaness_energy_binned.pdf", dpi = 250)
     plt.close()
+
+    bins_central = np.array([])
+    for b in range(len(bins) - 1):
+        bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
+
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.errorbar(bins_central, area_under_ROC_curve_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("AUC")
+    plt.xscale("log")
+    plt.tight_layout()
+    plt.savefig(path + "AUC_energy.pdf", dpi = 250)
+    plt.close()
+
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.errorbar(bins_central, accuracy_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("Accuracy")
+    plt.xscale("log")
+    plt.tight_layout()
+    plt.savefig(path + "accuracy_energy.pdf", dpi = 250)
+    plt.close()
+
+    return(bins, bins_central, area_under_ROC_curve_energy, accuracy_energy)
+
 
 def ROC(gammaness_true, gammaness_rec):
      # define true gammaness as boolean
@@ -677,7 +720,7 @@ def ROC(gammaness_true, gammaness_rec):
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
     # calculate the true positive rate for gamma rays and protons depending on the threshold
-    thresholds = np.linspace(0, 1.0, 10000)
+    thresholds = np.linspace(0, 1.0, 9999)
     true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
     true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
@@ -728,7 +771,7 @@ def AccuracyGammaness(gammaness_true, gammaness_rec):
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
     # calculate the true positive rate for gamma rays and protons depending on the threshold
-    thresholds = np.linspace(0, 1.0, 10000)
+    thresholds = np.linspace(0, 1.0, 9999)
 
     # create empty array for accuracy gammaness to be filled in
     accuracy_gammaness = np.array([])
@@ -760,7 +803,7 @@ def PrecisionGammaness(gammaness_true, gammaness_rec):
     gammaness_protons = gammaness_rec[gammaness_true_bool_inverted]
 
     # calculate the true positive rate for gamma rays and protons depending on the threshold
-    thresholds = np.linspace(0, 1.0, 10000)
+    thresholds = np.linspace(0, 1.0, 9999)
 
     # create empty array for precision gammaness to be filled in
     precision_gammaness = np.array([])
@@ -850,6 +893,40 @@ def PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_
             plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Pattern spectra (FPR)", alpha = 1.0) 
     plt.xlabel("Gammaness")
     # plt.ylabel("Loss")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    for i in range(len(area_under_ROC_curve_energy_all)):
+        if input[i] == "cta":
+            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "CTA images", color = colors_categorial[i]) 
+        elif input[i] == "ps":
+            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "Pattern spectra", color = colors_categorial[i]) 
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("1 - AUC")
+    plt.xscale("log")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, input, path):
+    # plot the ROC curve
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    for i in range(len(accuracy_energy_all)):
+        if input[i] == "cta":
+            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "CTA images", color = colors_categorial[i]) 
+        elif input[i] == "ps":
+            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "Pattern spectra", color = colors_categorial[i]) 
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel("1 - accuracy")
+    plt.xscale("log")
     plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
