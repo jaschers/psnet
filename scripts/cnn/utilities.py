@@ -121,13 +121,14 @@ def PlotLossComparison(epochs_all, loss_train_all, loss_val_all, input, path):
 
     for i in range(len(epochs_all)):
         if input[i] == "cta":
-            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[0], label = "CTA images (training)", alpha = 1.0) 
-            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[0], label = "CTA images (validation)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[0], label = "Training (CTA images)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[0], label = "Validation (CTA images)", alpha = 1.0) 
         elif input[i] == "ps":
-            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[1], label = "Pattern spectra (training)", alpha = 1.0) 
-            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Pattern spectra (validation)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_train_all[i], linestyle = "solid", color = colors_categorial[1], label = "Training (pattern spectra)", alpha = 1.0) 
+            plt.plot(epochs_all[i], loss_val_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Validation (pattern spectra)", alpha = 1.0) 
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
+    #plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="upper left")
     plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -725,7 +726,8 @@ def ROC(gammaness_true, gammaness_rec):
     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
     true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
     true_negative_rate_50, false_negative_rate_50 = NegativeRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
-    rejection_power = np.divide(1, false_positive_rate)
+    # rejection_power = np.divide(1, false_positive_rate)
+    rejection_power = 0 # placeholder
     # rejection_power = 1 / true_negative_rate[true_negative_rate == 0] = None
     # print("Correctly classified photons: ", true_positive_rate_50[0])
     # print("Correctly classified protons: ", true_negative_rate_50[0])
@@ -826,16 +828,38 @@ def PlotPrecisionGammaness(precision_gammaness, thresholds, path):
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, input, path):
+def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args_input, path):
+    table = []
+    for k in range(len(args_input)):
+        table.append([args_input[k], true_positive_rate_all[k], false_positive_rate_all[k], area_under_ROC_curve_all[k]])
+
+    table = pd.DataFrame(table, columns=["input", "TPR", "FPR", "AUC"])
+
+    table_mean = []
+    args_input_unique = np.unique(args_input)
+    for k in range(len(args_input_unique)):
+        table_k = table.copy()
+        table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
+        table_mean.append([args_input_unique[k], np.mean(table_k["TPR"].dropna().to_numpy(), axis = 0), np.std(table_k["TPR"].dropna().to_numpy(), axis = 0), np.mean(table_k["FPR"].dropna().to_numpy(), axis = 0), np.std(table_k["FPR"].dropna().to_numpy(), axis = 0), np.mean(table_k["AUC"].dropna().to_numpy()), np.std(table_k["AUC"].dropna().to_numpy())])
+    table_mean = pd.DataFrame(table_mean, columns=["input", "mean TPR", "std TPR", "mean FPR", "std FPR", "mean AUC", "std AUC"])
+
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     linestyles = ["-.", "--"]
-    for i in range(len(true_positive_rate_all)):
-        if input[i] == "cta":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-        elif input[i] == "ps":
-            plt.plot(false_positive_rate_all[i], true_positive_rate_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3))) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    labels = ["CTA images", "Pattern spectra"]
+    for i in range(len(args_input_unique)):
+        table_mean_i = table_mean.copy()
+        mean_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean TPR"].dropna().to_numpy()[0]
+        std_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std TPR"].dropna().to_numpy()[0]
+        mean_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean FPR"].dropna().to_numpy()[0]
+        std_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std FPR"].dropna().to_numpy()[0]
+        mean_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean AUC"].dropna().to_numpy()[0]
+        std_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std AUC"].dropna().to_numpy()[0]
+
+        plt.plot(mean_false_positive_rate, mean_true_positive_rate, linestyle = linestyles[i], color = colors_categorial[i], label = "{0} (AUC=${1:.3f}\pm{2:.3f}$)".format(labels[i], mean_AUC, std_AUC))#"CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3)))
+        plt.fill_between(mean_false_positive_rate, mean_true_positive_rate - std_true_positive_rate, mean_true_positive_rate + std_true_positive_rate, facecolor = colors_categorial[i], alpha = 0.3)
+
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "-")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
@@ -886,27 +910,27 @@ def PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_
 
     for i in range(len(thresholds_all)):
         if input[i] == "cta":
-            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[0], label = "CTA images (TPR)", alpha = 1.0) 
-            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = "CTA images (FPR)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[0], label = "TPR (CTA images)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = "FPR (CTA images)", alpha = 1.0) 
         elif input[i] == "ps":
-            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[1], label = "Pattern spectra (TPR)", alpha = 1.0) 
-            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = "Pattern spectra (FPR)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[1], label = "TPR (pattern spectra)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = "FPR (pattern spectra)", alpha = 1.0) 
     plt.xlabel("Gammaness")
     # plt.ylabel("Loss")
-    plt.legend()
+    plt.legend(bbox_to_anchor=(0, 1.02, 1, 0.2), loc="upper left", mode = "expand", ncol = 2)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
 
-def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, input, path):
+def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, args_input, path):
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    for i in range(len(area_under_ROC_curve_energy_all)):
-        if input[i] == "cta":
-            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "CTA images", color = colors_categorial[i]) 
-        elif input[i] == "ps":
-            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "Pattern spectra", color = colors_categorial[i]) 
+    for i in range(len(args_input)):
+        if args_input[i] == "cta":
+            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[0], markersize = markersizes[0], label = "CTA images", color = colors_categorial[0]) 
+        elif args_input[i] == "ps":
+            plt.errorbar(bins_central, 1 - area_under_ROC_curve_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[1], markersize = markersizes[1], label = "Pattern spectra", color = colors_categorial[1]) 
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("1 - AUC")
     plt.xscale("log")
@@ -921,9 +945,9 @@ def PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, input,
     plt.grid(alpha = 0.2)
     for i in range(len(accuracy_energy_all)):
         if input[i] == "cta":
-            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "CTA images", color = colors_categorial[i]) 
+            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[0], markersize = markersizes[0], label = "CTA images", color = colors_categorial[0]) 
         elif input[i] == "ps":
-            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = "Pattern spectra", color = colors_categorial[i]) 
+            plt.errorbar(bins_central, 1 - accuracy_energy_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[1], markersize = markersizes[1], label = "Pattern spectra", color = colors_categorial[1]) 
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("1 - accuracy")
     plt.xscale("log")

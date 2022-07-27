@@ -111,6 +111,7 @@ median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all, area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 for i in range(len(args.input[0])):
+    print(f"Processing input {i+1}...")
     # create folder
     os.makedirs(f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/", exist_ok = True)
 
@@ -345,5 +346,6 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_energy_comparison_" + string_comparison + ".pdf")
 
     MeanStdAUC(area_under_ROC_curve_all, args.input[0])
+
 
 print("CNN evaluation completed!")
