@@ -871,7 +871,7 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
         mean_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean FPR"].dropna().to_numpy()[0]
         std_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std FPR"].dropna().to_numpy()[0]
         mean_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean AUC"].dropna().to_numpy()[0]
-        std_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std AUC"].dropna().to_numpy()[0]
+        # std_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std AUC"].dropna().to_numpy()[0]
 
         plt.plot(mean_false_positive_rate, mean_true_positive_rate, linestyle = linestyles[i], color = colors_categorial[i], label = "{0} (AUC=${1:.3f}\pm{2:.3f}$)".format(labels[i], np.round(mean_AUC, 3), np.round(std_AUC, 3)))#"CTA images (AUC = {0:.3f})".format(np.round(area_under_ROC_curve_all[i], 3)))
         plt.fill_between(mean_false_positive_rate, mean_true_positive_rate - std_true_positive_rate, mean_true_positive_rate + std_true_positive_rate, facecolor = colors_categorial[i], alpha = 0.3)
@@ -928,10 +928,40 @@ def PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_
     for i in range(len(thresholds_all)):
         if input[i] == "cta":
             plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[0], label = r"$\eta_{{\gamma}}$ (CTA images)", alpha = 1.0) 
-            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = r"$\eta_{{p}}$ (CTA images)", alpha = 1.0) 
+            plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = r"$\eta_{{p}}$ (CTA images)", alpha = 1.0)
+
+            print("CTA")
+            index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)
+            print("index_purity_10p", index_purity_10p)
+            index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)[0][0]
+            print("index_purity_10p", index_purity_10p)
+            threshold_purity_10p = thresholds_all[i][index_purity_10p]
+            true_positive_rate_purity_10p = true_positive_rate_all[i][index_purity_10p]
+            false_positive_rate_purity_10p = false_positive_rate_all[i][index_purity_10p]
+
+            print("threshold_purity_10p", threshold_purity_10p)
+            print("true_positive_rate_purity_10p", true_positive_rate_purity_10p)
+            print("false_positive_rate_purity_10p", false_positive_rate_purity_10p)
+            print("______________________")
+
         elif input[i] == "ps":
             plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[1], label = r"$\eta_{{\gamma}}$ (pattern spectra)", alpha = 1.0) 
             plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = r"$\eta_{{p}}$ (pattern spectra)", alpha = 1.0) 
+
+            print("PS")
+            index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)
+            print("index_purity_10p", index_purity_10p)
+            index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)[0][0]
+            print("index_purity_10p", index_purity_10p)
+            threshold_purity_10p = thresholds_all[i][index_purity_10p]
+            true_positive_rate_purity_10p = true_positive_rate_all[i][index_purity_10p]
+            false_positive_rate_purity_10p = false_positive_rate_all[i][index_purity_10p]
+
+            print("threshold_purity_10p", threshold_purity_10p)
+            print("true_positive_rate_purity_10p", true_positive_rate_purity_10p)
+            print("false_positive_rate_purity_10p", false_positive_rate_purity_10p)
+            print("______________________")
+
     plt.xlabel(r"$\alpha_{g}$")
     plt.ylabel(r"$\eta$")
     plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
@@ -1196,12 +1226,12 @@ def ExtractPatternSpectraMeanProton(table_output, size, gammaness_limit_proton, 
 def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gammaness_limit, cmap, path):
     for pt in range(len(particle_type)):
         plt.figure()
-        if particle_type[pt] == "gamma_diffuse":
-            plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
-            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
-        elif particle_type[pt] == "proton":
-            plt.title(f"{particle_type[pt]} mean - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
-            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
+        # if particle_type[pt] == "gamma_diffuse":
+        #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
+        #     path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
+        # elif particle_type[pt] == "proton":
+        #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
+        #     path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
         plt.imshow(pattern_spectra_mean[pt], cmap = cmap, norm = SymLogNorm(linthresh = 0.1, base = 10))
         # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
         # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
@@ -1227,7 +1257,7 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes
         pattern_spectra_mean_difference_min = - abs(pattern_spectra_mean_difference_max)
 
     plt.figure()
-    plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
+    # plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
     im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.001, base = 10))
     im.set_clim(pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max)
     # im.set_clim(-0.09, 0.09)    
