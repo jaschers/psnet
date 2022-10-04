@@ -55,6 +55,7 @@ if args.run != None:
     run = args.run[0]
     
 print("Runs:", run)
+print("Total number of Runs:", len(run))
 
 for r in range(len(run)): #len(run)
     print("Run", run[r])
@@ -354,6 +355,8 @@ for r in range(len(run)): #len(run)
 
         if args.data_type == "int8":
             output_hdf_filename = output_hdf_filename + "_int8"
+
+        print(output_hdf_filename)
 
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
 
