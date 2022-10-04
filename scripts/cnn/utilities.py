@@ -11,6 +11,7 @@ from tqdm import tqdm
 from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
 
 np.set_printoptions(threshold=sys.maxsize)
+pd.options.mode.chained_assignment = None
 
 plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
 fontsize_plots = 8 # 8 (paper), 10 (poster)
@@ -1163,10 +1164,10 @@ def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column
         N = 4
         fig, ax = plt.subplots(N, N)
         if particle_type[pt] == "gamma_diffuse":
-            fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}")
+            # fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}")
             path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
         elif particle_type[pt] == "proton":
-            fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}")
+            # fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}")
             path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
         ax = ax.ravel()
         for n in range(N**2):
@@ -1174,7 +1175,7 @@ def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column
             ax[n].imshow(table_gammaness_limit[string_table_column][n], cmap = "Greys_r")
             ax[n].set_xticks([])
             ax[n].set_yticks([])
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.savefig(path_total, dpi = 250)
         plt.close()
 
@@ -1226,12 +1227,12 @@ def ExtractPatternSpectraMeanProton(table_output, size, gammaness_limit_proton, 
 def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gammaness_limit, cmap, path):
     for pt in range(len(particle_type)):
         plt.figure()
-        # if particle_type[pt] == "gamma_diffuse":
+        if particle_type[pt] == "gamma_diffuse":
         #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
-        #     path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
-        # elif particle_type[pt] == "proton":
+            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
+        elif particle_type[pt] == "proton":
         #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
-        #     path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
+            path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
         plt.imshow(pattern_spectra_mean[pt], cmap = cmap, norm = SymLogNorm(linthresh = 0.1, base = 10))
         # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
         # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
