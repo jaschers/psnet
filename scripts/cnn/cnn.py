@@ -164,7 +164,7 @@ elif args.mode == "separation":
     print("Total number of proton events:", events_count[1])
     print("Total number of events:", len(table))
 
-    EnergyDistributionSeparation(table, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
+    # EnergyDistributionSeparation(table, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
 
 table.drop(table.loc[table["true_energy"] <= args.energy_range[0] * 1e3].index, inplace=True)
 table.drop(table.loc[table["true_energy"] >= args.energy_range[1] * 1e3].index, inplace=True)
@@ -191,18 +191,18 @@ if args.mode == "energy":
     Y = np.asarray(table["true_energy"])
     Y = np.log10(np.asarray(table["true_energy"]))
 
-    # plot a few examples
-    ExamplesEnergy(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
-    # display total energy distribution of data set
-    EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
+    # # plot a few examples
+    # ExamplesEnergy(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
+    # # display total energy distribution of data set
+    # EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
 elif args.mode == "separation":
     # output label: particle or gammaness (1 = gamma, 0 = proton)
     Y = np.asarray(table["particle"])
     Y = keras.utils.to_categorical(Y, 2)
     energy_true_test = np.asarray(table["true_energy"])[int(-len(table) * test_split_percentage):]
 
-    # plot a few examples
-    ExamplesSeparation(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
+    # # plot a few examples
+    # ExamplesSeparation(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
 
 # reshape X data
 X_shape = np.shape(X)
