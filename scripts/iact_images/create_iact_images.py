@@ -32,6 +32,8 @@ parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices 
 parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta"], help = "telescope mode [mono, stereo_sum_cta], default: stereo_sum_cta", default = "stereo_sum_cta")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the CTA images will be extracted, default: csv list", action='append', nargs='+')
+parser.add_argument("-er", "--energy_range", type = float, required = True, metavar = "-", help = "set energy range of events in TeV", nargs = 2)
+
 
 # parser.add_argument("-r", "--run_list", type = str, required = True, metavar = "", help = "path to the csv file that contains the run numbers")
 
@@ -45,9 +47,9 @@ print(f"################### Input summary ################### \nParticle type: {
 
 # load data
 if args.telescope_mode == "mono" and args.particle_type == "gamma":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -90,8 +92,12 @@ for r in range(len(run)): #len(run)
     plt.close()
 
     # get tables for all SST telescopes that include images and corresponding obs_id + event_id for each event
-    sst_tel_id = np.append(range(30, 100), range(131, 181))
-    images_table= vstack([read_table(input_directory, f"/dl1/event/telescope/images/tel_{t:03}") for t in sst_tel_id])
+    # alpha configuration
+    sst_tel_id = np.array([30, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 133, 59, 61, 66, 67, 68, 69, 70, 71, 72, 73, 143, 144, 145, 146])
+    # full configuration
+    # sst_tel_id = np.append(range(30, 100), range(131, 181))
+    images_table = vstack([read_table(input_directory, f"/dl1/event/telescope/images/tel_{t:03}") for t in sst_tel_id])
+
 
     # get true energy of each event
     simulated_parameter_table = read_table(input_directory, "/simulation/event/subarray/shower")
@@ -102,6 +108,9 @@ for r in range(len(run)): #len(run)
 
     # convert energy from TeV to GeV
     complete_table["true_energy"] = complete_table["true_energy"].to("GeV")
+
+    mask = (complete_table["true_energy"] >= args.energy_range[0] * 1e3) & (complete_table["true_energy"] <= args.energy_range[1] * 1e3)
+    complete_table = complete_table[mask]
 
     # define telescope geometry to the SST geometry (telescope id 30)
     sst_camera_geometry = source.subarray.tel[30].camera.geometry
@@ -128,10 +137,10 @@ for r in range(len(run)): #len(run)
             os.makedirs(path_tables)
         except OSError:
             pass
-        ascii.write(table_csv, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono.csv", format = "csv", fast_writer = False, overwrite = True)
+        ascii.write(table_csv, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
 
         # open csv file and prepare table for filling in images 
-        table_path = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono" + ".csv"
+        table_path = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha" + ".csv"
 
         table = pd.read_csv(table_path)
 
@@ -167,7 +176,7 @@ for r in range(len(run)): #len(run)
             image = np.round(image, 1)
 
             # create directory in which the float images will be saved
-            path_hdf = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/mono/obs_id_{complete_table['obs_id'][i]}/hdf/"
+            path_hdf = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/hdf/"
             os.makedirs(path_hdf, exist_ok = True)
 
             image_HDF = np.array([np.reshape(image, (48 * 48))])
@@ -177,7 +186,7 @@ for r in range(len(run)): #len(run)
             HDFfile.create_dataset("image", data = image_HDF)
 
             if run[r] == 10 and i <= 125:
-                path_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/mono/obs_id_{complete_table['obs_id'][i]}/tif/"
+                path_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
@@ -193,7 +202,7 @@ for r in range(len(run)): #len(run)
         
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 
-        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_mono"
+        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_mono_alpha"
 
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
         # close event file
@@ -215,7 +224,7 @@ for r in range(len(run)): #len(run)
         for key, group in zip(complete_table_by_obs_id_event_id.groups.keys, complete_table_by_obs_id_event_id.groups):
             image_combined[k] = group["image"].groups.aggregate(np.add)
             k += 1
-        
+            
         # # compute sum of all 'photon' counts in each combined image 
         # sum_image_combined = np.sum(image_combined, axis = 2)
 
@@ -228,7 +237,7 @@ for r in range(len(run)): #len(run)
             os.makedirs(path_tables)
         except OSError:
             pass
-        ascii.write(complete_table_tel_combined, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1.csv", format = "csv", fast_writer = False, overwrite = True)
+        ascii.write(complete_table_tel_combined, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
 
         # add combined images list to the table
         complete_table_tel_combined["image combined"] = image_combined
@@ -240,14 +249,13 @@ for r in range(len(run)): #len(run)
         plt.xlabel("True energy [TeV]")
         plt.ylabel("Number of events")
         plt.yscale("log")
-        plt.savefig(f"dm-finder/data/{args.particle_type}/info/energy_distribution/energy_distribution_run{run[r]}.png")
+        plt.savefig(f"dm-finder/data/{args.particle_type}/info/energy_distribution/energy_distribution_run{run[r]}_alpha.png")
         plt.close()
-
-        # print(complete_table_tel_combined)
 
         # open csv file and prepare table for filling in images 
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        table_path = f"dm-finder/data/{args.particle_type}/tables/" + run_filename + ".csv"
+        # table_path = f"dm-finder/data/{args.particle_type}/tables/" + run_filename + ".csv"
+        table_path = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha" + ".csv"
 
         table = pd.read_csv(table_path)
 
@@ -299,9 +307,9 @@ for r in range(len(run)): #len(run)
             image = image.reshape(6,6,8,8).transpose(0,2,1,3).reshape(48,48)
             image = np.round(image, 1)
 
-            image_filename_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
+            image_filename_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
 
-            image_filename_pgm = f"dm-finder/data/{args.particle_type}/images/{input_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
+            image_filename_pgm = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
 
 
             if args.data_type == "int8":
@@ -315,7 +323,7 @@ for r in range(len(run)): #len(run)
             if args.data_type == "float64":
 
                 # create directory in which the float images will be saved
-                path = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/obs_id_{complete_table_tel_combined['obs_id'][i]}/"
+                path = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/"
                 os.makedirs(path, exist_ok = True)
 
                 image_HDF = np.array([np.reshape(image, (48 * 48))])
@@ -337,7 +345,7 @@ for r in range(len(run)): #len(run)
                 ###### these lines has to be uncommented if the float CTA images are not used for the pattern spectra extraction ######
 
             if run[r] == 10 and i <= 50:
-                path_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float/obs_id_{complete_table['obs_id'][i]}/tif/"
+                path_tif = f"dm-finder/data/{args.particle_type}/images/{input_filename}/float_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
@@ -351,7 +359,7 @@ for r in range(len(run)): #len(run)
         except OSError:
             pass
         
-        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images"
+        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_alpha"
 
         if args.data_type == "int8":
             output_hdf_filename = output_hdf_filename + "_int8"
