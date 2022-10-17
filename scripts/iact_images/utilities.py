@@ -56,7 +56,7 @@ def GetEventImageBasic(image, cmap = "Greys", show_frame = False, colorbar = Fal
 
     if colorbar == True:
         cbar = plt.colorbar()
-        cbar.set_label(label = "photon count")
+        cbar.set_label(label = "Photoelectrons")
     
     if clean_image == True:
         plt.axis("off")
