@@ -72,9 +72,9 @@ if args.input == "cta":
     print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
     if args.telescope_mode == "stereo_sum_cta":
-        string_input_short = "_images"
+        string_input_short = "_images_alpha"
     elif args.telescope_mode == "mono":
-        string_input_short = "_images_mono"
+        string_input_short = "_images_mono_alpha"
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
@@ -106,11 +106,11 @@ os.makedirs(path_output, exist_ok = True)
 # import data
 if args.mode == "energy":
     if args.test == "y":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_test.csv"
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha_test.csv"
     elif args.telescope_mode == "mono":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono.csv"
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono_alpha.csv"
     else: 
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list.csv"
+        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
