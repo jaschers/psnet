@@ -146,7 +146,7 @@ elif args.input == "cta":
 
     plt.imshow(table["image"][0], cmap = "Greys_r") 
     cbar = plt.colorbar()
-    cbar.set_label(label = "Photon count")
+    cbar.set_label(label = "Photoelectrons")
     plt.xlabel("x")
     plt.ylabel("y")
     plt.xticks([0, 10, 20, 30, 40])
