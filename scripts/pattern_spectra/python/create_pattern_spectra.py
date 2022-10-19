@@ -53,7 +53,7 @@ parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices 
 parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta", "stereo_sum_ps"], help = "telescope mode [mono, stereo_sum_cta, stereo_sum_ps], default: stereo_sum_cta", default = "stereo_sum_cta")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float32"], help = "data type of the output images [int8, float32], default: float32", default = "float32")
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the pattern spectra will be extracted, default: csv list", action='append', nargs='+')
-parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
+parser.add_argument("-er", "--energy_range", type = float, required = True, metavar = "-", help = "set energy range of events in TeV", nargs = 2)
 parser.add_argument("-a", "--attribute", type = int, metavar = "", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = float, metavar = "", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
 parser.add_argument("-dh", "--domain_higher", type = float, metavar = "", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
@@ -69,11 +69,11 @@ print(f"################### Input summary ################### \nParticle type: {
 ##########################################################################################
 
 if args.test == "y":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_test.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_alpha_test.csv"
 elif (args.telescope_mode == "mono" and args.particle_type == "gamma") or (args.telescope_mode == "stereo_sum_ps" and args.particle_type == "gamma"):
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list.csv"
+    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -90,9 +90,9 @@ for r in range(len(run)): #len(run)
     run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 
     if args.telescope_mode == "stereo_sum_cta":
-        csv_directory = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1" + ".csv"
+        csv_directory = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha" + ".csv"
     elif args.telescope_mode == "mono" or args.telescope_mode == "stereo_sum_ps":
-        csv_directory = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono" + ".csv"
+        csv_directory = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha" + ".csv"
 
     table = pd.read_csv(csv_directory)
 
@@ -125,6 +125,7 @@ for r in range(len(run)): #len(run)
 
     # for loop to create pattern spectra from cta images with pattern spectra code
     for i in tqdm(range(len(table))): #len(table)
+        ########## int8 code outdated ##########
         if args.data_type == "int8":
             # create folder 
             path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
@@ -137,12 +138,13 @@ for r in range(len(run)): #len(run)
 
             # command to create pattern spectra
             command = "./dm-finder/scripts/pattern_spectra/xmaxtree/xmaxtree" + f" dm-finder/data/{args.particle_type}/images/" + run_filename + "/obs_id_" + f"{table['obs_id'][i]}" + "/pgm/" + "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}.pgm" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
+        ########## int8 code outdated ##########
 
         elif args.data_type == "float32":
             if args.telescope_mode == "stereo_sum_cta":
                 # create folder 
-                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
-                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
+                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
+                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
 
                 os.makedirs(path_mat, exist_ok = True)
                 os.makedirs(path_tif, exist_ok = True)
@@ -150,11 +152,11 @@ for r in range(len(run)): #len(run)
                 filename = "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}"
 
                 # command to create pattern spectra
-                command = "./dm-finder/scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" dm-finder/data/{args.particle_type}/images/" + run_filename + "/float" + "/obs_id_" + f"{table['obs_id'][i]}/" + "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
+                command = "./dm-finder/scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" dm-finder/data/{args.particle_type}/images/" + run_filename + "/float_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
             elif args.telescope_mode == "mono":
                 # create folder 
-                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
-                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
+                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
+                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
 
                 os.makedirs(path_mat, exist_ok = True)
                 os.makedirs(path_tif, exist_ok = True)
@@ -162,10 +164,10 @@ for r in range(len(run)): #len(run)
                 filename = "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}"
 
                 # command to create pattern spectra
-                command = "./dm-finder/scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" dm-finder/data/{args.particle_type}/images/" + run_filename + "/float" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/" + "hdf/" + "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
+                command = "./dm-finder/scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" dm-finder/data/{args.particle_type}/images/" + run_filename + "/float" + "/mono_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "hdf/" + "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
 
             elif args.telescope_mode == "stereo_sum_ps":
-                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
+                path_mat = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
 
                 filename = "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}"
 
@@ -207,7 +209,7 @@ for r in range(len(run)): #len(run)
                 plt.xlabel(f"attribute {args.attribute[1]}", labelpad = 20, fontsize = 16)
                 plt.ylabel(f"attribute {args.attribute[0]}", labelpad = 20, fontsize = 16)
                 cbar = plt.colorbar()
-                cbar.set_label(label = "log$_{10}$(flux)", fontsize = 16)
+                cbar.set_label(label = r"log$_{10}$($\Phi$)", fontsize = 16)
                 # plt.axis('off')
                 plt.xticks([], [])
                 plt.yticks([], [])
@@ -223,7 +225,7 @@ for r in range(len(run)): #len(run)
 
         if run[r] == 10:
             for i in range(50):
-                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + "/stereo_sum_ps" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
+                path_tif = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/stereo_sum_ps" + "/obs_id_" + f"{table['obs_id'][i]}/tif/"
 
                 os.makedirs(path_tif, exist_ok = True)
 
@@ -242,7 +244,7 @@ for r in range(len(run)): #len(run)
                 plt.xlabel("(moment of inertia) / area$^2$", labelpad = 20, fontsize = 16)
                 plt.ylabel("area", labelpad = 20, fontsize = 16)
                 cbar = plt.colorbar()
-                cbar.set_label(label = "log$_{10}$(flux)", fontsize = 16)
+                cbar.set_label(label = r"log$_{10}$($\Phi$)", fontsize = 16)
                 # plt.axis('off')
                 plt.xticks([], [])
                 plt.yticks([], [])
@@ -260,11 +262,11 @@ for r in range(len(run)): #len(run)
 
     elif args.data_type == "float32":
         if args.telescope_mode == "stereo_sum_cta":
-            output_filename = path_cnn_input + run_filename + "_ps_float.h5"
+            output_filename = path_cnn_input + run_filename + "_ps_float_alpha.h5"
         elif args.telescope_mode == "mono":
-            output_filename = path_cnn_input + run_filename + "_ps_float_mono.h5"
+            output_filename = path_cnn_input + run_filename + "_ps_float_mono_alpha.h5"
         elif args.telescope_mode == "stereo_sum_ps":
-            output_filename = path_cnn_input + run_filename + "_ps_float_stereo_sum.h5"
+            output_filename = path_cnn_input + run_filename + "_ps_float_stereo_sum_alpha.h5"
 
     table.to_hdf(output_filename, key = 'events', mode = 'w', index = False)
 
