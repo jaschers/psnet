@@ -9,7 +9,7 @@ from keras.models import Model
 import time
 import argparse
 import warnings
-from utilities import ExamplesEnergy, ExamplesSeparation, EnergyDistributionEnergy, EnergyDistributionSeparation, ResBlock
+from utilities_cnn import ResBlock
 
 print("Packages successfully loaded")
 
@@ -30,12 +30,13 @@ parser.add_argument("-tm", "--telescope_mode", type = str, required = False, met
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action="append", nargs="+")
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
-parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
+parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
+parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [1.5, 100], nargs = 2)
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
-parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
-parser.add_argument("-dh", "--domain_higher", type = float, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
-parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 2 0", default = [2, 0], nargs = 2)
+parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
+parser.add_argument("-dh", "--domain_higher", type = float, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 7 3000", default = [7., 3000.], nargs = 2)
+parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 4 4", default = [4, 4], nargs = 2)
 parser.add_argument("-n", "--size", type = int, metavar = "-", help = "Granulometry: size <n1>x<n2>, default: 20 20", default = [20, 20], nargs = 2)
 parser.add_argument("-f", "--filter", type = int, metavar = "-", help = "Use decision <filter>, default: 3", default = 3, nargs = 1)
 parser.add_argument("-e", "--epochs", type = int, metavar = "-", help = "Number of epochs for CNN training, default: 50", default = 50)
@@ -69,7 +70,7 @@ else:
 #     string_energy_range = ""
 
 if args.input == "cta":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nData type: {args.data_type} \nEnergy range: {args.energy_range} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nData type: {args.data_type} \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
     if args.telescope_mode == "stereo_sum_cta":
         string_input_short = "_images_alpha"
@@ -78,14 +79,14 @@ if args.input == "cta":
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nEnergy range: {args.energy_range} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "pattern_spectra"
     if args.telescope_mode == "stereo_sum_cta":
-        string_input_short = "_ps_float"
+        string_input_short = "_ps_float_alpha"
     elif args.telescope_mode == "mono":
-        string_input_short = "_ps_float_mono"
+        string_input_short = "_ps_float_mono_alpha"
     elif args.telescope_mode == "stereo_sum_ps":
-        string_input_short = "_ps_float_stereo_sum"
+        string_input_short = "_ps_float_stereo_sum_alpha"
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
     string_table_column = "pattern spectrum"
 ##########################################################################################
@@ -130,6 +131,10 @@ if args.mode == "energy":
     
     print("Total number of events:", len(table))
 
+    table.drop(table.loc[table["true_energy"] <= args.energy_range_gamma[0] * 1e3].index, inplace=True)
+    table.drop(table.loc[table["true_energy"] >= args.energy_range_gamma[1] * 1e3].index, inplace=True)
+    table.reset_index(inplace = True)
+
 elif args.mode == "separation":
     particle_type = np.array(["gamma_diffuse", "proton"])
 
@@ -137,11 +142,11 @@ elif args.mode == "separation":
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
         if args.test == "y":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
         elif args.telescope_mode == "mono":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono_alpha.csv"
         else: 
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
+            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
@@ -164,16 +169,16 @@ elif args.mode == "separation":
     print("Total number of proton events:", events_count[1])
     print("Total number of events:", len(table))
 
-    # EnergyDistributionSeparation(table, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
+    table.drop(table.loc[(table["true_energy"] <= args.energy_range_gamma[0] * 1e3) & (table["particle"] == 1)].index, inplace=True)
+    table.drop(table.loc[(table["true_energy"] >= args.energy_range_gamma[1] * 1e3) & (table["particle"] == 1)].index, inplace=True)
 
-table.drop(table.loc[table["true_energy"] <= args.energy_range[0] * 1e3].index, inplace=True)
-table.drop(table.loc[table["true_energy"] >= args.energy_range[1] * 1e3].index, inplace=True)
-table.reset_index(inplace = True)
+    table.drop(table.loc[(table["true_energy"] <= args.energy_range_proton[0] * 1e3) & (table["particle"] == 0)].index, inplace=True)
+    table.drop(table.loc[(table["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table["particle"] == 0)].index, inplace=True)
 
 print("______________________________________________")
 if args.mode == "separation":
     # shuffle data set
-    table = table.sample(frac=1).reset_index(drop=True)
+    table = table.sample(frac = 1).reset_index(drop = True)
     print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
 print("Total number of events after energy cut:", len(table))
@@ -191,10 +196,26 @@ if args.mode == "energy":
     Y = np.asarray(table["true_energy"])
     Y = np.log10(np.asarray(table["true_energy"]))
 
-    # # plot a few examples
-    # ExamplesEnergy(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
-    # # display total energy distribution of data set
-    # EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".png")
+    # plot a few examples
+    fig, ax = plt.subplots(3, 3)
+    ax = ax.ravel()
+    for i in range(9):
+        ax[i].imshow(X[i], cmap = "Greys_r")
+        ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
+        ax[i].axis("off")
+    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".pdf", dpi = 250)
+    plt.close()
+
+    # display total energy distribution of data set
+    plt.figure()
+    plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
+    plt.xlabel("True energy [GeV]")
+    plt.ylabel("Number of events")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".pdf", dpi = 250)
+    plt.close()
+
 elif args.mode == "separation":
     # output label: particle or gammaness (1 = gamma, 0 = proton)
     Y = np.asarray(table["particle"])
@@ -202,7 +223,32 @@ elif args.mode == "separation":
     energy_true_test = np.asarray(table["true_energy"])[int(-len(table) * test_split_percentage):]
 
     # # plot a few examples
-    # ExamplesSeparation(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".png")
+    fig, ax = plt.subplots(3, 3)
+    ax = ax.ravel()
+    for i in range(9):
+        ax[i].imshow(X[i], cmap = "Greys_r")
+        if Y[i][1] == 1:
+            ax[i].title.set_text(f"gamma ray")
+        elif Y[i][1] == 0:
+            ax[i].title.set_text(f"proton")
+        ax[i].axis("off")
+    plt.tight_layout()
+    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_data_type + string_name + ".pdf", dpi = 250)
+    plt.close()
+
+    plt.figure()
+    table_gamma = np.asarray(table[table["particle"] == 1].reset_index(drop = True)["true_energy"])
+    table_proton = np.asarray(table[table["particle"] == 0].reset_index(drop = True)["true_energy"])
+    plt.hist(table_gamma, bins = np.logspace(np.log10(np.min(table_gamma)), np.log10(np.max(table_gamma)), 50), alpha = 0.5, label = "gamma")
+    plt.hist(table_proton, bins = np.logspace(np.log10(np.min(table_proton)), np.log10(np.max(table_proton)), 50), alpha = 0.5, label = "proton")
+    plt.xlabel("True energy [GeV]")
+    plt.ylabel("Number of events")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_data_type + string_name + ".pdf", dpi = 250)
+    plt.close()
+
 
 # reshape X data
 X_shape = np.shape(X)
