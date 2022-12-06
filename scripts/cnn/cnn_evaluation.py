@@ -44,9 +44,9 @@ parser.add_argument("-er", "--energy_range", type = float, required = False, met
 parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
 parser.add_argument("-s", "--suffix", type = str, required = False, metavar = "-", help = "suffix for the output filenames")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
-parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
-parser.add_argument("-dh", "--domain_higher", type = float, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
-parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 2 0", default = [2, 0], nargs = 2)
+parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
+parser.add_argument("-dh", "--domain_higher", type = float, metavar = "-", help = "Granulometry: domain - end at <value> <value>, default: 7 3000", default = [7., 3000.], nargs = 2)
+parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 4 4", default = [4, 4], nargs = 2)
 parser.add_argument("-n", "--size", type = int, metavar = "-", help = "Granulometry: size <n1>x<n2>, default: 20 20", default = [20, 20], nargs = 2)
 parser.add_argument("-f", "--filter", type = int, metavar = "-", help = "Use decision <filter>, default: 3", default = 3, nargs = 1)
 
@@ -93,7 +93,7 @@ for i in range(len(args.input[0])):
     if args.input[0][i] == "ps":
         string_summary += f"\nInput: pattern spectra \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter}\n"
         string_input = np.append(string_input, "pattern_spectra")
-        string_input_short = np.append(string_input_short, "_ps_float")
+        string_input_short = np.append(string_input_short, "_ps_float_alpha")
         string_ps_input = np.append(string_ps_input, f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/")
         string_table_column = np.append(string_table_column, "pattern spectrum")
         string_data_type = np.append(string_data_type, "")
@@ -217,6 +217,8 @@ for i in range(len(args.input[0])):
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
         PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
+
+        SaveROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.csv")
 
         # prepare accuracy vs gammaness threshold plot
         accuracy_gammaness, thresholds = AccuracyGammaness(gammaness_true, gammaness_rec)

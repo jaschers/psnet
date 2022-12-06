@@ -33,9 +33,9 @@ parser.add_argument("-o", "--obs_id", type = int, metavar = "-", help = "observa
 parser.add_argument("-e", "--event_id", type = int, metavar = "-", help = "event ID", required = True)
 parser.add_argument("-t", "--tel_id", type = int, metavar = "-", help = "telescope ID", required = False)
 parser.add_argument("-a", "--attribute", type = int, metavar = "", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
-parser.add_argument("-dl", "--domain_lower", type = float, metavar = "", help = "Granulometry: domain - start at <value> <value>, default: 0 0", default = [0, 0], nargs = 2)
-parser.add_argument("-dh", "--domain_higher", type = float, metavar = "", help = "Granulometry: domain - end at <value> <value>, default: 10 100000", default = [10, 100000], nargs = 2)
-parser.add_argument("-m", "--mapper", type = int, metavar = "", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 2 0", default = [2, 0], nargs = 2)
+parser.add_argument("-dl", "--domain_lower", type = float, metavar = "", help = "Granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
+parser.add_argument("-dh", "--domain_higher", type = float, metavar = "", help = "Granulometry: domain - end at <value> <value>, default: 7 3000", default = [7., 3000.], nargs = 2)
+parser.add_argument("-m", "--mapper", type = int, metavar = "", help = "Granulometry: use lambdamappers <mapper1> <mapper2>, default: 4 4", default = [4, 4], nargs = 2)
 parser.add_argument("-n", "--size", type = int, metavar = "", help = "Granulometry: size <n1>x<n2>, default: 20 20", default = [20, 20], nargs = 2)
 parser.add_argument("-f", "--filter", type = int, metavar = "", help = "Use decision <filter>, default: 3", default = 3, nargs = 1)
 
@@ -50,9 +50,9 @@ if args.input == "cta":
         print(f"Telescope ID: {args.tel_id}")
     string_input = "iact_images"
     if args.telescope_mode == "stereo_sum_cta":
-        string_input_short = "_images"
+        string_input_short = "_images_alpha"
     elif args.telescope_mode == "mono":
-        string_input_short = "_images_mono"
+        string_input_short = "_images_alpha_mono"
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
@@ -62,11 +62,11 @@ elif args.input == "ps":
     print(f"Attribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter}")
     string_input = "pattern_spectra"
     if args.telescope_mode == "stereo_sum_cta":
-        string_input_short = "_ps_float"
+        string_input_short = "_ps_float_alpha"
     elif args.telescope_mode == "mono":
-        string_input_short = "_ps_float_mono"
+        string_input_short = "_ps_float_alpha_mono"
     elif args.telescope_mode == "stereo_sum_ps":
-        string_input_short = "_ps_float_stereo_sum"
+        string_input_short = "_ps_float_stereo_sum_alpha"
     string_ps_input = f"a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/"
     string_table_column = "pattern spectrum"
 ##########################################################################################
@@ -87,7 +87,7 @@ table.reset_index(inplace = True)
 print(table)
 
 if args.input == "ps":
-    path_pdf = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
+    path_pdf = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
 
     if args.tel_id == None:
         filename_pdf = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"
@@ -128,7 +128,7 @@ if args.input == "ps":
     plt.close()
 
 elif args.input == "cta":
-    path_pdf = f"dm-finder/data/{args.particle_type}/images/" + run_filename + "/float" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
+    path_pdf = f"dm-finder/data/{args.particle_type}/images/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
 
     if args.tel_id == None:
         filename_pdf = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"
