@@ -41,6 +41,8 @@ parser.add_argument("-na", "--name", type = str, required = False, metavar = "-"
 parser.add_argument("-l", "--label", type = str, required = False, metavar = "-", help = "plotting label for the individual experiments", action='append', nargs='+')
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
+parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
+parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [1.5, 100], nargs = 2)
 parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
 parser.add_argument("-s", "--suffix", type = str, required = False, metavar = "-", help = "suffix for the output filenames")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
@@ -108,7 +110,7 @@ print(string_summary)
 
 median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
-epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all, area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
+epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 for i in range(len(args.input[0])):
     print(f"Processing input {i+1}...")
@@ -160,8 +162,8 @@ for i in range(len(args.input[0])):
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
-        sst_energy_min = args.energy_range[0] # TeV
-        sst_energy_max = args.energy_range[1] # TeV
+        sst_energy_min = args.energy_range_gamma[0] # TeV
+        sst_energy_max = args.energy_range_gamma[1] # TeV
         bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
         indices = np.array([], dtype = int)
         for b in range(len(bins) - 2):
@@ -212,7 +214,13 @@ for i in range(len(args.input[0])):
         PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
 
         # perform an energy dependend analysis of accuracy, AUC and gammaness
-        bins, bins_central, area_under_ROC_curve_energy, accuracy_energy, true_positive_rate_energy, false_positive_rate_energy = PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+        # bins, bins_central, area_under_ROC_curve_energy, accuracy_energy, true_positive_rate_energy, false_positive_rate_energy = PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+        bins, bins_central = PlotGammanessEnergyBinned(table_output, args.energy_range_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+
+        # perform an gamma & proton energy dependend analysis of accuracy, AUC and gammaness
+        bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton = GetEfficienciesEnergyBinned(table_output, args.energy_range_gamma, args.energy_range_proton)
+
+        PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_energy.pdf")
 
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
@@ -243,10 +251,12 @@ for i in range(len(args.input[0])):
         precision_gammaness_all[i] = precision_gammaness
         threshold_cut_all[i] = thresholds[:threshold_cut]
         thresholds_all[i] = thresholds
-        area_under_ROC_curve_energy_all[i] = area_under_ROC_curve_energy
-        accuracy_energy_all[i] = accuracy_energy 
-        true_positive_rate_energy_all[i] = true_positive_rate_energy
-        false_positive_rate_energy_all[i] = false_positive_rate_energy
+        # area_under_ROC_curve_energy_all[i] = area_under_ROC_curve_energy
+        # accuracy_energy_all[i] = accuracy_energy 
+        # true_positive_rate_energy_all[i] = true_positive_rate_energy
+        # false_positive_rate_energy_all[i] = false_positive_rate_energy
+        true_positive_rate_er_gamma_all[i] = true_positive_rate_er_gamma
+        false_positive_rate_er_proton_all[i] = false_positive_rate_er_proton
 
         # Plot wrongly classified CTA images / pattern spectra
         if args.gammaness_limit != [0.0, 0.0, 0.0, 0.0]:
@@ -340,17 +350,21 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     if len(args.input[0]) > 3:
         PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
 
+        PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "purity_gammaness_comparison_" + string_comparison + ".pdf")
+
     PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
 
     PlotPrecisionGammanessComparison(precision_gammaness_all, threshold_cut_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotPurityGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "purity_gammaness_comparison_" + string_comparison + ".pdf")
+    # PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
 
-    PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
+    # PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_energy_comparison_" + string_comparison + ".pdf")
 
-    PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_energy_comparison_" + string_comparison + ".pdf")
+    # PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
 
-    PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    PlotEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+
+    PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_comparison_" + string_comparison + ".pdf")
 
     MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 
