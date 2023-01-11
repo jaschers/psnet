@@ -31,7 +31,7 @@ parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
 parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
-parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [1.5, 100], nargs = 2)
+parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 1.5 100", default = [1.5, 100], nargs = 2)
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
