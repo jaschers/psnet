@@ -41,8 +41,8 @@ parser.add_argument("-na", "--name", type = str, required = False, metavar = "-"
 parser.add_argument("-l", "--label", type = str, required = False, metavar = "-", help = "plotting label for the individual experiments", action='append', nargs='+')
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-er", "--energy_range", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
-parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
-parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [1.5, 100], nargs = 2)
+parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 1.5 100", default = [1.5, 100], nargs = 2)
+parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 1.5 100", default = [1.5, 100], nargs = 2)
 parser.add_argument("-gl", "--gammaness_limit", type = float, required = False, metavar = "-", help = "separation: set min / max limit for reconstructed gammaness to investigate wrongly classified gamma/proton events [g_min (gamma), g_max (gamma), g_min (proton), g_max (proton)], default: 0.0 0.0 0.0 0.0", default = [0.0, 0.0, 0.0, 0.0], nargs = 4)
 parser.add_argument("-s", "--suffix", type = str, required = False, metavar = "-", help = "suffix for the output filenames")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
@@ -79,14 +79,14 @@ for i in range(len(args.input[0])):
         string_name = np.append(string_name, "")
 
     if args.input[0][i] == "cta":
-        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} \n"
+        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
         string_table_column = np.append(string_table_column, "image")
         string_data_type = np.append(string_data_type, "")
     if args.input[0][i] == "cta_int8":
-        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range: {args.energy_range} \n"
+        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
@@ -221,7 +221,7 @@ for i in range(len(args.input[0])):
         bins, bins_central = PlotGammanessEnergyBinned(table_output, args.energy_range_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
 
         # perform an gamma & proton energy dependend analysis of accuracy, AUC and gammaness
-        bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton = GetEfficienciesEnergyBinned(table_output, args.energy_range_gamma, args.energy_range_proton)
+        bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton = GetEfficienciesEnergyBinnedFixedBackground(table_output, args.energy_range_gamma, args.energy_range_proton, 0.01)
 
         # get AUC energy binned based on proton energy
         area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, args.energy_range_proton)
@@ -233,7 +233,7 @@ for i in range(len(args.input[0])):
             tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta = GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, args.energy_range_gamma, args.energy_range_proton, fpr_fixed_gammaness_cta_mean)
             PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_proton_efficiency_fixed_to_cta_energy.pdf")
 
-        PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_energy.pdf")
+        PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_background_energy.pdf")
 
 
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
