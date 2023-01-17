@@ -97,7 +97,7 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
     plt.close()
 
 def PlotRelativeEnergyError(relative_energy_error_single, mean, sigma_total, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.hist(relative_energy_error_single, bins = np.linspace(np.min(relative_energy_error_single), np.max(relative_energy_error_single), 40), color = color_single)
     # plt.yscale("log")
@@ -185,7 +185,7 @@ def PlotEnergyAccuracy(median, bins, path):
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.errorbar(bins_central, median, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
@@ -201,7 +201,7 @@ def PlotEnergyResolution(sigma, bins, path):
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.errorbar(bins_central, sigma, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
@@ -217,7 +217,7 @@ def PlotEnergyAccuracyComparison(median_all, bins, label, path):
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     for i in range(len(median_all)):
         plt.errorbar(bins_central, median_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
@@ -291,7 +291,7 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     for i in range(len(sigma_all)):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
@@ -404,7 +404,7 @@ def PlotFeatureMaps(X, model, index_example, path):
     # index_max_energy = np.argmax(Y)
     img = X[index_example]
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.title("example input")
     plt.xticks([])
     plt.yticks([])
@@ -459,7 +459,7 @@ def PlotFilters(model, path):
 
 def EnergyDistributionSeparation(table, path):
     # display total energy distribution of data set
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     table_gamma = np.asarray(table[table["particle"] == 1].reset_index(drop = True)["true_energy"])
     table_proton = np.asarray(table[table["particle"] == 0].reset_index(drop = True)["true_energy"])
     plt.hist(table_gamma, bins = np.logspace(np.log10(np.min(table_gamma)), np.log10(np.max(table_gamma)), 50), alpha = 0.5, label = "gamma")
@@ -474,7 +474,7 @@ def EnergyDistributionSeparation(table, path):
 
 def EnergyDistributionEnergy(Y, path):
     # display total energy distribution of data set
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
     plt.xlabel("True energy [GeV]")
     plt.ylabel("Number of events")
@@ -924,7 +924,7 @@ def PlotGammanessEnergyBinned(table_output, energy_range, path):
 
 #     return(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton)
 
-def GetEfficienciesEnergyBinned(table_output, energy_range_gamma, energy_range_proton):
+def GetEfficienciesEnergyBinnedFixedBackground(table_output, energy_range_gamma, energy_range_proton, false_positive_rate_requirement):
     table = table_output.copy()
     table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
     table.columns = table.columns.str.replace("E_true / GeV", "E_true / TeV")
@@ -959,7 +959,7 @@ def GetEfficienciesEnergyBinned(table_output, energy_range_gamma, energy_range_p
 
         # calculate the true positive rate for gamma rays and protons depending on the threshold
         gammaness_cut = np.linspace(0, 1.0, 9999)
-        false_positive_rate_requirement = 0.01
+        # false_positive_rate_requirement = 0.01
 
         # determine the efficiencies (TPR,...) for gammaness == 0.7
         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, gammaness_cut)
@@ -1129,7 +1129,7 @@ def GetAUCEnergyBinned(table_output, energy_range_proton):
     return(area_under_ROC_curve_energy)
 
 def PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.errorbar(bins_central_gamma, true_positive_rate_er_gamma, xerr = (bins_gamma[:-1] - bins_central_gamma, bins_central_gamma - bins_gamma[1:]), linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0], label = "Photon")
     plt.errorbar(bins_central_proton, false_positive_rate_er_proton, xerr = (bins_proton[:-1] - bins_central_proton, bins_central_proton - bins_proton[1:]), linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[1], label = "Proton")
@@ -1169,7 +1169,7 @@ def ROC(gammaness_true, gammaness_rec):
 
 def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path):
     # plot the ROC curve
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3)), color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
@@ -1189,7 +1189,7 @@ def SaveROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
 
 def PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, rejection_power, thresholds, path):
     # plot the "efficiency" curve
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(thresholds, true_positive_rate, label = "TPR", color = colors_categorial[0]) 
     plt.plot(thresholds, false_positive_rate, label = "FPR", color = colors_categorial[1]) 
@@ -1224,7 +1224,7 @@ def AccuracyGammaness(gammaness_true, gammaness_rec):
     return(accuracy_gammaness, thresholds)
 
 def PlotAccuracyGammaness(accuracy_gammaness, thresholds, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(thresholds, accuracy_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.xlabel("Gammaness")
@@ -1257,7 +1257,7 @@ def PrecisionGammaness(gammaness_true, gammaness_rec):
     return(precision_gammaness, threshold_cut)
 
 def PlotPrecisionGammaness(precision_gammaness, thresholds, path):
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(thresholds, precision_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
     plt.xlabel("Gammaness")
@@ -1809,7 +1809,7 @@ def ExtractPatternSpectraMeanProton(table_output, size, gammaness_limit_proton, 
 
 def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gammaness_limit, cmap, path):
     for pt in range(len(particle_type)):
-        plt.figure()
+        plt.figure(figsize = single_column_fig_size)
         if particle_type[pt] == "gamma_diffuse":
         #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
             path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
@@ -1840,7 +1840,7 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes
     elif abs(pattern_spectra_mean_difference_min) < abs(pattern_spectra_mean_difference_max):
         pattern_spectra_mean_difference_min = - abs(pattern_spectra_mean_difference_max)
 
-    plt.figure()
+    plt.figure(figsize = single_column_fig_size)
     # plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
     im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.001, base = 10))
     im.set_clim(pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max)
