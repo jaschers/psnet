@@ -165,8 +165,8 @@ for i in range(len(args.input[0])):
 
         # prepare energy binning
         number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
-        sst_energy_min = args.energy_range_gamma[0] # TeV
-        sst_energy_max = args.energy_range_gamma[1] # TeV
+        sst_energy_min = args.energy_range[0] # TeV
+        sst_energy_max = args.energy_range[1] # TeV
         bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
         indices = np.array([], dtype = int)
         for b in range(len(bins) - 2):
