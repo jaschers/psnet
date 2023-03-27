@@ -32,6 +32,7 @@ parser.add_argument("-pt", "--particle_type", type = str, metavar = "-", choices
 parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "-", choices = ["int8", "float64"], help = "data type of the output images [int8, float64], default: float64", default = "float64")
 parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of events in TeV, default: 1.5 100", default = [1.5, 100], nargs = 2)
+parser.add_argument("-sc", "--selection_cuts", type = str, required = False, metavar = "-", help = "Name of the selection cuts extracted from the pre_selection_cuty.py script")
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
@@ -120,6 +121,8 @@ if args.mode == "energy":
 
     print(filename_run_csv)
 
+    events_count = 0
+    events_count_selection_cuts = 0
     table = pd.DataFrame()
     for r in range(len(run)): # len(run)
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
@@ -127,9 +130,27 @@ if args.mode == "energy":
 
         table_individual_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
-        table = table.append(table_individual_run, ignore_index = True)
+        events_count += len(table_individual_run)
+
+        if args.selection_cuts != None:
+            selection_cuts_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts}/run{run[r]}.csv"
+            table_selection_cuts = pd.read_csv(selection_cuts_filename)
+            if args.telescope_mode == "stereo_sum_cta":
+                merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
+            elif args.telescope_mode == "mono":
+                merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id", "tel_id"])
+        
+            table = table.append(merged_table, ignore_index = True)
+            events_count_selection_cuts += len(merged_table)
+        else:
+            table = table.append(table_individual_run, ignore_index = True)
+
+        # table = table.append(table_individual_run, ignore_index = True)
     
-    print("Total number of events:", len(table))
+    print("Total number of events:", events_count)
+    if args.selection_cuts != None:
+        print("______________________________________________")
+        print("Total number of events after selection cut:", events_count_selection_cuts)
 
     table.drop(table.loc[table["true_energy"] <= args.energy_range_gamma[0] * 1e3].index, inplace=True)
     table.drop(table.loc[table["true_energy"] >= args.energy_range_gamma[1] * 1e3].index, inplace=True)
@@ -140,6 +161,7 @@ elif args.mode == "separation":
 
     table = pd.DataFrame()
     events_count = np.array([0, 0])
+    events_count_selection_cuts = np.array([0, 0])
     for p in range(len(particle_type)):
         if args.test == "y":
             filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
@@ -150,6 +172,7 @@ elif args.mode == "separation":
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
+        print(f"List of runs {particle_type[p]} filename:")
         print(filename_run_csv)
 
         for r in range(len(run)):
@@ -158,15 +181,36 @@ elif args.mode == "separation":
 
             table_individual_run = pd.read_hdf(input_filename)
             print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_individual_run))
+
             if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
                 events_count[0] += len(table_individual_run)
             if particle_type[p] == "proton":
                 events_count[1] += len(table_individual_run)
-            table = table.append(table_individual_run, ignore_index = True)
+
+            if args.selection_cuts != None:
+                selection_cuts_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts}/run{run[r]}.csv"
+                table_selection_cuts = pd.read_csv(selection_cuts_filename)
+                if args.telescope_mode == "stereo_sum_cta":
+                    merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
+                elif args.telescope_mode == "mono":
+                    merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id", "tel_id"])
+
+                if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
+                    events_count_selection_cuts[0] += len(merged_table)
+                if particle_type[p] == "proton":
+                    events_count_selection_cuts[1] += len(merged_table)
+            
+                table = table.append(merged_table, ignore_index = True)
+            else:
+                table = table.append(table_individual_run, ignore_index = True)
 
     print("______________________________________________")
     print("Total number of gamma events:", events_count[0])
     print("Total number of proton events:", events_count[1])
+    if args.selection_cuts != None:
+        print("______________________________________________")
+        print("Total number of gamma events after selection cuts:", events_count_selection_cuts[0])
+        print("Total number of proton events after selection cuts:", events_count_selection_cuts[1])
     print("Total number of events:", len(table))
 
     table.drop(table.loc[(table["true_energy"] <= args.energy_range_gamma[0] * 1e3) & (table["particle"] == 1)].index, inplace=True)
