@@ -25,9 +25,9 @@ parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices 
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the CTA images will be extracted, default: csv list", action='append', nargs='+')
 parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta"], help = "telescope mode [mono, stereo_sum_cta], default: stereo_sum_cta", default = "stereo_sum_cta")
 parser.add_argument("-er", "--energy_range", type = float, required = True, metavar = "-", help = "set energy range of events in TeV", nargs = 2)
-parser.add_argument("-hi", "--hillas_intensity", type = float, required = False, metavar = "", help = "Events with Hillas intensities less than X will be rejected", default = 50)
+parser.add_argument("-hi", "--hillas_intensity", type = int, required = False, metavar = "", help = "Events with Hillas intensities less than X will be rejected", default = 50)
 parser.add_argument("-l2", "--leakage2", type = float, required = False, metavar = "", help = "Events with leakage2 more than X will be rejected", default = 0.2)
-parser.add_argument("-mu", "--multiplicity", type = float, required = False, metavar = "", help = "Events with multiplicity less than X will be rejected", default = 4)
+parser.add_argument("-mu", "--multiplicity", type = int, required = False, metavar = "", help = "Events with multiplicity less than X will be rejected", default = 4)
 
 args = parser.parse_args()
 print(f"################### Input summary ################### \nParticle type: {args.particle_type} \nTelescope mode: {args.telescope_mode}\nEnergy range: {args.energy_range}\nHillas intensity cut: {args.hillas_intensity}\nLeakage2 cut: {args.leakage2}")
@@ -88,10 +88,15 @@ for r in tqdm(range(len(run))): #len(run)
         table_cut = table_cut[["obs_id", "event_id"]] 
     
         os.makedirs(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/", exist_ok = True)
-        # table_cut.to_hdf(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/run{run[r]}.h5", key='table')
         table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/run{run[r]}.csv", index = False)
+        # table_cut.close()
+    
+    if args.telescope_mode == "mono":
+        mask = (parameters_table["leakage_intensity_width_2"] < args.leakage2) & (parameters_table["hillas_intensity"] > args.hillas_intensity)
+        table_cut = parameters_table[mask][["obs_id", "event_id", "tel_id"]]
+        table_cut = pd.DataFrame(np.array(table_cut))
 
-    # mask = (parameters_table["leakage_intensity_width_2"] < 0.1) & (parameters_table["hillas_intensity"] > 1000)
-    # parameters_table_cut_ids = parameters_table[mask][["obs_id", "event_id", "tel_id"]]
+        os.makedirs(f"dm-finder/cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/", exist_ok = True)
+        table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/run{run[r]}.csv", index = False)
 
-    # images_table_cut = join(images_table, parameters_table_cut_ids, keys=["obs_id", "event_id", "tel_id"])
+        # table_cut.close()
