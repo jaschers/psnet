@@ -14,6 +14,12 @@ from keras.callbacks import CSVLogger
 from keras.models import Model
 import logging
 import time
+from ctapipe.io import EventSource, read_table
+from astropy.table import Table, join, vstack
+from pyirf.simulations import SimulatedEventsInfo
+
+# do not print tensorflow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
 # plt.rcParams.update({'font.family':'serif'}) #serif
@@ -79,14 +85,14 @@ for i in range(len(args.input[0])):
         string_name = np.append(string_name, "")
 
     if args.input[0][i] == "cta":
-        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
+        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-bkg sep): {args.energy_range_gamma} \nEnergy range proton (sig-bkg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
         string_table_column = np.append(string_table_column, "image")
         string_data_type = np.append(string_data_type, "")
     if args.input[0][i] == "cta_int8":
-        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
+        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-bkg sep): {args.energy_range_gamma} \nEnergy range proton (sig-bkg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
@@ -114,6 +120,86 @@ epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive
 
 tpr_fixed_gammaness_cta_all, fpr_fixed_gammaness_cta_all = [], []
 tpr_ps_proton_efficiency_fixed_to_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all = [], []
+
+if args.mode == "separation":
+    dl0_gamma = Table()
+    dl0_proton = Table()
+    # load simulation info which is necesarry to calculate signal and bkg efficiencies
+    filename_run_gamma_diffuse = f"dm-finder/scripts/run_lists/gamma_diffuse_run_list_alpha.csv"
+    filename_run_proton = f"dm-finder/scripts/run_lists/proton_run_list_alpha.csv"
+
+    run_gamma = pd.read_csv(filename_run_gamma_diffuse)
+    run_gamma = run_gamma.to_numpy().reshape(len(run_gamma))
+    run_proton = pd.read_csv(filename_run_proton)
+    run_proton = run_proton.to_numpy().reshape(len(run_proton))
+
+    print("loading gamma simulation information...")
+    for r in tqdm(range(len(run_gamma))):
+        dl1_filename_gamma_diffuse = f"gamma_20deg_0deg_run{run_gamma[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
+        dl1_directory_gamma_diffuse = f"dm-finder/data/gamma_diffuse/event_files/" + dl1_filename_gamma_diffuse + ".h5"
+        dl0_gamma_temp = read_table(dl1_directory_gamma_diffuse, "/configuration/simulation/run")
+        dl0_gamma = vstack([dl0_gamma, dl0_gamma_temp])
+        break
+        
+
+    print("loading proton simulation information...")
+    for r in tqdm(range(len(run_proton))):
+        dl1_filename_proton = f"proton_20deg_0deg_run{run_proton[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
+        dl1_directory_proton = f"dm-finder/data/proton/event_files/" + dl1_filename_proton + ".h5"
+        dl0_proton_temp = read_table(dl1_directory_proton, "/configuration/simulation/run")
+        dl0_proton = vstack([dl0_proton, dl0_proton_temp])
+        break
+        
+
+    if len(np.unique(dl0_gamma["energy_range_min"])) > 1:
+        print("WARNING: min energy range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["energy_range_max"])) > 1:
+        print("WARNING: max energy range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["spectral_index"])) > 1:
+        print("WARNING: spectral index is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["max_scatter_range"])) > 1:
+        print("WARNING: max scatter range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["max_viewcone_radius"])) > 1:
+        print("WARNING: max viewcone radius is not the same for all obs_ids (gamma_diffuse)")
+
+    if len(np.unique(dl0_gamma["energy_range_min"])) > 1:
+        print("WARNING: min energy range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["energy_range_max"])) > 1:
+        print("WARNING: max energy range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["spectral_index"])) > 1:
+        print("WARNING: spectral index is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["max_scatter_range"])) > 1:
+        print("WARNING: max scatter range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["max_viewcone_radius"])) > 1:
+        print("WARNING: max viewcone radius is not the same for all obs_ids (proton)")
+
+    percentage_test_data = 0.1
+    n_showers_total_gamma = np.sum(dl0_gamma["num_showers"] * dl0_gamma["shower_reuse"]) * percentage_test_data
+    n_showers_total_proton = np.sum(dl0_proton["num_showers"] * dl0_proton["shower_reuse"]) * percentage_test_data
+
+    print(n_showers_total_gamma)
+    print(n_showers_total_proton)
+
+    # use 
+    simulation_info_gamma = SimulatedEventsInfo(
+    energy_min=dl0_gamma["energy_range_min"][0] * dl0_gamma["energy_range_min"].unit, # energy_range_min
+    energy_max=dl0_gamma["energy_range_max"][0] * dl0_gamma["energy_range_max"].unit, # energy_range_max
+    spectral_index=dl0_gamma["spectral_index"][0], # spectral_index
+    n_showers=n_showers_total,
+    max_impact= dl0_gamma["max_scatter_range"][0] * dl0_gamma["max_scatter_range"].unit, # max_scatter_range
+    viewcone=dl0_gamma["max_viewcone_radius"][0] * dl0_gamma["max_viewcone_radius"].unit, # max_viewcone_radius
+    )
+
+    simulation_info_proton = SimulatedEventsInfo(
+    energy_min=dl0_proton["energy_range_min"][0] * dl0_proton["energy_range_min"].unit, # energy_range_min
+    energy_max=dl0_proton["energy_range_max"][0] * dl0_proton["energy_range_max"].unit, # energy_range_max
+    spectral_index=dl0_proton["spectral_index"][0], # spectral_index
+    n_showers=n_showers_total,
+    max_impact= dl0_proton["max_scatter_range"][0] * dl0_proton["max_scatter_range"].unit, # max_scatter_range
+    viewcone=dl0_proton["max_viewcone_radius"][0] * dl0_proton["max_viewcone_radius"].unit, # max_viewcone_radius
+    )
+
+    exit()
 
 for i in range(len(args.input[0])):
     print(f"Processing input {i+1}...")
