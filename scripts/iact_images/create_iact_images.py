@@ -4,7 +4,7 @@ import pandas as pd
 from ctapipe.io import EventSource, read_table
 from ctapipe.instrument import SubarrayDescription 
 from ctapipe.visualization import CameraDisplay
-from utilities import GetEventImage, GetEventImageBasic, GetEventImageBasicSmall
+from utilities import *
 from astropy.table import Table, join, vstack
 from astropy.io import ascii
 import sys
@@ -36,10 +36,6 @@ parser.add_argument("-er", "--energy_range", type = float, required = True, meta
 args = parser.parse_args()
 print(f"################### Input summary ################### \nParticle type: {args.particle_type} \nTelescope mode: {args.telescope_mode} \nEnergy range: {args.energy_range} TeV \n#####################################################")
 ##########################################################################################
-
-# ----------------------------------------------------------------------
-# load and prepare data set
-# ----------------------------------------------------------------------
 
 # load data
 if args.telescope_mode == "mono" and args.particle_type == "gamma":
@@ -80,10 +76,7 @@ for r in range(len(run)): #len(run)
     os.makedirs(path_array_layout, exist_ok = True)
     os.makedirs(path_energy_distribution, exist_ok = True)
 
-    plt.figure()
-    subarray.peek()
-    plt.savefig(path_array_layout + f"telescope_subarray_layout_run{run[r]}.pdf", dpi = 500)
-    plt.close()
+    plot_subarray_layout(subarray, path_array_layout, run[r])
 
     # get tables for all SST telescopes that include images and corresponding obs_id + event_id for each event
     # alpha configuration
@@ -109,6 +102,7 @@ for r in range(len(run)): #len(run)
     # define telescope geometry to the SST geometry (telescope id 30)
     sst_camera_geometry = source.subarray.tel[30].camera.geometry
 
+    # prepare mono images
     if args.telescope_mode == "mono":
         # group table by same obs_id and event_id
         complete_table_by_obs_id_event_id = complete_table.group_by(["obs_id", "event_id", "tel_id", "true_energy"])
@@ -145,20 +139,12 @@ for r in range(len(run)): #len(run)
         table["image"] = np.nan
         table["image"] = table["image"].astype(object)
 
-############################################ CLEAN ############################################
-
+        # for loop over table rows
         for i in tqdm(range(len(table))): # len(table)
-  
+
+            # prepare image 
             image = complete_table["image"][i]
-            
-            image = np.append(image, np.ones(4 * 8 * 8) * np.min(image))
-            image = np.split(image, 36)
-            image = np.reshape(image, newshape = (-1, 8, 8)).astype('float32')
-            image = np.rot90(image, k = 1, axes = (1, 2))
-            mask = np.array([32, 22, 10, 4, 16, 33, 30, 20, 8, 2, 14, 26, 28, 18, 6, 0, 12, 24, 29, 19, 7, 1, 13, 25, 31, 21, 9, 3, 15, 27, 34, 23, 11, 5, 17, 35])
-            image = image[mask]
-            image = image.reshape(6,6,8,8).transpose(0,2,1,3).reshape(48,48)
-            image = np.round(image, 1)
+            image = reshape_image(image)
 
             # create directory in which the float images will be saved
             path_hdf = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/hdf/"
@@ -166,34 +152,34 @@ for r in range(len(run)): #len(run)
 
             image_HDF = np.array([np.reshape(image, (48 * 48))])
 
+            # save image as hdf file to be read by the pattern spectra code
             output_hdf_filename = path_hdf + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.h5"
             HDFfile = h5py.File(output_hdf_filename, "w")
             HDFfile.create_dataset("image", data = image_HDF)
 
+            # save a few examples
             if run[r] == 10 and i <= 125:
                 path_tif = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
 
-            # implement image into table
+            # add image to table
             table["image"][i] = image
 
         path_cnn_input = f"dm-finder/cnn/iact_images/input/{args.particle_type}/"
-        try:
-            os.makedirs(path_cnn_input)
-        except OSError:
-            pass
-        
+        os.makedirs(path_cnn_input, exist_ok = True)
+
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 
         output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_mono_alpha"
 
+        # save table as hdf file
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
         # close event file
         source.close()
 
-
+    # prepare stereo_sum_cta images
     if args.telescope_mode == "stereo_sum_cta":
         # group table by same obs_id and event_id
         complete_table_by_obs_id_event_id = complete_table.group_by(["obs_id", "event_id", "true_energy"])
@@ -210,32 +196,17 @@ for r in range(len(run)): #len(run)
             image_combined[k] = group["image"].groups.aggregate(np.add)
             k += 1
             
-        # # compute sum of all 'photon' counts in each combined image 
-        # sum_image_combined = np.sum(image_combined, axis = 2)
-
-        # # add combined sum of all 'photon' counts list to the table
-        # complete_table_tel_combined["sum_image"] = sum_image_combined
-
         # save data into a .csv file
         path_tables = f"dm-finder/data/{args.particle_type}/tables/"
-        try:
-            os.makedirs(path_tables)
-        except OSError:
-            pass
+        os.makedirs(path_tables, exist_ok = True)
+
         ascii.write(complete_table_tel_combined, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
 
         # add combined images list to the table
         complete_table_tel_combined["image combined"] = image_combined
 
         # display and save energy distribution
-        plt.figure()
-        plt.grid(alpha = 0.2)
-        plt.hist(complete_table_tel_combined["true_energy"].to("TeV").value)
-        plt.xlabel("True energy [TeV]")
-        plt.ylabel("Number of events")
-        plt.yscale("log")
-        plt.savefig(f"dm-finder/data/{args.particle_type}/info/energy_distribution/energy_distribution_run{run[r]}_alpha.png")
-        plt.close()
+        plot_energy_dist(complete_table_tel_combined, args.particle_type, run[r])
 
         # open csv file and prepare table for filling in images 
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
@@ -269,32 +240,9 @@ for r in range(len(run)): #len(run)
 
         # save combined telescope images
         for i in tqdm(range(len(complete_table_tel_combined))): # len(complete_table_tel_combined)
-            # create directory in which the images will be saved
-            # path = f"dm-finder/data/{args.particle_type}/images/{output_filename}/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif"
-            # try:
-            #     os.makedirs(path)
-            # except OSError:
-            #     pass
-
-            # print("obs_id:", complete_table_tel_combined["obs_id"][i])
-            # print("event_id:", complete_table_tel_combined["event_id"][i])
-            # print(complete_table_tel_combined["image combined"][i][0])
-
+            # prepare image 
             image = complete_table_tel_combined["image combined"][i][0]
-            
-            image = np.append(image, np.ones(4 * 8 * 8) * np.min(image))
-            image = np.split(image, 36)
-            image = np.reshape(image, newshape = (-1, 8, 8)).astype('float32')
-            image = np.rot90(image, k = 1, axes = (1, 2))
-            # mask = np.array([15, 21, 9, 27, 3, 33, 14, 20, 8, 26, 2, 32, 16, 22, 10, 28, 4, 34, 13, 19, 7, 25, 1, 31, 17, 23, 11, 29, 18, 6, 24, 0, 5, 30, 35])
-            mask = np.array([32, 22, 10, 4, 16, 33, 30, 20, 8, 2, 14, 26, 28, 18, 6, 0, 12, 24, 29, 19, 7, 1, 13, 25, 31, 21, 9, 3, 15, 27, 34, 23, 11, 5, 17, 35])
-            image = image[mask]
-            image = image.reshape(6,6,8,8).transpose(0,2,1,3).reshape(48,48)
-            image = np.round(image, 1)
-
-            image_filename_tif = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/tif/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
-
-            image_filename_pgm = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/pgm/obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}"
+            image = reshape_image(image)
 
             # create directory in which the float images will be saved
             path = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/"
@@ -302,30 +250,29 @@ for r in range(len(run)): #len(run)
 
             image_HDF = np.array([np.reshape(image, (48 * 48))])
 
+            # save image as HDF file to be read by the pattern spectra code
             output_hdf_filename = path + f"obs_id_{complete_table_tel_combined['obs_id'][i]}__event_id_{complete_table_tel_combined['event_id'][i]}.h5"
             HDFfile = h5py.File(output_hdf_filename, "w")
             HDFfile.create_dataset("image", data = image_HDF)
 
-
+            # save a few examples
             if run[r] == 10 and i <= 50:
                 path_tif = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
 
-            # implement image into table
+            # add image to table
             table["image"][i] = image
 
         path_cnn_input = f"dm-finder/cnn/iact_images/input/{args.particle_type}/"
-        try:
-            os.makedirs(path_cnn_input)
-        except OSError:
-            pass
+        os.makedirs(path_cnn_input, exist_ok = True)
         
         output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_alpha"
 
         print(output_hdf_filename)
 
+        # save table as HDF file
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
 
         # close event file
