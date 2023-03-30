@@ -325,7 +325,7 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-ERes.dat")
+    data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-SST-ERes.dat")
     cta_requirement_energy = 10**data_cta_requirement[:,0]
     cta_requirement_energy_resolution = data_cta_requirement[:,1]
 
@@ -953,6 +953,23 @@ def GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central,
 
     return(true_positive_rate, false_positive_rate)
 
+def GetEffectiveArea(true_positive_rate, area):
+    area_eff = true_positive_rate * area
+    return(area_eff)
+
+def PlotEffectiveAreaEnergyBinned(bins, bins_central, area_eff, path):
+    plt.figure(figsize = single_column_fig_size)
+    plt.grid(alpha = 0.2)
+    xerr = bins[:-1] - bins_central
+    plt.errorbar(bins_central, area_eff, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0])
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel(r"$A_{{eff}}$ [m$^{{2}}$]")
+    plt.yscale("log")
+    plt.xscale("log")
+    plt.tight_layout()
+    plt.savefig(path)
+    plt.close()
+
 def PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist, dl0_proton_hist, path):
     table = table_output.copy()
     table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
@@ -1138,9 +1155,9 @@ def GetAUCEnergyBinned(table_output, energy_range_proton):
 def PlotEfficienciesEnergyBinned(bins, bins_central, true_positive_rate, false_positive_rate, path):
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    xerr = bins[:-1].value - bins_central.value
-    plt.errorbar(bins_central.value, true_positive_rate, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0], label = "Photon")
-    plt.errorbar(bins_central.value, false_positive_rate, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[1], label = "Proton")
+    xerr = bins[:-1] - bins_central
+    plt.errorbar(bins_central, true_positive_rate, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0], label = "Photon")
+    plt.errorbar(bins_central, false_positive_rate, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[1], label = "Proton")
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel(r"$\eta$")
     plt.yscale("log")
@@ -1643,6 +1660,60 @@ def PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate, false
     plt.xscale("log")
     plt.yscale("log")
     plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    plt.tight_layout()
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
+
+    table = []
+    for k in range(len(args_input)):
+        table.append([args_input[k], area_eff[k].value])
+
+    table = pd.DataFrame(table, columns=["input", "effective area"])
+
+    table_mean = []
+    args_input_unique = np.unique(args_input)
+    for k in range(len(args_input_unique)):
+        table_k = table.copy()
+        table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
+        table_mean.append([args_input_unique[k], np.mean(table_k["effective area"].dropna().to_numpy(), axis = 0), np.std(table_k["effective area"].dropna().to_numpy(), axis = 0, ddof = 1)])
+    table_mean = pd.DataFrame(table_mean, columns=["input", "mean effective area", "std effective area"])
+
+    data_cta_requirement = np.genfromtxt("dm-finder/data/South-30m-SST-EffectiveArea.dat")
+    cta_requirement_energy = 10**data_cta_requirement[:,0]
+    cta_requirement_area_eff = data_cta_requirement[:,1]
+
+    plt.figure(figsize = single_column_fig_size_legend)
+    plt.grid(alpha = 0.2)
+    labels = ["CTA images", "Pattern spectra"]
+    for i in range(len(args_input_unique)):
+        table_mean_i = table_mean.copy()
+        mean_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean effective area"].dropna().to_numpy()[0]
+        std_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std effective area"].dropna().to_numpy()[0]
+        plt.errorbar(bins_central, (mean_true_positive_rate_energy), xerr = (bins[:-1] - bins_central), linestyle = "", capsize = 0.0, marker = ".", markersize = 6, label = r"{0}".format(labels[i]), color = colors_categorial[i])
+        bins_central_fill_area = np.append(bins_central, bins[-1])
+        bins_central_fill_area = np.insert(bins_central_fill_area, 0, bins[0])
+
+        filling_lower_tpr = (mean_true_positive_rate_energy) - std_true_positive_rate_energy
+        filling_lower_tpr = np.append(filling_lower_tpr, filling_lower_tpr[-1])
+        filling_lower_tpr = np.insert(filling_lower_tpr, 0, filling_lower_tpr[0])
+        filling_upper_tpr = (mean_true_positive_rate_energy) + std_true_positive_rate_energy
+        filling_upper_tpr = np.append(filling_upper_tpr, filling_upper_tpr[-1])
+        filling_upper_tpr = np.insert(filling_upper_tpr, 0, filling_upper_tpr[0])
+
+        plt.fill_between(bins_central_fill_area, filling_lower_tpr, filling_upper_tpr, facecolor = colors_categorial[i], alpha = 0.3)
+    plt.xscale("log")
+    xmin, xmax, ymin, ymax = plt.axis()
+    plt.plot(cta_requirement_energy, cta_requirement_area_eff, color = "grey", linestyle = "--", label = "CTA requirements")
+    plt.xlim(xmin, xmax)
+    plt.xlabel("$E_\mathrm{true}$ [TeV]")
+    plt.ylabel(r"$A_{{eff}}$ [m$^{{2}}$]")
+    plt.yscale("log")
+    handles, labels = plt.gca().get_legend_handles_labels()
+    order = [1,0,2]
+    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    # plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()

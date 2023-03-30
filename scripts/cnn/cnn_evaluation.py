@@ -117,7 +117,7 @@ print(string_summary)
 
 median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
-epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
+epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, area_eff_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 tpr_fixed_gammaness_cta_all, fpr_fixed_gammaness_cta_all = [], []
 tpr_ps_proton_efficiency_fixed_to_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all = [], []
@@ -178,26 +178,23 @@ if args.mode == "separation":
     n_showers_total_gamma = np.sum(dl0_gamma["num_showers"] * dl0_gamma["shower_reuse"]) * percentage_test_data
     n_showers_total_proton = np.sum(dl0_proton["num_showers"] * dl0_proton["shower_reuse"]) * percentage_test_data
 
-    print(n_showers_total_gamma)
-    print(n_showers_total_proton)
-
     # use 
     simulation_info_gamma = SimulatedEventsInfo(
-    energy_min=dl0_gamma["energy_range_min"][0] * dl0_gamma["energy_range_min"].unit, # energy_range_min
-    energy_max=dl0_gamma["energy_range_max"][0] * dl0_gamma["energy_range_max"].unit, # energy_range_max
-    spectral_index=dl0_gamma["spectral_index"][0], # spectral_index
-    n_showers=n_showers_total_gamma,
-    max_impact= dl0_gamma["max_scatter_range"][0] * dl0_gamma["max_scatter_range"].unit, # max_scatter_range
-    viewcone=dl0_gamma["max_viewcone_radius"][0] * dl0_gamma["max_viewcone_radius"].unit, # max_viewcone_radius
+    energy_min = dl0_gamma["energy_range_min"][0] * dl0_gamma["energy_range_min"].unit, # energy_range_min
+    energy_max = dl0_gamma["energy_range_max"][0] * dl0_gamma["energy_range_max"].unit, # energy_range_max
+    spectral_index = dl0_gamma["spectral_index"][0], # spectral_index
+    n_showers = n_showers_total_gamma,
+    max_impact = dl0_gamma["max_scatter_range"][0] * dl0_gamma["max_scatter_range"].unit, # max_scatter_range
+    viewcone = (dl0_gamma["max_viewcone_radius"][0] - dl0_gamma["min_viewcone_radius"][0]) * dl0_gamma["max_viewcone_radius"].unit, # max_viewcone_radius
     )
 
     simulation_info_proton = SimulatedEventsInfo(
-    energy_min=dl0_proton["energy_range_min"][0] * dl0_proton["energy_range_min"].unit, # energy_range_min
-    energy_max=dl0_proton["energy_range_max"][0] * dl0_proton["energy_range_max"].unit, # energy_range_max
-    spectral_index=dl0_proton["spectral_index"][0], # spectral_index
-    n_showers=n_showers_total_proton,
-    max_impact= dl0_proton["max_scatter_range"][0] * dl0_proton["max_scatter_range"].unit, # max_scatter_range
-    viewcone=dl0_proton["max_viewcone_radius"][0] * dl0_proton["max_viewcone_radius"].unit, # max_viewcone_radius
+    energy_min = dl0_proton["energy_range_min"][0] * dl0_proton["energy_range_min"].unit, # energy_range_min
+    energy_max = dl0_proton["energy_range_max"][0] * dl0_proton["energy_range_max"].unit, # energy_range_max
+    spectral_index = dl0_proton["spectral_index"][0], # spectral_index
+    n_showers = n_showers_total_proton,
+    max_impact = dl0_proton["max_scatter_range"][0] * dl0_proton["max_scatter_range"].unit, # max_scatter_range
+    viewcone = (dl0_proton["max_viewcone_radius"][0] - dl0_proton["min_viewcone_radius"][0]) * dl0_proton["max_viewcone_radius"].unit, # max_viewcone_radius
     )
 
     bins = np.logspace(np.log10(args.energy_range_gamma[0]), np.log10(args.energy_range_gamma[1]), 10) * u.TeV
@@ -207,12 +204,8 @@ if args.mode == "separation":
     dl0_gamma_hist = simulation_info_gamma.calculate_n_showers_per_energy(bins) #* 500 # temp solution
     dl0_proton_hist = simulation_info_proton.calculate_n_showers_per_energy(bins) #* 1000 # temp solution
 
-    # plt.figure()
-    # plt.bar(bins_central, dl0_gamma_hist, width = bins_width, label = "gamma", alpha = 0.5)
-    # plt.bar(bins_central, dl0_proton_hist, width = bins_width, label = "proton", alpha = 0.5)
-    # plt.xscale("log")
-    # plt.legend()
-    # plt.show()
+    # calculate geometric area from simulation info
+    area = np.pi * simulation_info_gamma.max_impact ** 2
 
 
 for i in range(len(args.input[0])):
@@ -325,6 +318,9 @@ for i in range(len(args.input[0])):
         # perform an gamma & proton energy dependend analysis of accuracy, AUC and gammaness
         true_positive_rate_fixed_eta, false_positive_raten_fixed_eta = GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central, dl0_gamma_hist, dl0_proton_hist, 0.001)
 
+        # get effective area
+        area_eff = GetEffectiveArea(true_positive_rate_fixed_eta, area)
+
         # get AUC energy binned based on proton energy
         area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, args.energy_range_proton)
 
@@ -335,7 +331,9 @@ for i in range(len(args.input[0])):
         #     tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta = GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, args.energy_range_gamma, args.energy_range_proton, fpr_fixed_gammaness_cta_mean)
         #     PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_proton_efficiency_fixed_to_cta_energy.pdf")
 
-        PlotEfficienciesEnergyBinned(bins, bins_central, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
+        PlotEfficienciesEnergyBinned(bins.value, bins_central.value, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
+
+        PlotEffectiveAreaEnergyBinned(bins.value, bins_central.value, area_eff.value, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/area_eff.pdf")
 
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
@@ -372,6 +370,7 @@ for i in range(len(args.input[0])):
         # false_positive_rate_energy_all[i] = false_positive_rate_energy
         true_positive_rate_fixed_eta_all[i] = true_positive_rate_fixed_eta
         false_positive_rate_fixed_eta_all[i] = false_positive_raten_fixed_eta
+        area_eff_all[i] = area_eff
         
         # if args.input[0][i] == "cta":
         #     tpr_fixed_gammaness_cta_all.append(tpr_fixed_gammaness_cta)
@@ -489,6 +488,8 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     # PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
 
     PlotEfficiencyEnergyComparison(bins.value, bins_central.value, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    
+    PlotAeffEnergyComparison(bins.value, bins_central.value, area_eff_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
 
     # PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_comparison_" + string_comparison + ".pdf")
 
