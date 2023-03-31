@@ -270,10 +270,7 @@ for r in range(len(run)): #len(run)
         
         output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_alpha"
 
-        print(output_hdf_filename)
-
         # save table as HDF file
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
-
         # close event file
         source.close()
