@@ -1344,12 +1344,8 @@ model = keras.models.Model(inputs=input, outputs=output)
 
 print(model.summary())
 
-#weight estimations, relative values for all attributes:
-weights = 1
-
 model.compile(
     loss = loss,
-    loss_weights = weights,  
     optimizer = keras.optimizers.Adam(learning_rate = 1E-3))
 
 history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
