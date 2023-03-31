@@ -13,7 +13,7 @@ plt.rcParams.update({'font.size': 16})
 ######################################## argparse setup ########################################
 script_version=0.1
 script_descr="""
-This script creates pattern spectra from the CTA images of gamma/diffuse gamma/proton events. One can create the pattern spectra from int8 or float64 CTA images. 
+This script creates pattern spectra from the CTA images of gamma/gamma_diffuse/proton events.
 attr =  0 - Area (default) 
         1 - Area of the minimum enclosing rectangle 
         2 - Length of the diagonal of the minimum encl. rect. 
@@ -51,7 +51,6 @@ parser.add_argument("-v", "--version", action="version", version=f"v{script_vers
 # Define expected arguments
 parser.add_argument("-pt", "--particle_type", type = str, metavar = "", choices = ["gamma", "gamma_diffuse", "proton"], help = "particle type [gamma, gamma_diffuse, proton], default: gamma", default = "gamma")
 parser.add_argument("-tm", "--telescope_mode", type = str, required = False, metavar = "", choices = ["mono", "stereo_sum_cta", "stereo_sum_ps"], help = "telescope mode [mono, stereo_sum_cta, stereo_sum_ps], default: stereo_sum_cta", default = "stereo_sum_cta")
-parser.add_argument("-dt", "--data_type", type = str, required = False, metavar = "", choices = ["int8", "float32"], help = "data type of the output images [int8, float32], default: float32", default = "float32")
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) from which the pattern spectra will be extracted, default: csv list", action='append', nargs='+')
 parser.add_argument("-er", "--energy_range", type = float, required = True, metavar = "-", help = "set energy range of events in TeV", nargs = 2)
 parser.add_argument("-a", "--attribute", type = int, metavar = "", choices = np.arange(0, 19, dtype = int), help = "attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
@@ -65,7 +64,7 @@ parser.add_argument("-t", "--test", type = str, metavar = "-", help = "If yes, c
 # parser.add_argument("-r", "--run_list", type = str, metavar = "", help = "path to the csv file that contains the run numbers")
 
 args = parser.parse_args()
-print(f"################### Input summary ################### \nParticle type: {args.particle_type} \nData type: {args.data_type} \nTelescope mode: {args.telescope_mode} \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter}")
+print(f"################### Input summary ################### \nParticle type: {args.particle_type} \nTelescope mode: {args.telescope_mode} \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter}\n#######################################################")
 ##########################################################################################
 
 if args.test == "y":
