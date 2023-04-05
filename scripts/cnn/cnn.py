@@ -220,9 +220,9 @@ elif args.mode == "separation":
     table.drop(table.loc[(table["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table["particle"] == 0)].index, inplace=True)
 
 print("______________________________________________")
+# shuffle data set
+table = table.sample(frac = 1).reset_index(drop = True)
 if args.mode == "separation":
-    # shuffle data set
-    table = table.sample(frac = 1).reset_index(drop = True)
     print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
 print("Total number of events after energy cut:", len(table))
