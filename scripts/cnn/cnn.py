@@ -7,7 +7,7 @@ from keras.callbacks import CSVLogger
 from keras.models import Model
 import time
 import argparse
-from utilities_cnn import ResBlock
+from utilities_cnn import *
 
 print("Packages successfully loaded")
 
@@ -71,8 +71,8 @@ elif args.input == "ps":
     string_table_column = "pattern spectrum"
 ##########################################################################################
 
-######################################## Make some folders ########################################
-path_results = f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/"
+######################################## Create some folders ########################################
+path_results = f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{args.name}/"
 path_history = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input
 path_model = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input
 path_output = f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input
@@ -98,8 +98,6 @@ if args.mode == "energy":
     if args.run != None:
         run = args.run[0]
 
-    print(filename_run_csv)
-
     events_count = 0
     events_count_selection_cuts = 0
     table = pd.DataFrame()
@@ -123,8 +121,6 @@ if args.mode == "energy":
             events_count_selection_cuts += len(merged_table)
         else:
             table = table.append(table_individual_run, ignore_index = True)
-
-        # table = table.append(table_individual_run, ignore_index = True)
     
     print("Total number of events:", events_count)
     if args.selection_cuts != None:
@@ -134,6 +130,7 @@ if args.mode == "energy":
     table.drop(table.loc[table["true_energy"] <= args.energy_range_gamma[0] * 1e3].index, inplace=True)
     table.drop(table.loc[table["true_energy"] >= args.energy_range_gamma[1] * 1e3].index, inplace=True)
     table.reset_index(inplace = True)
+    print("______________________________________________")
 
 elif args.mode == "separation":
     particle_type = np.array(["gamma_diffuse", "proton"])
@@ -161,7 +158,7 @@ elif args.mode == "separation":
             table_individual_run = pd.read_hdf(input_filename)
             print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_individual_run))
 
-            if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
+            if (particle_type[p] == "gamma_diffuse"):
                 events_count[0] += len(table_individual_run)
             if particle_type[p] == "proton":
                 events_count[1] += len(table_individual_run)
@@ -174,7 +171,7 @@ elif args.mode == "separation":
                 elif args.telescope_mode == "mono":
                     merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id", "tel_id"])
 
-                if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
+                if (particle_type[p] == "gamma_diffuse"):
                     events_count_selection_cuts[0] += len(merged_table)
                 if particle_type[p] == "proton":
                     events_count_selection_cuts[1] += len(merged_table)
@@ -198,19 +195,17 @@ elif args.mode == "separation":
     table.drop(table.loc[(table["true_energy"] <= args.energy_range_proton[0] * 1e3) & (table["particle"] == 0)].index, inplace=True)
     table.drop(table.loc[(table["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table["particle"] == 0)].index, inplace=True)
 
-print("______________________________________________")
-if args.mode == "separation":
+    print("______________________________________________")
+
     # shuffle data set
     table = table.sample(frac = 1).reset_index(drop = True)
     print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
+
 print("Total number of events after energy cut:", len(table))
 
 # input features
-X = [[]] * len(table)
-for i in range(len(table)):
-    X[i] = table[string_table_column][i]
-X = np.asarray(X)
+X = table[string_table_column].to_list()
 
 test_split_percentage = 1 / 10
 
@@ -220,24 +215,12 @@ if args.mode == "energy":
     Y = np.log10(np.asarray(table["true_energy"]))
 
     # plot a few examples
-    fig, ax = plt.subplots(3, 3)
-    ax = ax.ravel()
-    for i in range(9):
-        ax[i].imshow(X[i], cmap = "Greys_r")
-        ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
-        ax[i].axis("off")
-    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf", dpi = 250)
-    plt.close()
+    PlotExamplesEnergy(X, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
 
     # display total energy distribution of data set
-    plt.figure()
-    plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
-    plt.xlabel("True energy [GeV]")
-    plt.ylabel("Number of events")
-    plt.xscale("log")
-    plt.yscale("log")
-    plt.savefig(f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf", dpi = 250)
-    plt.close()
+    EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
+
+########################################## CLEAN ################################################
 
 elif args.mode == "separation":
     # output label: particle or gammaness (1 = gamma, 0 = proton)
