@@ -28,7 +28,8 @@ parser.add_argument("-tm", "--telescope_mode", type = str, required = False, met
 parser.add_argument("-r", "--run", type = int, metavar = "-", help = "input run(s) for CNN, default: csv list", action="append", nargs="+")
 parser.add_argument("-erg", "--energy_range_gamma", type = float, required = False, metavar = "-", help = "set energy range of gamma events in TeV (energy reco. or sig/bkg sep.), default: 0.5 100", default = [0.5, 100], nargs = 2)
 parser.add_argument("-erp", "--energy_range_proton", type = float, required = False, metavar = "-", help = "set energy range of proton events in TeV (sig/bkg sep. only), default: 1.5 100", default = [1.5, 100], nargs = 2)
-parser.add_argument("-sc", "--selection_cuts", type = str, required = False, metavar = "-", help = "Name of the selection cuts extracted from the pre_selection_cuty.py script")
+parser.add_argument("-sctr", "--selection_cuts_train", type = str, required = False, metavar = "-", help = "Name of the selection cuts extracted from the pre_selection_cuty.py script for training")
+parser.add_argument("-scte", "--selection_cuts_test", type = str, required = False, metavar = "-", help = "Name of the selection cuts extracted from the pre_selection_cuty.py script for testing")
 parser.add_argument("-na", "--name", type = str, required = False, metavar = "-", help = "Name of this particular experiment")
 parser.add_argument("-a", "--attribute", type = int, metavar = "-", choices = np.arange(0, 19, dtype = int), help = "Pattern spectra: attribute [0, 1 ... 18] (two required), default: 9 0", default = [9, 0], nargs = 2)
 parser.add_argument("-dl", "--domain_lower", type = float, metavar = "-", help = "Pattern spectra: granulometry: domain - start at <value> <value>, default: 0.8 0.8", default = [0.8, 0.8], nargs = 2)
@@ -109,8 +110,8 @@ if args.mode == "energy":
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
         events_count += len(table_individual_run)
 
-        if args.selection_cuts != None:
-            selection_cuts_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts}/run{run[r]}.csv"
+        if args.selection_cuts_train != None:
+            selection_cuts_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts_train}/run{run[r]}.csv"
             table_selection_cuts = pd.read_csv(selection_cuts_filename)
             if args.telescope_mode == "stereo_sum_cta":
                 merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
@@ -123,7 +124,7 @@ if args.mode == "energy":
             table = table.append(table_individual_run, ignore_index = True)
     
     print("Total number of events:", events_count)
-    if args.selection_cuts != None:
+    if args.selection_cuts_train != None:
         print("______________________________________________")
         print("Total number of events after selection cut:", events_count_selection_cuts)
 
@@ -163,8 +164,8 @@ elif args.mode == "separation":
             if particle_type[p] == "proton":
                 events_count[1] += len(table_individual_run)
 
-            if args.selection_cuts != None:
-                selection_cuts_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts}/run{run[r]}.csv"
+            if args.selection_cuts_train != None:
+                selection_cuts_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts_train}/run{run[r]}.csv"
                 table_selection_cuts = pd.read_csv(selection_cuts_filename)
                 if args.telescope_mode == "stereo_sum_cta":
                     merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
@@ -183,7 +184,7 @@ elif args.mode == "separation":
     print("______________________________________________")
     print("Total number of gamma events:", events_count[0])
     print("Total number of proton events:", events_count[1])
-    if args.selection_cuts != None:
+    if args.selection_cuts_train != None:
         print("______________________________________________")
         print("Total number of gamma events after selection cuts:", events_count_selection_cuts[0])
         print("Total number of proton events after selection cuts:", events_count_selection_cuts[1])
@@ -205,7 +206,7 @@ if args.mode == "separation":
 print("Total number of events after energy cut:", len(table))
 
 # input features
-X = table[string_table_column].to_list()
+X = np.array(table[string_table_column].to_list())
 
 test_split_percentage = 1 / 10
 
@@ -215,7 +216,7 @@ if args.mode == "energy":
     Y = np.log10(np.asarray(table["true_energy"]))
 
     # plot a few examples
-    PlotExamplesEnergy(X, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
+    PlotExamplesEnergy(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
 
     # display total energy distribution of data set
     EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
@@ -336,10 +337,10 @@ model.compile(
     loss = loss,
     optimizer = keras.optimizers.Adam(learning_rate = 1E-3))
 
-model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
+model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_name + ".h5"
 checkpointer = ModelCheckpoint(filepath = model_path, verbose = 2, save_best_only = True)
 
-history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
+history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_name + ".csv"
 
 # start timer
 start_time = time.time()

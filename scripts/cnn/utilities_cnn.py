@@ -1,4 +1,6 @@
+import matplotlib.pyplot as plt
 from keras.layers import Input, Add, Dense, Activation, BatchNormalization, Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, MaxPool2D, ReLU, Dropout, LeakyReLU
+import numpy as np
 
 def ResBlock(z, kernelsizes, filters, increase_dim = False):
     # https://github.com/priya-dwivedi/Deep-Learning/blob/master/resnet_keras/Residual_Networks_yourself.ipynb
@@ -30,7 +32,7 @@ def ResBlock(z, kernelsizes, filters, increase_dim = False):
     
     return out
 
-def PlotExamplesEnergy(X, path):
+def PlotExamplesEnergy(X, Y, path):
     # plot a few examples
     fig, ax = plt.subplots(3, 3)
     ax = ax.ravel()
