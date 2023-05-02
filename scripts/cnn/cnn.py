@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import os 
 import tensorflow as tf
 from tensorflow import keras
-from keras.callbacks import CSVLogger
+from keras.callbacks import CSVLogger, ReduceLROnPlateau, EarlyStopping, ModelCheckpoint
 from keras.models import Model
 import time
 import argparse
@@ -220,9 +220,9 @@ elif args.mode == "separation":
     table.drop(table.loc[(table["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table["particle"] == 0)].index, inplace=True)
 
 print("______________________________________________")
+# shuffle data set
+table = table.sample(frac = 1).reset_index(drop = True)
 if args.mode == "separation":
-    # shuffle data set
-    table = table.sample(frac = 1).reset_index(drop = True)
     print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
     print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
 print("Total number of events after energy cut:", len(table))
@@ -1344,45 +1344,44 @@ model = keras.models.Model(inputs=input, outputs=output)
 
 print(model.summary())
 
-#weight estimations, relative values for all attributes:
-weights = 1
-
 model.compile(
     loss = loss,
-    loss_weights = weights,  
     optimizer = keras.optimizers.Adam(learning_rate = 1E-3))
+
+model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
+checkpointer = ModelCheckpoint(filepath = model_path, verbose = 2, save_best_only = True)
 
 history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_data_type + string_name + ".csv"
 
 # start timer
 start_time = time.time()
 
-fit = model.fit(X_train,
-    Y_train,
-    batch_size = 32,
-    epochs = args.epochs,
-    verbose = 2,
-    validation_split = 0.1,
-    callbacks = [CSVLogger(history_path)])
+# fit = model.fit(X_train,
+#     Y_train,
+#     batch_size = 32,
+#     epochs = args.epochs,
+#     verbose = 2,
+#     validation_split = 0.1,
+#     callbacks = [CSVLogger(history_path)])
+
+model.fit(X_train, Y_train, epochs = args.epochs, batch_size = 32, validation_split = 0.1, callbacks = [checkpointer, CSVLogger(history_path), EarlyStopping(monitor = "val_loss", patience = 20, min_delta = 0)], verbose = 2)
 
 # end timer and print training time
 print("Time spend for training the CNN: ", np.round(time.time() - start_time, 1), "s")
 
-model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
-
-model.save(model_path)
+# model.save(model_path)
 #########################################################################################
 
 ######################################## Results ########################################
 model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_data_type + string_name + ".h5"
 model = keras.models.load_model(model_path)
 
-losses = model.evaluate(X_test, Y_test, batch_size=128, verbose=0)
+losses = model.evaluate(X_test, Y_test, batch_size=32, verbose=0)
 # print("Test loss with", title_names[i])
 print("loss: %.5e" % losses)
 
 # predict output for test set and undo feature scaling
-yp = model.predict(X_test, batch_size=128)
+yp = model.predict(X_test, batch_size=32)
 
 if args.mode == "energy":
     if args.telescope_mode != "mono":

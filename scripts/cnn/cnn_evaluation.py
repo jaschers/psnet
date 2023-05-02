@@ -14,6 +14,13 @@ from keras.callbacks import CSVLogger
 from keras.models import Model
 import logging
 import time
+from ctapipe.io import EventSource, read_table
+from astropy.table import Table, join, vstack
+from pyirf.simulations import SimulatedEventsInfo
+import astropy.units as u
+
+# do not print tensorflow warnings
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
 # plt.rcParams.update({'font.family':'serif'}) #serif
@@ -79,14 +86,14 @@ for i in range(len(args.input[0])):
         string_name = np.append(string_name, "")
 
     if args.input[0][i] == "cta":
-        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
+        string_summary += f"\nInput: CTA \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-bkg sep): {args.energy_range_gamma} \nEnergy range proton (sig-bkg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
         string_table_column = np.append(string_table_column, "image")
         string_data_type = np.append(string_data_type, "")
     if args.input[0][i] == "cta_int8":
-        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-backg sep): {args.energy_range_gamma} \nEnergy range proton (sig-backg sep): {args.energy_range_proton} \n"
+        string_summary += f"\nInput: CTA 8-bit \nParticle type: {args.particle_type} \nEnergy range (energy reco): {args.energy_range} \nEnergy range gamma (sig-bkg sep): {args.energy_range_gamma} \nEnergy range proton (sig-bkg sep): {args.energy_range_proton} \n"
         string_input = np.append(string_input, "iact_images")
         string_input_short = np.append(string_input_short, "_images")
         string_ps_input = np.append(string_ps_input, "")
@@ -110,10 +117,96 @@ print(string_summary)
 
 median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
-epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
+epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, area_eff_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
 
 tpr_fixed_gammaness_cta_all, fpr_fixed_gammaness_cta_all = [], []
 tpr_ps_proton_efficiency_fixed_to_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all = [], []
+
+if args.mode == "separation":
+    dl0_gamma = Table()
+    dl0_proton = Table()
+    # load simulation info which is necesarry to calculate signal and bkg efficiencies
+    filename_run_gamma_diffuse = f"dm-finder/scripts/run_lists/gamma_diffuse_run_list_alpha.csv"
+    filename_run_proton = f"dm-finder/scripts/run_lists/proton_run_list_alpha.csv"
+
+    run_gamma = pd.read_csv(filename_run_gamma_diffuse)
+    run_gamma = run_gamma.to_numpy().reshape(len(run_gamma))
+    run_proton = pd.read_csv(filename_run_proton)
+    run_proton = run_proton.to_numpy().reshape(len(run_proton))
+
+    print("loading gamma simulation information...")
+    for r in tqdm(range(len(run_gamma))):
+        dl1_filename_gamma_diffuse = f"gamma_20deg_0deg_run{run_gamma[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
+        dl1_directory_gamma_diffuse = f"dm-finder/data/gamma_diffuse/event_files/" + dl1_filename_gamma_diffuse + ".h5"
+        dl0_gamma_temp = read_table(dl1_directory_gamma_diffuse, "/configuration/simulation/run")
+        dl0_gamma = vstack([dl0_gamma, dl0_gamma_temp])
+        # break
+        
+
+    print("loading proton simulation information...")
+    for r in tqdm(range(len(run_proton))):
+        dl1_filename_proton = f"proton_20deg_0deg_run{run_proton[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
+        dl1_directory_proton = f"dm-finder/data/proton/event_files/" + dl1_filename_proton + ".h5"
+        dl0_proton_temp = read_table(dl1_directory_proton, "/configuration/simulation/run")
+        dl0_proton = vstack([dl0_proton, dl0_proton_temp])
+        # break
+        
+
+    if len(np.unique(dl0_gamma["energy_range_min"])) > 1:
+        print("WARNING: min energy range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["energy_range_max"])) > 1:
+        print("WARNING: max energy range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["spectral_index"])) > 1:
+        print("WARNING: spectral index is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["max_scatter_range"])) > 1:
+        print("WARNING: max scatter range is not the same for all obs_ids (gamma_diffuse)")
+    if len(np.unique(dl0_gamma["max_viewcone_radius"])) > 1:
+        print("WARNING: max viewcone radius is not the same for all obs_ids (gamma_diffuse)")
+
+    if len(np.unique(dl0_gamma["energy_range_min"])) > 1:
+        print("WARNING: min energy range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["energy_range_max"])) > 1:
+        print("WARNING: max energy range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["spectral_index"])) > 1:
+        print("WARNING: spectral index is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["max_scatter_range"])) > 1:
+        print("WARNING: max scatter range is not the same for all obs_ids (proton)")
+    if len(np.unique(dl0_gamma["max_viewcone_radius"])) > 1:
+        print("WARNING: max viewcone radius is not the same for all obs_ids (proton)")
+
+    percentage_test_data = 0.1
+    n_showers_total_gamma = np.sum(dl0_gamma["num_showers"] * dl0_gamma["shower_reuse"]) * percentage_test_data
+    n_showers_total_proton = np.sum(dl0_proton["num_showers"] * dl0_proton["shower_reuse"]) * percentage_test_data
+
+    # use 
+    simulation_info_gamma = SimulatedEventsInfo(
+    energy_min = dl0_gamma["energy_range_min"][0] * dl0_gamma["energy_range_min"].unit, # energy_range_min
+    energy_max = dl0_gamma["energy_range_max"][0] * dl0_gamma["energy_range_max"].unit, # energy_range_max
+    spectral_index = dl0_gamma["spectral_index"][0], # spectral_index
+    n_showers = n_showers_total_gamma,
+    max_impact = dl0_gamma["max_scatter_range"][0] * dl0_gamma["max_scatter_range"].unit, # max_scatter_range
+    viewcone = (dl0_gamma["max_viewcone_radius"][0] - dl0_gamma["min_viewcone_radius"][0]) * dl0_gamma["max_viewcone_radius"].unit, # max_viewcone_radius
+    )
+
+    simulation_info_proton = SimulatedEventsInfo(
+    energy_min = dl0_proton["energy_range_min"][0] * dl0_proton["energy_range_min"].unit, # energy_range_min
+    energy_max = dl0_proton["energy_range_max"][0] * dl0_proton["energy_range_max"].unit, # energy_range_max
+    spectral_index = dl0_proton["spectral_index"][0], # spectral_index
+    n_showers = n_showers_total_proton,
+    max_impact = dl0_proton["max_scatter_range"][0] * dl0_proton["max_scatter_range"].unit, # max_scatter_range
+    viewcone = (dl0_proton["max_viewcone_radius"][0] - dl0_proton["min_viewcone_radius"][0]) * dl0_proton["max_viewcone_radius"].unit, # max_viewcone_radius
+    )
+
+    bins = np.logspace(np.log10(args.energy_range_gamma[0]), np.log10(args.energy_range_gamma[1]), 10) * u.TeV
+    bins_width = (bins[1:] - bins[:-1])
+    bins_central =  bins[:-1] + bins_width / 2
+
+    dl0_gamma_hist = simulation_info_gamma.calculate_n_showers_per_energy(bins) #* 500 # temp solution
+    dl0_proton_hist = simulation_info_proton.calculate_n_showers_per_energy(bins) #* 1000 # temp solution
+
+    # calculate geometric area from simulation info
+    area = np.pi * simulation_info_gamma.max_impact ** 2
+
 
 for i in range(len(args.input[0])):
     print(f"Processing input {i+1}...")
@@ -218,23 +311,29 @@ for i in range(len(args.input[0])):
 
         # perform an energy dependend analysis of accuracy, AUC and gammaness
         # bins, bins_central, area_under_ROC_curve_energy, accuracy_energy, true_positive_rate_energy, false_positive_rate_energy = PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
-        bins, bins_central = PlotGammanessEnergyBinned(table_output, args.energy_range_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+        PlotGammanessEnergyBinned(table_output, bins, bins_central, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+
+        PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist, dl0_proton_hist, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
 
         # perform an gamma & proton energy dependend analysis of accuracy, AUC and gammaness
-        bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton = GetEfficienciesEnergyBinnedFixedBackground(table_output, args.energy_range_gamma, args.energy_range_proton, 0.01)
+        true_positive_rate_fixed_eta, false_positive_raten_fixed_eta = GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central, dl0_gamma_hist, dl0_proton_hist, 0.001)
+
+        # get effective area
+        area_eff = GetEffectiveArea(true_positive_rate_fixed_eta, area)
 
         # get AUC energy binned based on proton energy
         area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, args.energy_range_proton)
 
-        if args.input[0][i] == "cta":
-            tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta = GetEfficienciesEnergyBinnedFixedGammaness(table_output, args.energy_range_gamma, args.energy_range_proton, 0.8) #0.5075
-            PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_gammaness_energy.pdf")
-        if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
-            tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta = GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, args.energy_range_gamma, args.energy_range_proton, fpr_fixed_gammaness_cta_mean)
-            PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_proton_efficiency_fixed_to_cta_energy.pdf")
+        # if args.input[0][i] == "cta":
+        #     tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta = GetEfficienciesEnergyBinnedFixedGammaness(table_output, args.energy_range_gamma, args.energy_range_proton, 0.8) #0.5075
+        #     PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_gammaness_energy.pdf")
+        # if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
+        #     tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta = GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, args.energy_range_gamma, args.energy_range_proton, fpr_fixed_gammaness_cta_mean)
+        #     PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_proton_efficiency_fixed_to_cta_energy.pdf")
 
-        PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_background_energy.pdf")
+        PlotEfficienciesEnergyBinned(bins.value, bins_central.value, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
 
+        PlotEffectiveAreaEnergyBinned(bins.value, bins_central.value, area_eff.value, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/area_eff.pdf")
 
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
@@ -269,18 +368,19 @@ for i in range(len(args.input[0])):
         # accuracy_energy_all[i] = accuracy_energy 
         # true_positive_rate_energy_all[i] = true_positive_rate_energy
         # false_positive_rate_energy_all[i] = false_positive_rate_energy
-        true_positive_rate_er_gamma_all[i] = true_positive_rate_er_gamma
-        false_positive_rate_er_proton_all[i] = false_positive_rate_er_proton
+        true_positive_rate_fixed_eta_all[i] = true_positive_rate_fixed_eta
+        false_positive_rate_fixed_eta_all[i] = false_positive_raten_fixed_eta
+        area_eff_all[i] = area_eff
         
-        if args.input[0][i] == "cta":
-            tpr_fixed_gammaness_cta_all.append(tpr_fixed_gammaness_cta)
-            fpr_fixed_gammaness_cta_all.append(fpr_fixed_gammaness_cta)
-            # print("fpr_fixed_gammaness_cta_all", fpr_fixed_gammaness_cta_all)
-            fpr_fixed_gammaness_cta_mean = np.mean(fpr_fixed_gammaness_cta_all, axis = 0)
-            # print("fpr_fixed_gammaness_cta_mean", fpr_fixed_gammaness_cta_mean)
-        if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
-            tpr_ps_proton_efficiency_fixed_to_cta_all.append(tpr_ps_proton_efficiency_fixed_to_cta)
-            fpr_ps_proton_efficiency_fixed_to_cta_all.append(fpr_ps_proton_efficiency_fixed_to_cta)
+        # if args.input[0][i] == "cta":
+        #     tpr_fixed_gammaness_cta_all.append(tpr_fixed_gammaness_cta)
+        #     fpr_fixed_gammaness_cta_all.append(fpr_fixed_gammaness_cta)
+        #     # print("fpr_fixed_gammaness_cta_all", fpr_fixed_gammaness_cta_all)
+        #     fpr_fixed_gammaness_cta_mean = np.mean(fpr_fixed_gammaness_cta_all, axis = 0)
+        #     # print("fpr_fixed_gammaness_cta_mean", fpr_fixed_gammaness_cta_mean)
+        # if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
+        #     tpr_ps_proton_efficiency_fixed_to_cta_all.append(tpr_ps_proton_efficiency_fixed_to_cta)
+        #     fpr_ps_proton_efficiency_fixed_to_cta_all.append(fpr_ps_proton_efficiency_fixed_to_cta)
 
 
         # Plot wrongly classified CTA images / pattern spectra
@@ -381,37 +481,39 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
 
     PlotPrecisionGammanessComparison(precision_gammaness_all, threshold_cut_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotAUCEnergyComparison(bins_proton, bins_central_proton, area_under_ROC_curve_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
+    PlotAUCEnergyComparison(bins.value, bins_central.value, area_under_ROC_curve_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
 
     # PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_energy_comparison_" + string_comparison + ".pdf")
 
     # PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
 
-    PlotEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    PlotEfficiencyEnergyComparison(bins.value, bins_central.value, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    
+    PlotAeffEnergyComparison(bins.value, bins_central.value, area_eff_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
 
-    PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma_all, false_positive_rate_er_proton_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_comparison_" + string_comparison + ".pdf")
+    # PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_comparison_" + string_comparison + ".pdf")
 
-    if ("ps" in args.input[0]) and ("cta" in args.input[0]):
-        # print("tpr_fixed_gammaness_cta_all")
-        # print(tpr_fixed_gammaness_cta_all)
-        # print("tpr_ps_proton_efficiency_fixed_to_cta_all")
-        # print(tpr_ps_proton_efficiency_fixed_to_cta_all)
-        # print("fpr_fixed_gammaness_cta_all")
-        # print(fpr_fixed_gammaness_cta_all)
-        # print("fpr_ps_proton_efficiency_fixed_to_cta_all")
-        # print(fpr_ps_proton_efficiency_fixed_to_cta_all)
+    # if ("ps" in args.input[0]) and ("cta" in args.input[0]):
+    #     # print("tpr_fixed_gammaness_cta_all")
+    #     # print(tpr_fixed_gammaness_cta_all)
+    #     # print("tpr_ps_proton_efficiency_fixed_to_cta_all")
+    #     # print(tpr_ps_proton_efficiency_fixed_to_cta_all)
+    #     # print("fpr_fixed_gammaness_cta_all")
+    #     # print(fpr_fixed_gammaness_cta_all)
+    #     # print("fpr_ps_proton_efficiency_fixed_to_cta_all")
+    #     # print(fpr_ps_proton_efficiency_fixed_to_cta_all)
 
-        tpr_proton_efficiency_fixed_to_cta = np.concatenate((tpr_fixed_gammaness_cta_all, tpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
-        fpr_proton_efficiency_fixed_to_cta = np.concatenate((fpr_fixed_gammaness_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
+    #     tpr_proton_efficiency_fixed_to_cta = np.concatenate((tpr_fixed_gammaness_cta_all, tpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
+    #     fpr_proton_efficiency_fixed_to_cta = np.concatenate((fpr_fixed_gammaness_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
 
-        # print("tpr_proton_efficiency_fixed_to_cta")
-        # print(tpr_proton_efficiency_fixed_to_cta)
-        # print("fpr_proton_efficiency_fixed_to_cta")
-        # print(fpr_proton_efficiency_fixed_to_cta)
+    #     # print("tpr_proton_efficiency_fixed_to_cta")
+    #     # print(tpr_proton_efficiency_fixed_to_cta)
+    #     # print("fpr_proton_efficiency_fixed_to_cta")
+    #     # print(fpr_proton_efficiency_fixed_to_cta)
 
-        PlotEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
+    #     PlotEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
 
-        PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
+    #     PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
 
     MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 
