@@ -1364,7 +1364,7 @@ start_time = time.time()
 #     validation_split = 0.1,
 #     callbacks = [CSVLogger(history_path)])
 
-model.fit(X_train, Y_train, epochs = args.epochs, batch_size = 32, validation_split = 0.1, callbacks = [checkpointer, CSVLogger(history_path), EarlyStopping(monitor = "val_loss", patience = 15, min_delta = 1e-4)], verbose = 2)
+model.fit(X_train, Y_train, epochs = args.epochs, batch_size = 32, validation_split = 0.1, callbacks = [checkpointer, CSVLogger(history_path), EarlyStopping(monitor = "val_loss", patience = 20, min_delta = 0)], verbose = 2)
 
 # end timer and print training time
 print("Time spend for training the CNN: ", np.round(time.time() - start_time, 1), "s")
