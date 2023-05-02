@@ -191,3 +191,31 @@ def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, numb
 
     # sns.pairplot(table, kind="hist")
     # plt.show()
+
+def reshape_image(image):
+    image = np.append(image, np.ones(4 * 8 * 8) * np.min(image))
+    image = np.split(image, 36)
+    image = np.reshape(image, newshape = (-1, 8, 8)).astype('float32')
+    image = np.rot90(image, k = 1, axes = (1, 2))
+    mask = np.array([32, 22, 10, 4, 16, 33, 30, 20, 8, 2, 14, 26, 28, 18, 6, 0, 12, 24, 29, 19, 7, 1, 13, 25, 31, 21, 9, 3, 15, 27, 34, 23, 11, 5, 17, 35])
+    image = image[mask]
+    image = image.reshape(6,6,8,8).transpose(0,2,1,3).reshape(48,48)
+    image = np.round(image, 1)
+    return(image)
+
+def plot_energy_dist(table, particle_type, run):
+    plt.figure()
+    plt.grid(alpha = 0.2)
+    plt.hist(table["true_energy"].to("TeV").value)
+    plt.xlabel("True energy [TeV]")
+    plt.ylabel("Number of events")
+    plt.yscale("log")
+    plt.savefig(f"dm-finder/data/{particle_type}/info/energy_distribution/energy_distribution_run{run}_alpha.pdf", dpi = 500)
+    plt.close()
+
+
+def plot_subarray_layout(subarray, path, run):
+    plt.figure()
+    subarray.peek()
+    plt.savefig(path + f"telescope_subarray_layout_run{run}.pdf", dpi = 500)
+    plt.close()

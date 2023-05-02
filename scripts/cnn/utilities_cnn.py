@@ -29,3 +29,24 @@ def ResBlock(z, kernelsizes, filters, increase_dim = False):
     # out = MaxPooling2D(pool_size=(3, 3), strides = 1)(out)
     
     return out
+
+def PlotExamplesEnergy(X, path):
+    # plot a few examples
+    fig, ax = plt.subplots(3, 3)
+    ax = ax.ravel()
+    for i in range(9):
+        ax[i].imshow(X[i], cmap = "Greys_r")
+        ax[i].title.set_text(f"{int(np.round(10**Y[i]))} GeV")
+        ax[i].axis("off")
+    plt.savefig(path, dpi = 250)
+    plt.close()
+
+def EnergyDistributionEnergy(Y, path):
+    plt.figure()
+    plt.hist(10**Y, bins=np.logspace(np.log10(np.min(10**Y)),np.log10(np.max(10**Y)), 50))
+    plt.xlabel("True energy [GeV]")
+    plt.ylabel("Number of events")
+    plt.xscale("log")
+    plt.yscale("log")
+    plt.savefig(path, dpi = 250)
+    plt.close()
