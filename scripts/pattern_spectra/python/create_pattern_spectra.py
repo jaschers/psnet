@@ -206,5 +206,6 @@ for r in range(len(run)): #len(run)
     elif args.telescope_mode == "stereo_sum_ps":
         output_filename = path_cnn_input + run_filename + "_ps_float_stereo_sum_alpha.h5"
 
+    print(output_filename)
     table.to_hdf(output_filename, key = 'events', mode = 'w', index = False)
 
