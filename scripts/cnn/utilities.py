@@ -61,6 +61,7 @@ def PlotLoss(epochs, loss_training, loss_validation, path):
     plt.close()
 
 def PlotLossComparison(epochs_all, loss_train_all, loss_val_all, input, path):
+    print("Starting PlotLossComparison...")
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size_legend)
     plt.grid(alpha = 0.2)
@@ -325,7 +326,8 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-SST-ERes.dat")
+    # data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-SST-ERes.dat")
+    data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-ERes.dat")
     cta_requirement_energy = 10**data_cta_requirement[:,0]
     cta_requirement_energy_resolution = data_cta_requirement[:,1]
 
@@ -335,6 +337,10 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
         mean_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy resolution"].dropna().to_numpy()[0]
+        print(args_input_unique[i])
+        print("bins central")
+        print(bins_central)
+        print("Mean energy resolution")
         print(mean_energy_resolution)
         std_energy_resolution = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy resolution"].dropna().to_numpy()[0]
         plt.errorbar(bins_central, mean_energy_resolution, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
@@ -350,13 +356,14 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
-    # plt.ylim(0.2, 0.60)
     xmin, xmax, ymin, ymax = plt.axis()
+    plt.ylim(ymin, 0.40)
     plt.plot(cta_requirement_energy, cta_requirement_energy_resolution, color = "grey", linestyle = "--", label = "CTA requirements")
     plt.xlim(xmin, xmax)
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [1,2,0]
-    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc = "upper left")
+    if len(args_input_unique) > 1:
+        plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], loc = "upper right")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -602,7 +609,7 @@ def PlotGammanessEnergyBinned(table_output, bins, bins_central, path):
     ax = ax.ravel()
     plt.grid(alpha = 0.2)
     for i in range(len(bins_central)):
-        ax[i].set_title("{0:.1f} - {1:.1f} TeV".format(bins[i], bins[i+1]))
+        ax[i].set_title("{0:.1f} - {1:.1f}".format(bins[i], bins[i+1]))
         gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
         gammaness_protons_binned = true_protons[(true_protons["E_true / TeV"] >= bins[i]) & (true_protons["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
@@ -944,7 +951,7 @@ def GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central,
         false_positive_rate_temp = positive_rates(gammaness_protons_binned, dl0_proton_hist[i], gammaness_cut)
 
         index = np.argmin(np.abs(false_positive_rate_requirement - false_positive_rate_temp))
-        gammaness_cut_fpr_requirement =  np.array([gammaness_cut[index]])
+        gammaness_cut_fpr_requirement = np.array([gammaness_cut[index]])
 
         true_positive_rate_temp = positive_rates(gammaness_gammas_binned, dl0_gamma_hist[i], gammaness_cut_fpr_requirement)
 
@@ -962,8 +969,8 @@ def PlotEffectiveAreaEnergyBinned(bins, bins_central, area_eff, path):
     plt.grid(alpha = 0.2)
     xerr = bins[:-1] - bins_central
     plt.errorbar(bins_central, area_eff, xerr = xerr, linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0])
-    plt.xlabel("$E_\mathrm{true}$ [TeV]")
-    plt.ylabel(r"$A_{{eff}}$ [m$^{{2}}$]")
+    plt.xlabel(r"$E_\mathrm{true}$ [TeV]")
+    plt.ylabel(r"$A_\mathrm{eff}$ [m$^{{2}}$]")
     plt.yscale("log")
     plt.xscale("log")
     plt.tight_layout()
@@ -1113,7 +1120,7 @@ def GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, energy_range_
     return(true_positive_rate_er_gamma, false_positive_rate_er_proton)
 
 
-def GetAUCEnergyBinned(table_output, energy_range_proton):
+def GetAUCEnergyBinned(table_output, bins):
     table = table_output.copy()
     table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
     table.columns = table.columns.str.replace("E_true / GeV", "E_true / TeV")
@@ -1124,21 +1131,13 @@ def GetAUCEnergyBinned(table_output, energy_range_proton):
     gammaness_gammas = true_gammas["reconstructed gammaness"].to_numpy()
     gammaness_protons = true_protons["reconstructed gammaness"].to_numpy()
 
-    number_energy_ranges_proton = 9
-    proton_energy_min, proton_energy_max = energy_range_proton[0], energy_range_proton[1] # TeV
-    bins_proton = np.logspace(np.log10(proton_energy_min), np.log10(proton_energy_max), number_energy_ranges_proton + 1) 
-
-    bins_central_proton = np.array([])
-    for b in range(len(bins_proton) - 1):
-        bins_central_proton = np.append(bins_central_proton, bins_proton[b] + (bins_proton[b+1] - bins_proton[b]) / 2)
-
     area_under_ROC_curve_energy = np.array([])
     gammaness_cut = np.linspace(0, 1.0, 9999)
-    for i in range(number_energy_ranges_proton):
+    for i in range(len(bins) - 1):
         # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
-        gammaness_protons_er_proton = true_protons[(true_protons["E_true / TeV"] >= bins_proton[i]) & (true_protons["E_true / TeV"] <= bins_proton[i+1])]["reconstructed gammaness"].to_numpy()
+        gammaness_protons_er_proton = true_protons[(true_protons["E_true / TeV"] >= bins[i]) & (true_protons["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
-        gammaness_gammas_er_proton = true_gammas[(true_gammas["E_true / TeV"] >= bins_proton[i]) & (true_gammas["E_true / TeV"] <= bins_proton[i+1])]["reconstructed gammaness"].to_numpy()
+        gammaness_gammas_er_proton = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
         # determine the efficiencies (TPR,...) for gammaness == 0.7
         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, gammaness_cut)
@@ -1292,6 +1291,7 @@ def PlotPrecisionGammaness(precision_gammaness, thresholds, path):
     plt.close()
 
 def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args_input, path):
+    print("Starting PlotROCComparison...")
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], true_positive_rate_all[k], false_positive_rate_all[k], area_under_ROC_curve_all[k]])
@@ -1333,6 +1333,7 @@ def PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_unde
     plt.close()
 
 def PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, input, path):
+    print("Starting PlotAccuracyGammanessComparison...")
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
@@ -1350,6 +1351,7 @@ def PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, inpu
     plt.close()
 
 def PlotPrecisionGammanessComparison(precision_gammaness_all, thresholds_all, input, path):
+    print("Starting PlotPrecisionGammanessComparison...")
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
@@ -1367,6 +1369,7 @@ def PlotPrecisionGammanessComparison(precision_gammaness_all, thresholds_all, in
     plt.close()
 
 def PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, args_input, path):
+    print("Starting PlotEfficiencyGammanessComparison...")
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], true_positive_rate_all[k], false_positive_rate_all[k]])
@@ -1378,7 +1381,7 @@ def PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, fa
     for k in range(len(args_input_unique)):
         table_k = table.copy()
         table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
-        table_mean.append([args_input_unique[k], np.mean(table_k["TPR"].dropna().to_numpy(), axis = 0), np.std(table_k["TPR"].dropna().to_numpy(), axis = 0, ddof = 1), np.mean(table_k["FPR"].dropna().to_numpy(), axis = 0), np.std(table_k["FPR"].dropna().to_numpy(), axis = 0, ddof = 1)])
+        table_mean.append([args_input_unique[k], np.mean(table_k["TPR"].dropna().tolist(), axis = 0), np.std(table_k["TPR"].dropna().tolist(), axis = 0, ddof = 1), np.mean(table_k["FPR"].dropna().tolist(), axis = 0), np.std(table_k["FPR"].dropna().tolist(), axis = 0, ddof = 1)])
     table_mean = pd.DataFrame(table_mean, columns=["input", "mean TPR", "std TPR", "mean FPR", "std FPR"])
 
     plt.figure(figsize = single_column_fig_size_legend)
@@ -1387,10 +1390,10 @@ def PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, fa
     labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
-        mean_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean TPR"].dropna().to_numpy()[0]
-        std_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std TPR"].dropna().to_numpy()[0]
-        mean_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean FPR"].dropna().to_numpy()[0]
-        std_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std FPR"].dropna().to_numpy()[0]
+        mean_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean TPR"].dropna().tolist()[0]
+        std_true_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std TPR"].dropna().tolist()[0]
+        mean_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean FPR"].dropna().tolist()[0]
+        std_false_positive_rate = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std FPR"].dropna().tolist()[0]
 
         plt.plot(thresholds_all[0], mean_true_positive_rate, linestyle = linestyles[0], color = colors_categorial[i], label = r"$\eta_{{\gamma}}$ ({0})".format(labels[i]))
         plt.fill_between(thresholds_all[0], mean_true_positive_rate - std_true_positive_rate, mean_true_positive_rate + std_true_positive_rate, facecolor = colors_categorial[i], alpha = 0.3)
@@ -1472,6 +1475,7 @@ def PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, fa
     # plt.close()
 
 def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, args_input, path):
+    print("Starting PlotAUCEnergyComparison...")
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], area_under_ROC_curve_energy_all[k]])
@@ -1493,13 +1497,13 @@ def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all,
         table_mean_i = table_mean.copy()
         mean_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean AUC"].dropna().to_numpy()[0]
         std_AUC = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std AUC"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, (mean_AUC), xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
+        plt.errorbar(bins_central, mean_AUC, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
         bins_central_fill = np.append(bins_central, bins[-1])
         bins_central_fill = np.insert(bins_central_fill, 0, bins[0])
-        filling_lower = (mean_AUC) - std_AUC
+        filling_lower = mean_AUC - std_AUC
         filling_lower = np.append(filling_lower, filling_lower[-1])
         filling_lower = np.insert(filling_lower, 0, filling_lower[0])
-        filling_upper = (mean_AUC) + std_AUC
+        filling_upper = mean_AUC + std_AUC
         filling_upper = np.append(filling_upper, filling_upper[-1])
         filling_upper = np.insert(filling_upper, 0, filling_upper[0])
         plt.fill_between(bins_central_fill, filling_lower, filling_upper, facecolor = colors_categorial[i], alpha = 0.3)
@@ -1608,7 +1612,7 @@ def PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args_i
 #     plt.close()
 
 def PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate, false_positive_rate, args_input, path):
-
+    print("Starting PlotEfficiencyEnergyComparison...")
     table = []
     for k in range(len(args_input)):
         table.append([args_input[k], true_positive_rate[k], false_positive_rate[k]])
@@ -1665,6 +1669,7 @@ def PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate, false
     plt.close()
 
 def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
+    print("Starting PlotAeffEnergyComparison...")
 
     table = []
     for k in range(len(args_input)):
@@ -1705,15 +1710,16 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
         plt.fill_between(bins_central_fill_area, filling_lower_tpr, filling_upper_tpr, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
-    plt.plot(cta_requirement_energy, cta_requirement_area_eff, color = "grey", linestyle = "--", label = "CTA requirements")
+    # plt.plot(cta_requirement_energy, cta_requirement_area_eff, color = "grey", linestyle = "--", label = "CTA requirements")
     plt.xlim(xmin, xmax)
-    plt.xlabel("$E_\mathrm{true}$ [TeV]")
-    plt.ylabel(r"$A_{{eff}}$ [m$^{{2}}$]")
+    plt.xlabel(r"$E_\mathrm{true}$ [TeV]")
+    plt.ylabel(r"$A_\mathrm{eff}$ [m$^{{2}}$]")
     plt.yscale("log")
     handles, labels = plt.gca().get_legend_handles_labels()
     order = [1,0,2]
-    plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
-    # plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    # if len(np.unique(args_input_unique)) > 1:
+    #     plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
@@ -1766,6 +1772,7 @@ def PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_ga
     plt.close()
 
 def MeanStdAUC(area_under_ROC_curve_all, input):
+    print("Starting MeanStdAUC...")
     area_under_ROC_curve_all_cta = np.array([])
     area_under_ROC_curve_all_ps = np.array([])
     for i in range(len(input)):
