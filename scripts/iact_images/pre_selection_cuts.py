@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 script_version=0.1
 script_descr="""
-This script selects CTA images based on selection criteria on the Hillas intensity and the leakage2 parameter. The table including the obs_id, event_id and tel_id is saved in ...
+This script selects CTA images based on selection criteria on the Hillas intensity, the leakage2 or the multiplicity parameter. The table including the obs_id, event_id and tel_id is saved in dm-finder/cnn/selection_cuts/
 """
 
 # Open argument parser
@@ -54,7 +54,6 @@ print("Total number of Runs:", len(run))
 sst_tel_id = np.array([30, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 133, 59, 61, 66, 67, 68, 69, 70, 71, 72, 73, 143, 144, 145, 146])
 
 for r in tqdm(range(len(run))): #len(run)
-    # print("Run", run[r])
 
     if args.particle_type == "gamma_diffuse":
         input_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
@@ -90,6 +89,8 @@ for r in tqdm(range(len(run))): #len(run)
         os.makedirs(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/", exist_ok = True)
         table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/run{run[r]}.csv", index = False)
         # table_cut.close()
+
+        source.close()
     
     if args.telescope_mode == "mono":
         mask = (parameters_table["leakage_intensity_width_2"] < args.leakage2) & (parameters_table["hillas_intensity"] > args.hillas_intensity)
@@ -100,3 +101,5 @@ for r in tqdm(range(len(run))): #len(run)
         table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/run{run[r]}.csv", index = False)
 
         # table_cut.close()
+
+        source.close()
