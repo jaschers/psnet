@@ -197,7 +197,7 @@ if args.mode == "separation":
     viewcone = (dl0_proton["max_viewcone_radius"][0] - dl0_proton["min_viewcone_radius"][0]) * dl0_proton["max_viewcone_radius"].unit, # max_viewcone_radius
     )
 
-    bins = np.logspace(np.log10(args.energy_range_gamma[0]), np.log10(args.energy_range_gamma[1]), 10) * u.TeV
+    bins = np.logspace(np.log10(args.energy_range_gamma[0]), np.log10(args.energy_range_gamma[1]), 8) * u.TeV
     bins_width = (bins[1:] - bins[:-1])
     bins_central =  bins[:-1] + bins_width / 2
 
@@ -257,7 +257,7 @@ for i in range(len(args.input[0])):
         PlotEnergyScattering2D(np.log10(energy_true), np.log10(energy_rec), f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
 
         # prepare energy binning
-        number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
+        number_energy_ranges = 7 # number of energy ranges the whole energy range will be splitted
         sst_energy_min = args.energy_range[0] # TeV
         sst_energy_max = args.energy_range[1] # TeV
         bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
@@ -322,7 +322,7 @@ for i in range(len(args.input[0])):
         area_eff = GetEffectiveArea(true_positive_rate_fixed_eta, area)
 
         # get AUC energy binned based on proton energy
-        area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, args.energy_range_proton)
+        area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, bins)
 
         # if args.input[0][i] == "cta":
         #     tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta = GetEfficienciesEnergyBinnedFixedGammaness(table_output, args.energy_range_gamma, args.energy_range_proton, 0.8) #0.5075
@@ -515,7 +515,7 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
 
     #     PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
 
-    MeanStdAUC(area_under_ROC_curve_all, args.input[0])
+    # MeanStdAUC(area_under_ROC_curve_all, args.input[0])
 
 
 print("CNN evaluation completed!")
