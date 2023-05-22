@@ -51,7 +51,7 @@ else:
     string_name = ""
 
 if args.input == "cta":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: CTA images \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nSelection cuts: {args.selection_cuts_train} (training), {args.selection_cuts_test} (testing) \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "iact_images"
     if args.telescope_mode == "stereo_sum_cta":
         string_input_short = "_images_alpha"
@@ -60,7 +60,7 @@ if args.input == "cta":
     string_ps_input = ""
     string_table_column = "image"
 elif args.input == "ps":
-    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
+    print(f"################### Input summary ################### \nMode: {args.mode} \nInput: pattern spectra \nEnergy range (gamma/proton): {args.energy_range_gamma} / {args.energy_range_proton} TeV \nSelection cuts: {args.selection_cuts_train} (training), {args.selection_cuts_test} (testing) \nAttribute: {args.attribute} \nDomain lower: {args.domain_lower} \nDomain higher: {args.domain_higher} \nMapper: {args.mapper} \nSize: {args.size} \nFilter: {args.filter} \nEpochs: {args.epochs} \nTest run: {args.test}")
     string_input = "pattern_spectra"
     if args.telescope_mode == "stereo_sum_cta":
         string_input_short = "_ps_float_alpha"
@@ -85,8 +85,12 @@ os.makedirs(path_output, exist_ok = True)
 ##########################################################################################
 
 ######################################## Load and prepare dataset ########################################
-# import data
+
+test_split_percentage = 1 / 10
+
+# import data for energy reconstruction
 if args.mode == "energy":
+    # load csv file with list of runs
     if args.test == "y":
         filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha_test.csv"
     elif args.telescope_mode == "mono":
@@ -99,46 +103,83 @@ if args.mode == "energy":
     if args.run != None:
         run = args.run[0]
 
+    # start counter for number of events
     events_count = 0
-    events_count_selection_cuts = 0
-    table = pd.DataFrame()
-    for r in range(len(run)): # len(run)
+    events_count_energy_cut = 0
+
+    # initialise train and test table
+    table_train = pd.DataFrame()
+    table_test = pd.DataFrame()
+
+    # loop over each run
+    for r in range(len(run)):
+        # load data from run
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
         input_filename = f"dm-finder/cnn/{string_input}/input/gamma/" + string_ps_input + run_filename + string_input_short + ".h5"
 
-        table_individual_run = pd.read_hdf(input_filename)
-        print(f"Number of events in Run {run[r]}:", len(table_individual_run))
-        events_count += len(table_individual_run)
+        table_run = pd.read_hdf(input_filename)
+        print(f"Number of events in Run {run[r]}:", len(table_run))
+        events_count += len(table_run)
 
+        # apply energy cut
+        table_run.drop(table_run.loc[table_run["true_energy"] <= args.energy_range_gamma[0] * 1e3].index, inplace=True)
+        table_run.drop(table_run.loc[table_run["true_energy"] >= args.energy_range_gamma[1] * 1e3].index, inplace=True)
+        table_run.reset_index(inplace = True)
+        events_count_energy_cut += len(table_run)
+
+        # shuffle data set
+        table_run = table_run.sample(frac = 1).reset_index(drop = True)
+
+        # split data into training and test data
+        table_run_test, table_run_train = np.split(table_run, [int(len(table_run) * test_split_percentage)])
+
+        # apply selection cut on training data
         if args.selection_cuts_train != None:
-            selection_cuts_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts_train}/run{run[r]}.csv"
-            table_selection_cuts = pd.read_csv(selection_cuts_filename)
+            selection_cuts_train_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts_train}/run{run[r]}.csv"
+            table_selection_cuts_train = pd.read_csv(selection_cuts_train_filename)
             if args.telescope_mode == "stereo_sum_cta":
-                merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
+                merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id"])
             elif args.telescope_mode == "mono":
-                merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id", "tel_id"])
+                merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id", "tel_id"])
         
-            table = table.append(merged_table, ignore_index = True)
-            events_count_selection_cuts += len(merged_table)
+            table_train = table_train.append(merged_table_train, ignore_index = True)
         else:
-            table = table.append(table_individual_run, ignore_index = True)
+            table_train = table_train.append(table_run_train, ignore_index = True)
+
+        # apply selection cut on test data
+        if args.selection_cuts_test != None:
+            selection_cuts_test_filename = f"dm-finder/cnn/selection_cuts/gamma/{args.selection_cuts_test}/run{run[r]}.csv"
+            table_selection_cuts_test = pd.read_csv(selection_cuts_test_filename)
+            if args.telescope_mode == "stereo_sum_cta":
+                merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id"])
+            elif args.telescope_mode == "mono":
+                merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id", "tel_id"])
+        
+            table_test = table_test.append(merged_table_test, ignore_index = True)
+        else:
+            table_test = table_test.append(table_run_test, ignore_index = True)
     
     print("Total number of events:", events_count)
-    if args.selection_cuts_train != None:
-        print("______________________________________________")
-        print("Total number of events after selection cut:", events_count_selection_cuts)
-
-    table.drop(table.loc[table["true_energy"] <= args.energy_range_gamma[0] * 1e3].index, inplace=True)
-    table.drop(table.loc[table["true_energy"] >= args.energy_range_gamma[1] * 1e3].index, inplace=True)
-    table.reset_index(inplace = True)
+    print("Total number of events after energy cut:", events_count_energy_cut)
     print("______________________________________________")
+    if args.selection_cuts_train != None:
+        print("Total number of training events after selection cut:", len(table_train))
+    if args.selection_cuts_test != None:
+        print("Total number of testing events after selection cut:", len(table_test))
+    if args.selection_cuts_train != None or args.selection_cuts_test != None:
+        print("Total number of all events after selection cut:", len(table_train) + len(table_test))
+        print("______________________________________________")
 
 elif args.mode == "separation":
     particle_type = np.array(["gamma_diffuse", "proton"])
 
-    table = pd.DataFrame()
+    table_train = pd.DataFrame()
+    table_test = pd.DataFrame()
+
     events_count = np.array([0, 0])
-    events_count_selection_cuts = np.array([0, 0])
+    events_count_energy_cut = np.array([0, 0])
+    events_count_selection_cuts_train = np.array([0, 0])
+    events_count_selection_cuts_test = np.array([0, 0])
     for p in range(len(particle_type)):
         if args.test == "y":
             filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
@@ -156,87 +197,130 @@ elif args.mode == "separation":
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
             input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type[p]}/" + string_ps_input + run_filename + string_input_short + ".h5"
 
-            table_individual_run = pd.read_hdf(input_filename)
-            print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_individual_run))
+            table_run = pd.read_hdf(input_filename)
+            print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_run))
 
             if (particle_type[p] == "gamma_diffuse"):
-                events_count[0] += len(table_individual_run)
-            if particle_type[p] == "proton":
-                events_count[1] += len(table_individual_run)
+                events_count[0] += len(table_run)
 
+                # apply energy cut for gammas
+                table_run.drop(table_run.loc[(table_run["true_energy"] <= args.energy_range_gamma[0] * 1e3) & (table_run["particle"] == 1)].index, inplace=True)
+                table_run.drop(table_run.loc[(table_run["true_energy"] >= args.energy_range_gamma[1] * 1e3) & (table_run["particle"] == 1)].index, inplace=True)
+
+                events_count_energy_cut[0] += len(table_run)
+
+            if particle_type[p] == "proton":
+                events_count[1] += len(table_run)
+
+                # apply energy cut for protons
+                table_run.drop(table_run.loc[(table_run["true_energy"] <= args.energy_range_proton[0] * 1e3) & (table_run["particle"] == 0)].index, inplace=True)
+                table_run.drop(table_run.loc[(table_run["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table_run["particle"] == 0)].index, inplace=True)
+
+                events_count_energy_cut[1] += len(table_run)
+
+            # shuffle data set
+            table_run = table_run.sample(frac = 1).reset_index(drop = True)
+
+             # split data into training and test data
+            table_run_test, table_run_train = np.split(table_run, [int(len(table_run) * test_split_percentage)])
+
+            # apply selection cuts on training data
             if args.selection_cuts_train != None:
-                selection_cuts_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts_train}/run{run[r]}.csv"
-                table_selection_cuts = pd.read_csv(selection_cuts_filename)
+                selection_cuts_train_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts_train}/run{run[r]}.csv"
+                table_selection_cuts_train = pd.read_csv(selection_cuts_train_filename)
                 if args.telescope_mode == "stereo_sum_cta":
-                    merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id"])
+                    merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id"])
                 elif args.telescope_mode == "mono":
-                    merged_table = pd.merge(table_individual_run, table_selection_cuts, on=["obs_id", "event_id", "tel_id"])
+                    merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id", "tel_id"])
 
                 if (particle_type[p] == "gamma_diffuse"):
-                    events_count_selection_cuts[0] += len(merged_table)
+                    events_count_selection_cuts_train[0] += len(merged_table_train)
                 if particle_type[p] == "proton":
-                    events_count_selection_cuts[1] += len(merged_table)
+                    events_count_selection_cuts_train[1] += len(merged_table_train)
             
-                table = table.append(merged_table, ignore_index = True)
+                table_train = table_train.append(merged_table_train, ignore_index = True)
             else:
-                table = table.append(table_individual_run, ignore_index = True)
+                table_train = table_train.append(table_run_train, ignore_index = True)
+
+
+            # apply selection cuts on test data
+            if args.selection_cuts_test != None:
+                selection_cuts_test_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{args.selection_cuts_test}/run{run[r]}.csv"
+                table_selection_cuts_test = pd.read_csv(selection_cuts_test_filename)
+                if args.telescope_mode == "stereo_sum_cta":
+                    merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id"])
+                elif args.telescope_mode == "mono":
+                    merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id", "tel_id"])
+
+                if (particle_type[p] == "gamma_diffuse"):
+                    events_count_selection_cuts_test[0] += len(merged_table_test)
+                if particle_type[p] == "proton":
+                    events_count_selection_cuts_test[1] += len(merged_table_test)
+            
+                table_test = table_test.append(merged_table_test, ignore_index = True)
+            else:
+                table_test = table_test.append(table_run_test, ignore_index = True)
+
+            table_train = table_train.sample(frac = 1).reset_index(drop = True)
 
     print("______________________________________________")
     print("Total number of gamma events:", events_count[0])
     print("Total number of proton events:", events_count[1])
+
+    print("______________________________________________")
+    print("Total number of gamma events after energy cut:", events_count_energy_cut[0])
+    print("Total number of proton events after energy cut:", events_count_energy_cut[1])
+
+
     if args.selection_cuts_train != None:
         print("______________________________________________")
-        print("Total number of gamma events after selection cuts:", events_count_selection_cuts[0])
-        print("Total number of proton events after selection cuts:", events_count_selection_cuts[1])
-    print("Total number of events:", len(table))
-
-    table.drop(table.loc[(table["true_energy"] <= args.energy_range_gamma[0] * 1e3) & (table["particle"] == 1)].index, inplace=True)
-    table.drop(table.loc[(table["true_energy"] >= args.energy_range_gamma[1] * 1e3) & (table["particle"] == 1)].index, inplace=True)
-
-    table.drop(table.loc[(table["true_energy"] <= args.energy_range_proton[0] * 1e3) & (table["particle"] == 0)].index, inplace=True)
-    table.drop(table.loc[(table["true_energy"] >= args.energy_range_proton[1] * 1e3) & (table["particle"] == 0)].index, inplace=True)
+        print("Total number of gamma training events after selection cuts:", events_count_selection_cuts_train[0])
+        print("Total number of proton training events after selection cuts:", events_count_selection_cuts_train[1])
+    if args.selection_cuts_test != None:
+        print("______________________________________________")
+        print("Total number of gamma test events after selection cuts:", events_count_selection_cuts_test[0])
+        print("Total number of proton test events after selection cuts:", events_count_selection_cuts_test[1])
+    if args.selection_cuts_train != None or args.selection_cuts_test != None:
+        print("______________________________________________")
+        print("Total number of training events after selection cuts:", len(table_train))
+        print("Total number of test events after selection cuts:", len(table_test))
+        print("Total number of all events after selection cuts:", len(table_train) +  len(table_test))
 
 print("______________________________________________")
-# shuffle data set
-table = table.sample(frac = 1).reset_index(drop = True)
-if args.mode == "separation":
-    print("Total number of gamma events after energy cut:", len(table.loc[table["particle"] == 1]))
-    print("Total number of proton events after energy cut:", len(table.loc[table["particle"] == 0]))
-
-print("Total number of events after energy cut:", len(table))
 
 # input features
-X = np.array(table[string_table_column].to_list())
+X_train = np.array(table_train[string_table_column].to_list())
+X_test = np.array(table_test[string_table_column].to_list())
 
-test_split_percentage = 1 / 10
 
 if args.mode == "energy":
     # output label: log10(true energy)
-    Y = np.asarray(table["true_energy"])
-    Y = np.log10(np.asarray(table["true_energy"]))
+    Y_train = np.log10(np.asarray(table_train["true_energy"]))
+    Y_test = np.log10(np.asarray(table_test["true_energy"]))
 
     # plot a few examples
-    PlotExamplesEnergy(X, Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
+    PlotExamplesEnergy(X_train, Y_train, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
 
     # display total energy distribution of data set
-    EnergyDistributionEnergy(Y, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
+    EnergyDistributionEnergy(Y_train, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
 
 ########################################## CLEAN ################################################
 
 elif args.mode == "separation":
     # output label: particle or gammaness (1 = gamma, 0 = proton)
-    Y = np.asarray(table["particle"])
-    Y = keras.utils.to_categorical(Y, 2)
-    energy_true_test = np.asarray(table["true_energy"])[int(-len(table) * test_split_percentage):]
+    Y_train = np.asarray(table_train["particle"])
+    Y_test = np.asarray(table_test["particle"])
+    Y_train, Y_test = keras.utils.to_categorical(Y_train, 2), keras.utils.to_categorical(Y_test, 2)
+    energy_true_test = np.asarray(table_test["true_energy"])
 
     # # plot a few examples
     fig, ax = plt.subplots(3, 3)
     ax = ax.ravel()
     for i in range(9):
-        ax[i].imshow(X[i], cmap = "Greys_r")
-        if Y[i][1] == 1:
+        ax[i].imshow(X_train[i], cmap = "Greys_r")
+        if Y_train[i][1] == 1:
             ax[i].title.set_text(f"gamma ray")
-        elif Y[i][1] == 0:
+        elif Y_train[i][1] == 0:
             ax[i].title.set_text(f"proton")
         ax[i].axis("off")
     plt.tight_layout()
@@ -244,8 +328,8 @@ elif args.mode == "separation":
     plt.close()
 
     plt.figure()
-    table_gamma = np.asarray(table[table["particle"] == 1].reset_index(drop = True)["true_energy"])
-    table_proton = np.asarray(table[table["particle"] == 0].reset_index(drop = True)["true_energy"])
+    table_gamma = np.asarray(table_train[table_train["particle"] == 1].reset_index(drop = True)["true_energy"])
+    table_proton = np.asarray(table_train[table_train["particle"] == 0].reset_index(drop = True)["true_energy"])
     plt.hist(table_gamma, bins = np.logspace(np.log10(np.min(table_gamma)), np.log10(np.max(table_gamma)), 50), alpha = 0.5, label = "gamma")
     plt.hist(table_proton, bins = np.logspace(np.log10(np.min(table_proton)), np.log10(np.max(table_proton)), 50), alpha = 0.5, label = "proton")
     plt.xlabel("True energy [GeV]")
@@ -258,32 +342,22 @@ elif args.mode == "separation":
 
 
 # reshape X data
-X_shape = np.shape(X)
-X = X.reshape(-1, X_shape[1], X_shape[2], 1)
-
-# # hold out 10 percent as test data and extract the corresponding run, obs_id, event_id (and tel_id)
-X_train, X_test = np.split(X, [int(-len(table) * test_split_percentage)])
-Y_train, Y_test = np.split(Y, [int(-len(table) * test_split_percentage)])
-
-print("Number training events: ", len(X_train))
-print("Number test events: ", len(X_test))
+X_shape = np.shape(X_train)
+X_train, X_test = X_train.reshape(-1, X_shape[1], X_shape[2], 1), X_test.reshape(-1, X_shape[1], X_shape[2], 1)
 
 if args.telescope_mode != "mono":
-    run_test, obs_id_test, event_id_test = table.tail(int(len(table) * test_split_percentage))["run"], table.tail(int(len(table) * test_split_percentage))["obs_id"], table.tail(int(len(table) * test_split_percentage))["event_id"]
+    run_test, obs_id_test, event_id_test = table_test["run"], table_test["obs_id"], table_test["event_id"]
     run_test.reset_index(drop = True, inplace = True)
     obs_id_test.reset_index(drop = True, inplace = True)
     event_id_test.reset_index(drop = True, inplace = True)
     run_test, obs_id_test, event_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test)
 elif args.telescope_mode == "mono":
-    run_test, obs_id_test, event_id_test, tel_id_test = table.tail(int(len(table) * test_split_percentage))["run"], table.tail(int(len(table) * test_split_percentage))["obs_id"], table.tail(int(len(table) * test_split_percentage))["event_id"], table.tail(int(len(table) * test_split_percentage))["tel_id"]
+    run_test, obs_id_test, event_id_test, tel_id_test = table_test["run"], table_test["obs_id"], table_test["event_id"], table_test["tel_id"]
     run_test.reset_index(drop = True, inplace = True)
     obs_id_test.reset_index(drop = True, inplace = True)
     event_id_test.reset_index(drop = True, inplace = True)
     tel_id_test.reset_index(drop = True, inplace = True)
     run_test, obs_id_test, event_id_test, tel_id_test = np.asarray(run_test), np.asarray(obs_id_test), np.asarray(event_id_test), np.asarray(tel_id_test)
-# # remove strange outlier
-# index = np.argmin(Y)
-# Y = np.delete(Y, index)
 
 ##########################################################################################
 
@@ -344,14 +418,6 @@ history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_
 
 # start timer
 start_time = time.time()
-
-# fit = model.fit(X_train,
-#     Y_train,
-#     batch_size = 32,
-#     epochs = args.epochs,
-#     verbose = 2,
-#     validation_split = 0.1,
-#     callbacks = [CSVLogger(history_path)])
 
 model.fit(X_train, Y_train, epochs = args.epochs, batch_size = 32, validation_split = 0.1, callbacks = [checkpointer, CSVLogger(history_path), EarlyStopping(monitor = "val_loss", patience = 20, min_delta = 0)], verbose = 2)
 
