@@ -1,21 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.colors
-from matplotlib.colors import ListedColormap, LinearSegmentedColormap
+from matplotlib.colors import ListedColormap
 import pandas as pd
 import os
-import sys
 import argparse
-import warnings
 from utilities import *
-import tensorflow as tf
 from tensorflow import keras
-from keras.callbacks import CSVLogger
 from keras.models import Model
-import logging
-import time
-from ctapipe.io import EventSource, read_table
-from astropy.table import Table, join, vstack
+from ctapipe.io import read_table
+from astropy.table import Table, vstack
 from pyirf.simulations import SimulatedEventsInfo
 import astropy.units as u
 
@@ -23,11 +16,8 @@ import astropy.units as u
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 
 plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
-# plt.rcParams.update({'font.family':'serif'}) #serif
-# plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
-# pd.options.mode.chained_assignment = None 
 
-plt.rc('text', usetex=True )
+plt.rc('text', usetex=True)
 plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
 plt.rcParams['mathtext.fontset'] = 'cm'
 
@@ -59,15 +49,8 @@ parser.add_argument("-ma", "--mapper", type = int, metavar = "-", help = "Granul
 parser.add_argument("-n", "--size", type = int, metavar = "-", help = "Granulometry: size <n1>x<n2>, default: 20 20", default = [20, 20], nargs = 2)
 parser.add_argument("-f", "--filter", type = int, metavar = "-", help = "Use decision <filter>, default: 3", default = 3, nargs = 1)
 
-# parser.add_argument("-r", "--run_list", type = str, required = True, metavar = "-", help = "path to the csv file that contains the run numbers")
 
 args = parser.parse_args()
-##########################################################################################
-
-
-######################################## Error messages and warnings ########################################
-# if "ps" in args.input[0] and args.data_type == "int8":
-#     raise ValueError("-i ps -dt int8 -> using pattern spectra from int8 CTA images is not supported")
 ##########################################################################################
 
 ######################################## Define some strings based on the input of the user ########################################
@@ -115,12 +98,29 @@ else:
 print(string_summary)
 ##########################################################################################
 
-median_all, sigma_all = [[]] * len(args.input[0]), [[]] * len(args.input[0])
-
-epochs_all, loss_train_all, loss_val_all, true_positive_rate_all, false_positive_rate_all, true_negative_rate_all, false_negative_rate_all,  area_under_ROC_curve_all, accuracy_gammaness_all, precision_gammaness_all, thresholds_all, threshold_cut_all, area_under_ROC_curve_energy_all, accuracy_energy_all, true_positive_rate_energy_all, false_positive_rate_energy_all, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, area_eff_all = [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0]), [[]] * len(args.input[0])
-
-tpr_fixed_gammaness_cta_all, fpr_fixed_gammaness_cta_all = [], []
-tpr_ps_proton_efficiency_fixed_to_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all = [], []
+# define a dictonary with lists to be filled in
+dict = {
+    "median_all": [],
+    "sigma_all": [],
+    "epochs_all": [],
+    "loss_train_all": [],
+    "loss_val_all": [],
+    "true_positive_rate_all": [],
+    "false_positive_rate_all": [],
+    "true_negative_rate_all": [],
+    "false_negative_rate_all": [],
+    "area_under_ROC_curve_all": [],
+    "accuracy_gammaness_all": [],
+    "precision_gammaness_all": [],
+    "thresholds_all": [],
+    "threshold_cut_all": [],
+    "area_under_ROC_curve_energy_all": [],
+    "true_positive_rate_fixed_eta_all": [],
+    "false_positive_rate_fixed_eta_all": [],
+    "area_eff_all": [],
+    "tpr_fixed_gammaness_cta_all": [],
+    "fpr_fixed_gammaness_cta_all": []
+}
 
 if args.mode == "separation":
     dl0_gamma = Table()
@@ -139,18 +139,14 @@ if args.mode == "separation":
         dl1_filename_gamma_diffuse = f"gamma_20deg_0deg_run{run_gamma[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
         dl1_directory_gamma_diffuse = f"dm-finder/data/gamma_diffuse/event_files/" + dl1_filename_gamma_diffuse + ".h5"
         dl0_gamma_temp = read_table(dl1_directory_gamma_diffuse, "/configuration/simulation/run")
-        dl0_gamma = vstack([dl0_gamma, dl0_gamma_temp])
-        # break
-        
+        dl0_gamma = vstack([dl0_gamma, dl0_gamma_temp])        
 
     print("loading proton simulation information...")
     for r in tqdm(range(len(run_proton))):
         dl1_filename_proton = f"proton_20deg_0deg_run{run_proton[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
         dl1_directory_proton = f"dm-finder/data/proton/event_files/" + dl1_filename_proton + ".h5"
         dl0_proton_temp = read_table(dl1_directory_proton, "/configuration/simulation/run")
-        dl0_proton = vstack([dl0_proton, dl0_proton_temp])
-        # break
-        
+        dl0_proton = vstack([dl0_proton, dl0_proton_temp])        
 
     if len(np.unique(dl0_gamma["energy_range_min"])) > 1:
         print("WARNING: min energy range is not the same for all obs_ids (gamma_diffuse)")
@@ -201,8 +197,8 @@ if args.mode == "separation":
     bins_width = (bins[1:] - bins[:-1])
     bins_central =  bins[:-1] + bins_width / 2
 
-    dl0_gamma_hist = simulation_info_gamma.calculate_n_showers_per_energy(bins) #* 500 # temp solution
-    dl0_proton_hist = simulation_info_proton.calculate_n_showers_per_energy(bins) #* 1000 # temp solution
+    dl0_gamma_hist = simulation_info_gamma.calculate_n_showers_per_energy(bins) 
+    dl0_proton_hist = simulation_info_proton.calculate_n_showers_per_energy(bins) 
 
     # calculate geometric area from simulation info
     area = np.pi * simulation_info_gamma.max_impact ** 2
@@ -220,26 +216,13 @@ for i in range(len(args.input[0])):
     # plot loss history
     PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
 
-    epochs_all[i] = table_history["epoch"] + 1
-    loss_train_all[i] = table_history["loss"]
-    loss_val_all[i] = table_history["val_loss"]
-
-    ####################################### Filters and feature maps ########################################
-    # define example run and load example data
-    # run = 107
-    # X, Y = LoadExampleData(run, string_input[i], args.particle_type, string_ps_input[i], string_input_short[i], string_data_type[i], string_table_column[i])
+    dict["epochs_all"].append(table_history["epoch"] + 1)
+    dict["loss_train_all"].append(table_history["loss"])
+    dict["loss_val_all"].append(table_history["val_loss"])
 
     # load model
     model_path = f"dm-finder/cnn/{string_input[i]}/{args.mode}/model/" + string_ps_input[i] + "model" + string_data_type[i] + string_name[i] + ".h5"
     model = keras.models.load_model(model_path)
-    
-    # plot filters
-    # PlotFilters(model, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "filters")
-
-    # # plot feature maps for an example image
-    # index_example = 39
-    # PlotFeatureMaps(X, model, index_example, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "feature_maps")
-    ##########################################################################################
 
     # load data file that contains E_true and E_rec from the test set
     filename_output = f"dm-finder/cnn/{string_input[i]}/{args.mode}/output/" + string_ps_input[i] + "evaluation" + string_data_type[i] + string_name[i] + ".csv"
@@ -286,10 +269,6 @@ for i in range(len(args.input[0])):
         # get median and sigma68 values (binned)
         median, sigma = MedianSigma68(energy_true_binned, energy_rec_binned, bins)
 
-        # collect median and sigma values from each experiment
-        median_all[i] = median
-        sigma_all[i] = sigma
-
         # plot energy accuracy
         PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.pdf")
     
@@ -299,6 +278,10 @@ for i in range(len(args.input[0])):
         # save energy accuracy & resolution in csv files
         SaveCSV(median, bins, "accuracy", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
         SaveCSV(sigma, bins, "resolution", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.csv")
+
+        # collect median and sigma values from each experiment
+        dict["median_all"].append(median)
+        dict["sigma_all"].append(sigma)
         
     
     elif args.mode == "separation":
@@ -310,7 +293,6 @@ for i in range(len(args.input[0])):
         PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
 
         # perform an energy dependend analysis of accuracy, AUC and gammaness
-        # bins, bins_central, area_under_ROC_curve_energy, accuracy_energy, true_positive_rate_energy, false_positive_rate_energy = PlotGammanessEnergyBinned(table_output, args.energy_range, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
         PlotGammanessEnergyBinned(table_output, bins, bins_central, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
 
         PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist, dl0_proton_hist, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
@@ -324,18 +306,11 @@ for i in range(len(args.input[0])):
         # get AUC energy binned based on proton energy
         area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, bins)
 
-        # if args.input[0][i] == "cta":
-        #     tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta = GetEfficienciesEnergyBinnedFixedGammaness(table_output, args.energy_range_gamma, args.energy_range_proton, 0.8) #0.5075
-        #     PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_fixed_gammaness_cta, fpr_fixed_gammaness_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_gammaness_energy.pdf")
-        # if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
-        #     tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta = GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, args.energy_range_gamma, args.energy_range_proton, fpr_fixed_gammaness_cta_mean)
-        #     PlotEfficienciesEnergyBinned(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_ps_proton_efficiency_fixed_to_cta, fpr_ps_proton_efficiency_fixed_to_cta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_proton_efficiency_fixed_to_cta_energy.pdf")
-
         PlotEfficienciesEnergyBinned(bins.value, bins_central.value, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
 
         PlotEffectiveAreaEnergyBinned(bins.value, bins_central.value, area_eff.value, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/area_eff.pdf")
 
-        true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
+        true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
         PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
@@ -353,34 +328,21 @@ for i in range(len(args.input[0])):
         # plot precision vs gammaness treshold plot
         PlotPrecisionGammaness(precision_gammaness, thresholds[:threshold_cut], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/precision_gammaness.pdf")
 
-        PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, rejection_power, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiency_gammaness.pdf")
+        PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiency_gammaness.pdf")
 
-        true_positive_rate_all[i] = true_positive_rate
-        false_positive_rate_all[i] = false_positive_rate
-        true_negative_rate_all[i] = true_negative_rate
-        false_negative_rate_all[i] = false_negative_rate
-        area_under_ROC_curve_all[i] = area_under_ROC_curve
-        accuracy_gammaness_all[i] = accuracy_gammaness
-        precision_gammaness_all[i] = precision_gammaness
-        threshold_cut_all[i] = thresholds[:threshold_cut]
-        thresholds_all[i] = thresholds
-        area_under_ROC_curve_energy_all[i] = area_under_ROC_curve_energy
-        # accuracy_energy_all[i] = accuracy_energy 
-        # true_positive_rate_energy_all[i] = true_positive_rate_energy
-        # false_positive_rate_energy_all[i] = false_positive_rate_energy
-        true_positive_rate_fixed_eta_all[i] = true_positive_rate_fixed_eta
-        false_positive_rate_fixed_eta_all[i] = false_positive_raten_fixed_eta
-        area_eff_all[i] = area_eff
-        
-        # if args.input[0][i] == "cta":
-        #     tpr_fixed_gammaness_cta_all.append(tpr_fixed_gammaness_cta)
-        #     fpr_fixed_gammaness_cta_all.append(fpr_fixed_gammaness_cta)
-        #     # print("fpr_fixed_gammaness_cta_all", fpr_fixed_gammaness_cta_all)
-        #     fpr_fixed_gammaness_cta_mean = np.mean(fpr_fixed_gammaness_cta_all, axis = 0)
-        #     # print("fpr_fixed_gammaness_cta_mean", fpr_fixed_gammaness_cta_mean)
-        # if (args.input[0][i] == "ps") and ("cta" in args.input[0]):
-        #     tpr_ps_proton_efficiency_fixed_to_cta_all.append(tpr_ps_proton_efficiency_fixed_to_cta)
-        #     fpr_ps_proton_efficiency_fixed_to_cta_all.append(fpr_ps_proton_efficiency_fixed_to_cta)
+        dict["true_positive_rate_all"].append(true_positive_rate)
+        dict["false_positive_rate_all"].append(false_positive_rate)
+        dict["true_negative_rate_all"].append(true_negative_rate)
+        dict["false_negative_rate_all"].append(false_negative_rate)
+        dict["area_under_ROC_curve_all"].append(area_under_ROC_curve)
+        dict["accuracy_gammaness_all"].append(accuracy_gammaness)
+        dict["precision_gammaness_all"].append(precision_gammaness)
+        dict["threshold_cut_all"].append(thresholds[:threshold_cut])
+        dict["thresholds_all"].append(thresholds)
+        dict["area_under_ROC_curve_energy_all"].append(area_under_ROC_curve_energy)
+        dict["true_positive_rate_fixed_eta_all"].append(true_positive_rate_fixed_eta)
+        dict["false_positive_rate_fixed_eta_all"].append(false_positive_raten_fixed_eta)
+        dict["area_eff_all"].append(area_eff)
 
 
         # Plot wrongly classified CTA images / pattern spectra
@@ -409,8 +371,10 @@ for i in range(len(args.input[0])):
 
             # plot pattern spectra difference (gamma - proton) of missclassified events
             PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
+
             # plot pattern spectra difference of correctly and wrongly classified gamma events
             PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_gamma, ["gamma_diffuse", "gamma_diffuse"], args.attribute, [0.9, 1.0, 0.0, 0.1], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_gamma_difference")
+
             # plot pattern spectra difference of correctly and wrongly classified proton events
             PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_proton, ["proton", "proton"], args.attribute, [0.0, 0.1, 0.9, 1.0], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_proton_difference")
 
@@ -441,18 +405,18 @@ if args.mode == "energy":
             string_comparison = string_comparison[:200]
         
         # plot Loss comparison
-        PlotLossComparison(epochs_all, loss_train_all, loss_val_all, args.input[0], f"dm-finder/cnn/comparison/energy/" + "loss_comparison_" + string_comparison + ".pdf")
+        PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"dm-finder/cnn/comparison/energy/" + "loss_comparison_" + string_comparison + ".pdf")
 
         # plot energy accuracy comparison
-        PlotEnergyAccuracyComparison(median_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
+        PlotEnergyAccuracyComparison(dict["median_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
 
-        PlotEnergyAccuracyComparisonMean(median_all, bins, label[0], args.input[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
+        PlotEnergyAccuracyComparisonMean(dict["median_all"], bins, label[0], args.input[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
 
         # plot energy resolution comparison
-        PlotEnergyResolutionComparison(sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
+        PlotEnergyResolutionComparison(dict["sigma_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyResolutionComparisonMean(args.input[0], sigma_all, bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
+        PlotEnergyResolutionComparisonMean(args.input[0], dict["sigma_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
 
 
 if (args.mode == "separation") and (len(args.input[0]) > 1):
@@ -470,52 +434,21 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     if len(string_comparison) > 200:
         string_comparison = string_comparison[:200]
 
-    PlotLossComparison(epochs_all, loss_train_all, loss_val_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "loss_comparison_" + string_comparison + ".pdf")
+    PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "loss_comparison_" + string_comparison + ".pdf")
 
     if len(args.input[0]) > 3:
-        PlotROCComparison(true_positive_rate_all, false_positive_rate_all, area_under_ROC_curve_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
+        PlotROCComparison(dict["true_positive_rate_all"], dict["false_positive_rate_all"], dict["area_under_ROC_curve_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
 
-        PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, false_positive_rate_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_gammaness_comparison_" + string_comparison + ".pdf")
+        PlotEfficiencyGammanessComparison(dict["thresholds_all"], dict["true_positive_rate_all"], dict["false_positive_rate_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
+    PlotAccuracyGammanessComparison(dict["accuracy_gammaness_all"], dict["thresholds_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotPrecisionGammanessComparison(precision_gammaness_all, threshold_cut_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
+    PlotPrecisionGammanessComparison(dict["precision_gammaness_all"], dict["threshold_cut_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotAUCEnergyComparison(bins.value, bins_central.value, area_under_ROC_curve_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
+    PlotAUCEnergyComparison(bins.value, bins_central.value, dict["area_under_ROC_curve_energy_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
 
-    # PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_energy_comparison_" + string_comparison + ".pdf")
-
-    # PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
-
-    PlotEfficiencyEnergyComparison(bins.value, bins_central.value, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    PlotEfficiencyEnergyComparison(bins.value, bins_central.value, dict["true_positive_rate_fixed_eta_all"], dict["false_positive_rate_fixed_eta_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
     
-    PlotAeffEnergyComparison(bins.value, bins_central.value, area_eff_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
-
-    # PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_fixed_eta_all, false_positive_rate_fixed_eta_all, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_comparison_" + string_comparison + ".pdf")
-
-    # if ("ps" in args.input[0]) and ("cta" in args.input[0]):
-    #     # print("tpr_fixed_gammaness_cta_all")
-    #     # print(tpr_fixed_gammaness_cta_all)
-    #     # print("tpr_ps_proton_efficiency_fixed_to_cta_all")
-    #     # print(tpr_ps_proton_efficiency_fixed_to_cta_all)
-    #     # print("fpr_fixed_gammaness_cta_all")
-    #     # print(fpr_fixed_gammaness_cta_all)
-    #     # print("fpr_ps_proton_efficiency_fixed_to_cta_all")
-    #     # print(fpr_ps_proton_efficiency_fixed_to_cta_all)
-
-    #     tpr_proton_efficiency_fixed_to_cta = np.concatenate((tpr_fixed_gammaness_cta_all, tpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
-    #     fpr_proton_efficiency_fixed_to_cta = np.concatenate((fpr_fixed_gammaness_cta_all, fpr_ps_proton_efficiency_fixed_to_cta_all), axis = 0)
-
-    #     # print("tpr_proton_efficiency_fixed_to_cta")
-    #     # print(tpr_proton_efficiency_fixed_to_cta)
-    #     # print("fpr_proton_efficiency_fixed_to_cta")
-    #     # print(fpr_proton_efficiency_fixed_to_cta)
-
-    #     PlotEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
-
-    #     PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, tpr_proton_efficiency_fixed_to_cta, fpr_proton_efficiency_fixed_to_cta, args.input[0], f"dm-finder/cnn/comparison/separation/" + "gamma_efficiency_energy_fixed_peff_comparison_" + string_comparison + ".pdf")
-
-    # MeanStdAUC(area_under_ROC_curve_all, args.input[0])
-
+    PlotAeffEnergyComparison(bins.value, bins_central.value, dict["area_eff_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
 
 print("CNN evaluation completed!")

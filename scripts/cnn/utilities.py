@@ -2,22 +2,15 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from keras.callbacks import CSVLogger
 from keras.models import Model
-from keras.layers import Input, Add, Dense, Activation, BatchNormalization, Flatten, Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, MaxPool2D, ReLU, Dropout, LeakyReLU
-import matplotlib.patches as mpatches
-import sys
 from tqdm import tqdm
-from matplotlib.colors import SymLogNorm, LogNorm, LinearSegmentedColormap
+from matplotlib.colors import SymLogNorm, LinearSegmentedColormap
 
 # np.set_printoptions(threshold=sys.maxsize)
 pd.options.mode.chained_assignment = None
 
 plt.rcParams.update({'font.size': 8}) # 8 (paper), 10 (poster)
 fontsize_plots = 8 # 8 (paper), 10 (poster)
-# plt.rcParams.update({'font.family':'serif'}) #serif
-# plt.rcParams["mathtext.fontset"] = 'dejavuserif' #dejavuserif
-# pd.options.mode.chained_assignment = None 
 
 plt.rc('text', usetex=True )
 plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
@@ -40,7 +33,6 @@ double_column_squeezed_fig_size = (18.34621 * cm_conversion_factor, 18.34621 * 1
 
 markers = [".", "s"]
 markersizes = [6, 3]
-# hatches = ["xxx", "..."]
 
 def cstm_PuBu(x):
     return plt.cm.PuBu((np.clip(x,2,10)-2)/8.)
@@ -260,6 +252,8 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
         table_mean_i = table_mean.copy()
         mean_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean energy accuracy"].dropna().to_numpy()[0]
         std_energy_accuracy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std energy accuracy"].dropna().to_numpy()[0]
+        print(args_input_unique[i])
+        print("mean_energy_accuracy", mean_energy_accuracy)
         plt.errorbar(bins_central, mean_energy_accuracy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = markers[i], markersize = markersizes[i], label = labels[i], color = colors_categorial[i])
         bins_central_fill = np.append(bins_central, bins[-1])
         bins_central_fill = np.insert(bins_central_fill, 0, bins[0])
@@ -274,7 +268,9 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
     plt.ylabel("median$(\Delta E / E_\mathrm{true})$")
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(ymin, 1.2 * ymax)
+    ylim = np.max([np.abs(ymax), np.abs(ymin)])
+    #   plt.ylim(ymin, 1.2 * ymax)
+    plt.ylim(-ylim, ylim)
     plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -282,12 +278,6 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
 
 
 def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
-    # mean = np.array([])
-    # error = np.array([])
-    # for k in range(len(sigma_all[0])):
-    #     row = [row_k[k] for row_k in sigma_all]
-    #     mean = np.append(mean, nan(row))
-    #     error = np.append(error, np.std(row))
     bins_central = np.array([])
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
@@ -296,12 +286,9 @@ def PlotEnergyResolutionComparison(sigma_all, bins, label, path):
     plt.grid(alpha = 0.2)
     for i in range(len(sigma_all)):
         plt.errorbar(bins_central, sigma_all[i], xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", label = label[i])
-    # plt.plot(bins_central, mean, linestyle = "--", label = "Mean", color = "black")
-    # plt.fill_between(bins_central, mean - error, mean + error, color = "black", alpha = 0.25)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
-    # plt.ylim(0.2, 0.60)
     plt.legend()
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -357,7 +344,7 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     plt.ylabel("$(\Delta E / E_\mathrm{true})_{68}$")
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
-    plt.ylim(ymin, 0.40)
+    plt.ylim(ymin, 0.35)
     plt.plot(cta_requirement_energy, cta_requirement_energy_resolution, color = "grey", linestyle = "--", label = "CTA requirements")
     plt.xlim(xmin, xmax)
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -408,7 +395,6 @@ def PlotFeatureMaps(X, model, index_example, path):
     model = Model(inputs = model.inputs, outputs = outputs)
 
     # load the image with the required shape
-    # index_max_energy = np.argmax(Y)
     img = X[index_example]
 
     plt.figure(figsize = single_column_fig_size)
@@ -446,9 +432,6 @@ def PlotFilters(model, path):
         if 'conv' in layer.name:
             weights, bias = layer.get_weights()
             
-            # normalize filter values between  0 and 1 for visualization
-            # f_min, f_max = weights.min(), weights.max()
-            # filters = (weights - f_min) / (f_max - f_min)  
             filters = weights[:,:,:, 0]
 
             fig, ax = plt.subplots(int(np.round(np.sqrt(weights.shape[3]), decimals = 0)), int(np.round(np.sqrt(weights.shape[3]), decimals = 0)))
@@ -527,14 +510,8 @@ def PlotGammaness(gammaness_true, gammaness_rec, path):
     plt.grid(alpha = 0.2)
     plt.hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 26), alpha = 0.8, color = colors_categorial_hist[0])
     plt.hist(gammaness_protons, label = "True protons", bins = np.linspace(0, 1, 26), alpha = 0.8, color = colors_categorial_hist[1])
-    # plt.axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
-    plt.xlabel("Gammaness")
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel("Number events")
-    # plt.yscale("log")
-    # handles, labels = fig.gca().get_legend_handles_labels()
-    # patch = mpatches.Patch(color = 'white', label = r"total - acc = {0} $\%$".format(np.round(true_positive_rate_total * 100, 2)))
-    # handles.append(patch) 
-    # plt.legend(handles = handles, framealpha = 0.95)
     plt.legend(framealpha = 0.95, loc = "upper center")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -589,10 +566,6 @@ def AreaUnderROCCurve(x, y): # x = gammaness_gammas, y = gammaness_protons
     area_under_ROC_curve = np.sum(y[1:] * np.diff(x))
     return area_under_ROC_curve
 
-# def AreaUnderROCCurveNumpy(x, y):
-#     area = np.trapz(y[::-1], x[::-1])
-#     return area
-
 def PlotGammanessEnergyBinned(table_output, bins, bins_central, path):
     table = table_output.copy()
     table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
@@ -613,15 +586,8 @@ def PlotGammanessEnergyBinned(table_output, bins, bins_central, path):
         gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
         gammaness_protons_binned = true_protons[(true_protons["E_true / TeV"] >= bins[i]) & (true_protons["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
-        hist_gamma = ax[i].hist(gammaness_gammas_binned, bins = np.linspace(0, 1, 31), alpha = 0.5, color = colors_categorial_hist[0])
+        ax[i].hist(gammaness_gammas_binned, bins = np.linspace(0, 1, 31), alpha = 0.5, color = colors_categorial_hist[0])
         ax[i].hist(gammaness_protons_binned, bins = np.linspace(0, 1, 31), alpha = 0.5, color = colors_categorial_hist[1])
-
-        # # plot bar values into plot
-        # x = np.array([])
-        # for k in range(len(hist_gamma[1]) - 1):
-        #     x = np.append(x, (hist_gamma[1][k+1] - hist_gamma[1][k]) / 8 + hist_gamma[1][k])
-        # for m, n in zip(x, hist_gamma[0]):
-        #     ax[i].text(m, 1.1 * n, str(int(n)), color = "black", fontweight = "bold", rotation= 90, fontsize = 5)
 
         # create gammaness energy binnded plots
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : fontsize_plots})
@@ -629,304 +595,10 @@ def PlotGammanessEnergyBinned(table_output, bins, bins_central, path):
         ax[i].tick_params(axis = 'both', which = 'major')
     ax[-2].set_xlabel("Gammaness")
     ax[3].set_ylabel("Number events")
-    # plt.legend(framealpha = 0.95, fontsize = 10)
     plt.tight_layout()
     plt.savefig(path + "gammaness_energy_binned.pdf", dpi = 250)
     plt.close()
 
-
-    # ######################################################################
-
-    # # prepare energy binning
-    # table_output = table_output.sort_values(by = ["E_true / GeV"], ignore_index = True)
-    # energy_true = np.asarray(table_output["E_true / GeV"]) * 1e-3
-    # gammaness_true = np.asarray(table_output["true gammaness"])
-    # gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
-
-    # number_energy_ranges = 9 # number of energy ranges the whole energy range will be splitted
-    # sst_energy_min = energy_range[0] # TeV
-    # sst_energy_max = energy_range[1] # TeV
-    # bins = np.logspace(np.log10(np.min(sst_energy_min)), np.log10(np.max(sst_energy_max)), number_energy_ranges + 1) 
-    # indices = np.array([], dtype = int)
-    # for b in range(len(bins) - 2):
-    #     index = np.max(np.where(energy_true < bins[b+1])) + 1
-    #     indices = np.append(indices, index)
-
-    # energy_true_binned = np.split(energy_true, indices)
-    # gammaness_true_binned = np.split(gammaness_true, indices)
-    # gammaness_rec_binned = np.split(gammaness_rec, indices)
-
-    # fig, ax = plt.subplots(3, 3)
-    # fig.set_size_inches(double_column_squeezed_fig_size)
-    # ax = ax.ravel()
-    # plt.grid(alpha = 0.2)
-    # accuracy_energy = np.array([])
-    # area_under_ROC_curve_energy = np.array([])
-    # true_positive_rate_energy = np.array([])
-    # false_positive_rate_energy = np.array([])
-    # for i in range(number_energy_ranges):
-    #     # define true gammaness as boolean
-    #     gammaness_true_bool = gammaness_true_binned[i].astype(bool)
-    #     gammaness_true_bool_inverted = [not elem for elem in gammaness_true_bool]
-
-    #     # extract gammaness of true gamma-ray events
-    #     gammaness_gammas = gammaness_rec_binned[i][gammaness_true_bool]
-    #     print("GammanessEnergyBinned")
-    #     print("bin", bins[i], bins[i+1])
-    #     print("gammaness_gammas", gammaness_gammas)
-    #     # extract gammaness of true proton events
-    #     gammaness_protons = gammaness_rec_binned[i][gammaness_true_bool_inverted]
-    #     print("gammaness_protons", gammaness_protons)
-
-    #     # calculate the true positive rate for gamma rays and protons depending on the threshold
-    #     thresholds = np.linspace(0, 1.0, 9999)
-    #     # calculate rates to determine AUC
-    #     true_positive_rate, false_positive_rate = PositiveRates(gammaness_gammas, gammaness_protons, thresholds)
-    #     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
-    #     area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
-    #     area_under_ROC_curve_energy = np.append(area_under_ROC_curve_energy, area_under_ROC_curve)
-
-    #     # determine accuracy for gammaness == 0.7
-    #     gammaness_cut = 0.7
-    #     accuracy = (len(gammaness_gammas[gammaness_gammas >= gammaness_cut]) + len(gammaness_protons[gammaness_protons < gammaness_cut])) / (len(gammaness_gammas) + len(gammaness_protons))
-    #     accuracy_energy = np.append(accuracy_energy, accuracy)
-
-    #     # determine the efficiencies (TPR,...) for gammaness == 0.7
-    #     true_positive_rate_single, false_positive_rate_single = PositiveRates(gammaness_gammas, gammaness_protons, np.array([gammaness_cut]))
-    #     true_negative_rate_single, false_negative_rate_single = NegativeRates(gammaness_gammas, gammaness_protons, np.array([gammaness_cut]))
-    #     true_positive_rate_energy = np.append(true_positive_rate_energy, true_positive_rate_single)
-    #     false_positive_rate_energy = np.append(false_positive_rate_energy, false_positive_rate_single)
-
-    #     # create gammaness energy binnded plots
-    #     ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : fontsize_plots})
-    #     ax[i].hist(gammaness_gammas, label = "True photons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[0])
-    #     ax[i].hist(gammaness_protons, label = "True protons", bins = np.linspace(0, 1, 31), alpha = 0.8, color = colors_categorial_hist[1])
-    #     ylim = ax[i].get_ylim()
-    #     ax[i].set_xlim(-0.05, 1.05)
-    #     # ax[i].text(0, 0.8 * ylim[1], f"AUC = {np.round(area_under_ROC_curve, 3)}", fontsize = 6)
-    #     # ax[i].axvline(0.5, color = "r", linestyle = "--", label = "decision boundary")
-    #     ax[i].tick_params(axis = 'both', which = 'major')
-
-    # #ax[-1].set_xlabel("Gammaness", fontsize = 10)
-    # ax[-2].set_xlabel("Gammaness")
-    # ax[3].set_ylabel("Number events")
-    # # plt.legend(framealpha = 0.95, fontsize = 10)
-    # plt.tight_layout()
-    # plt.savefig(path + "gammaness_energy_binned.pdf", dpi = 250)
-    # plt.close()
-
-    # bins_central = np.array([])
-    # for b in range(len(bins) - 1):
-    #     bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
-
-    # plt.figure()
-    # plt.grid(alpha = 0.2)
-    # plt.errorbar(bins_central, area_under_ROC_curve_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
-    # plt.xlabel("$E_\mathrm{true}$ [TeV]")
-    # plt.ylabel("AUC")
-    # plt.xscale("log")
-    # plt.tight_layout()
-    # plt.savefig(path + "AUC_energy.pdf", dpi = 250)
-    # plt.close()
-
-    # plt.figure()
-    # plt.grid(alpha = 0.2)
-    # plt.errorbar(bins_central, accuracy_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = color_single)
-    # plt.xlabel("$E_\mathrm{true}$ [TeV]")
-    # plt.ylabel("Accuracy")
-    # plt.xscale("log")
-    # plt.tight_layout()
-    # plt.savefig(path + "accuracy_energy.pdf", dpi = 250)
-    # plt.close()
-
-    # plt.figure()
-    # plt.grid(alpha = 0.2)
-    # plt.errorbar(bins_central, true_positive_rate_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[0], label = "Photon")
-    # plt.errorbar(bins_central, false_positive_rate_energy, xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 3.0, marker = ".", color = colors_categorial[1], label = "Proton")
-    # plt.xlabel("$E_\mathrm{true}$ [TeV]")
-    # plt.ylabel(r"$\eta$")
-    # plt.xscale("log")
-    # plt.legend()
-    # plt.tight_layout()
-    # plt.savefig(path + "efficiencies_energy.pdf", dpi = 250)
-    # plt.close()
-
-# def GetEfficienciesEnergyBinned(table_output, energy_range_gamma, energy_range_proton):
-#     # prepare energy binning
-#     table_output = table_output.sort_values(by = ["E_true / GeV"], ignore_index = True)
-#     energy_true = np.asarray(table_output["E_true / GeV"]) * 1e-3
-#     gammaness_true = np.asarray(table_output["true gammaness"])
-#     gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
-
-#     number_energy_ranges_gamma = 11 # number of energy ranges the whole energy range will be splitted
-#     number_energy_ranges_proton = 9
-#     gamma_energy_min, gamma_energy_max = energy_range_gamma[0], energy_range_gamma[1] # TeV
-#     proton_energy_min, proton_energy_max = energy_range_proton[0], energy_range_proton[1] # TeV
-#     bins_gamma = np.logspace(np.log10(np.min(gamma_energy_min)), np.log10(np.max(gamma_energy_max)), number_energy_ranges_gamma + 1) 
-#     bins_proton = np.logspace(np.log10(np.min(proton_energy_min)), np.log10(np.max(proton_energy_max)), number_energy_ranges_proton + 1) 
-
-#     indices_gamma = np.array([], dtype = int)
-#     indices_proton = np.array([], dtype = int)
-#     for b in range(len(bins_gamma) - 2):
-#         index_gamma = np.max(np.where(energy_true < bins_gamma[b+1])) + 1
-#         indices_gamma = np.append(indices_gamma, index_gamma)
-    
-#     for b in range(len(bins_proton) - 2):
-#         index_proton = np.max(np.where(energy_true < bins_proton[b+1])) + 1
-#         indices_proton = np.append(indices_proton, index_proton)
-
-#     energy_true_binned_gamma = np.split(energy_true, indices_gamma)
-#     energy_true_binned_proton = np.split(energy_true, indices_proton)
-
-#     gammaness_true_binned_er_gamma = np.split(gammaness_true, indices_gamma)
-#     gammaness_true_binned_er_proton = np.split(gammaness_true, indices_proton)
-#     gammaness_rec_binned_er_gamma = np.split(gammaness_rec, indices_gamma)
-#     gammaness_rec_binned_er_proton = np.split(gammaness_rec, indices_proton)
-
-#     area_under_ROC_curve_energy = np.array([])
-#     true_positive_rate_er_gamma = np.array([])
-#     false_positive_rate_er_proton = np.array([])
-#     for i in range(number_energy_ranges_gamma):
-#         # define true gammaness as boolean
-#         gammaness_true_bool_er_gamma = gammaness_true_binned_er_gamma[i].astype(bool)
-#         gammaness_true_bool_er_gamma_inverted = [not elem for elem in gammaness_true_bool_er_gamma]
-
-#         # extract gammaness of true gamma-ray events
-#         gammaness_gammas_er_gamma = gammaness_rec_binned_er_gamma[i][gammaness_true_bool_er_gamma]
-#         # extract gammaness of true proton events
-
-#         # calculate the true positive rate for gamma rays and protons depending on the threshold
-#         thresholds = np.linspace(0, 1.0, 9999)
-
-#         # determine accuracy for gammaness == 0.7
-#         gammaness_cut = 0.7
-
-#         # determine the efficiencies (TPR,...) for gammaness == 0.7
-#         true_positive_rate_er_gamma_single = tpr(gammaness_gammas_er_gamma, np.array([gammaness_cut]))
-
-#         true_positive_rate_er_gamma = np.append(true_positive_rate_er_gamma, true_positive_rate_er_gamma_single)
-
-#     for i in range(number_energy_ranges_proton):
-#         # define true gammaness as boolean
-#         gammaness_true_bool_er_proton = gammaness_true_binned_er_proton[i].astype(bool)
-#         gammaness_true_bool_er_proton_inverted = [not elem for elem in gammaness_true_bool_er_proton]
-
-#         # extract gammaness of true proton events
-#         gammaness_protons_er_proton = gammaness_rec_binned_er_proton[i][gammaness_true_bool_er_proton_inverted]
-
-#         # calculate the true positive rate for gamma rays and protons depending on the threshold
-#         thresholds = np.linspace(0, 1.0, 9999)
-        
-#         # determine accuracy for gammaness == 0.7
-#         gammaness_cut = 0.7
-
-#         # determine the efficiencies (TPR,...) for gammaness == 0.7
-#         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, np.array([gammaness_cut]))
-
-#         false_positive_rate_er_proton = np.append(false_positive_rate_er_proton, false_positive_rate_er_proton_single)
-
-#     bins_central_gamma = np.array([])
-#     for b in range(len(bins_gamma) - 1):
-#         bins_central_gamma = np.append(bins_central_gamma, bins_gamma[b] + (bins_gamma[b+1] - bins_gamma[b]) / 2)
-
-#     bins_central_proton = np.array([])
-#     for b in range(len(bins_proton) - 1):
-#         bins_central_proton = np.append(bins_central_proton, bins_proton[b] + (bins_proton[b+1] - bins_proton[b]) / 2)
-
-#     return(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton)
-
-# def GetEfficienciesEnergyBinned(table_output, energy_range_gamma, energy_range_proton):
-#     # prepare energy binning
-#     table_output = table_output.sort_values(by = ["E_true / GeV"], ignore_index = True)
-#     energy_true = np.asarray(table_output["E_true / GeV"]) * 1e-3
-#     gammaness_true = np.asarray(table_output["true gammaness"])
-#     gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
-
-#     number_energy_ranges_gamma = 9 # 11 # number of energy ranges the whole energy range will be splitted
-#     number_energy_ranges_proton = 9
-#     gamma_energy_min, gamma_energy_max = energy_range_gamma[0], energy_range_gamma[1] # TeV
-#     proton_energy_min, proton_energy_max = energy_range_proton[0], energy_range_proton[1] # TeV
-#     bins_gamma = np.logspace(np.log10(np.min(gamma_energy_min)), np.log10(np.max(gamma_energy_max)), number_energy_ranges_gamma + 1) 
-#     bins_proton = np.logspace(np.log10(np.min(proton_energy_min)), np.log10(np.max(proton_energy_max)), number_energy_ranges_proton + 1) 
-
-#     indices_gamma = np.array([], dtype = int)
-#     indices_proton = np.array([], dtype = int)
-#     for b in range(len(bins_gamma) - 2):
-#         index_gamma = np.max(np.where(energy_true < bins_gamma[b+1])) + 1
-#         indices_gamma = np.append(indices_gamma, index_gamma)
-    
-#     for b in range(len(bins_proton) - 2):
-#         index_proton = np.max(np.where(energy_true < bins_proton[b+1])) + 1
-#         indices_proton = np.append(indices_proton, index_proton)
-
-#     energy_true_binned_gamma = np.split(energy_true, indices_gamma)
-#     energy_true_binned_proton = np.split(energy_true, indices_proton)
-
-#     gammaness_true_binned_er_gamma = np.split(gammaness_true, indices_gamma)
-#     gammaness_true_binned_er_proton = np.split(gammaness_true, indices_proton)
-#     gammaness_rec_binned_er_gamma = np.split(gammaness_rec, indices_gamma)
-#     gammaness_rec_binned_er_proton = np.split(gammaness_rec, indices_proton)
-
-#     area_under_ROC_curve_energy = np.array([])
-#     true_positive_rate_er_gamma = np.array([])
-#     false_positive_rate_er_proton = np.array([])
-#     gammaness_cut_fpr_requirement_binned = np.array([])
-
-#     for i in range(number_energy_ranges_proton):
-#         # define true gammaness as boolean
-#         gammaness_true_bool_er_proton = gammaness_true_binned_er_proton[i].astype(bool)
-#         gammaness_true_bool_er_proton_inverted = [not elem for elem in gammaness_true_bool_er_proton]
-
-#         # extract gammaness of true proton events
-#         gammaness_protons_er_proton = gammaness_rec_binned_er_proton[i][gammaness_true_bool_er_proton_inverted]
-
-#         # calculate the true positive rate for gamma rays and protons depending on the threshold
-#         thresholds = np.linspace(0, 1.0, 9999)
-        
-#         # determine accuracy for gammaness == 0.7
-#         gammaness_cut = np.linspace(0, 1.0, 1000)
-#         false_positive_rate_requirement = 0.01
-
-#         # determine the efficiencies (TPR,...) for gammaness == 0.7
-#         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, np.array(gammaness_cut))
-#         index = np.argmin(np.abs(false_positive_rate_requirement - false_positive_rate_er_proton_single))
-#         gammaness_cut_fpr_requirement = gammaness_cut[index]
-#         gammaness_cut_fpr_requirement_binned = np.append(gammaness_cut_fpr_requirement_binned, gammaness_cut_fpr_requirement)
-
-#         false_positive_rate_er_proton = np.append(false_positive_rate_er_proton, false_positive_rate_er_proton_single[index])
-
-#     for i in range(number_energy_ranges_gamma - number_energy_ranges_proton):
-#         gammaness_cut_fpr_requirement_binned = np.insert(gammaness_cut_fpr_requirement_binned, 0, gammaness_cut_fpr_requirement_binned[0])
-
-#     for i in range(number_energy_ranges_gamma):
-#         # define true gammaness as boolean
-#         gammaness_true_bool_er_gamma = gammaness_true_binned_er_gamma[i].astype(bool)
-#         gammaness_true_bool_er_gamma_inverted = [not elem for elem in gammaness_true_bool_er_gamma]
-
-#         # extract gammaness of true gamma-ray events
-#         gammaness_gammas_er_gamma = gammaness_rec_binned_er_gamma[i][gammaness_true_bool_er_gamma]
-#         # extract gammaness of true proton events
-
-#         # calculate the true positive rate for gamma rays and protons depending on the threshold
-#         thresholds = np.linspace(0, 1.0, 9999)
-
-#         # # determine accuracy for gammaness == 0.7
-#         # gammaness_cut = 0.7
-
-#         # determine the efficiencies (TPR,...) for gammaness == 0.7
-#         true_positive_rate_er_gamma_single = tpr(gammaness_gammas_er_gamma, np.array([gammaness_cut_fpr_requirement_binned[i]]))
-
-#         true_positive_rate_er_gamma = np.append(true_positive_rate_er_gamma, true_positive_rate_er_gamma_single)
-
-#     bins_central_gamma = np.array([])
-#     for b in range(len(bins_gamma) - 1):
-#         bins_central_gamma = np.append(bins_central_gamma, bins_gamma[b] + (bins_gamma[b+1] - bins_gamma[b]) / 2)
-
-#     bins_central_proton = np.array([])
-#     for b in range(len(bins_proton) - 1):
-#         bins_central_proton = np.append(bins_central_proton, bins_proton[b] + (bins_proton[b+1] - bins_proton[b]) / 2)
-
-#     return(bins_gamma, bins_proton, bins_central_gamma, bins_central_proton, true_positive_rate_er_gamma, false_positive_rate_er_proton)
 
 def GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central, dl0_gamma_hist, dl0_proton_hist, false_positive_rate_requirement):
     table = table_output.copy()
@@ -946,8 +618,6 @@ def GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central,
         # calculate the true positive rate for gamma rays and protons depending on the threshold
         gammaness_cut = np.linspace(0, 1.0, 9999) #9999
 
-        # false_positive_rate_temp = fpr(gammaness_protons_binned, gammaness_cut)
-        # print(false_positive_rate_temp)
         false_positive_rate_temp = positive_rates(gammaness_protons_binned, dl0_proton_hist[i], gammaness_cut)
 
         index = np.argmin(np.abs(false_positive_rate_requirement - false_positive_rate_temp))
@@ -1015,110 +685,6 @@ def PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist,
     plt.savefig(path + "energy_dist_dl0_dl1.pdf", dpi = 500) 
     plt.close()
 
-def GetEfficienciesEnergyBinnedFixedGammaness(table_output, energy_range_gamma, energy_range_proton, gammaness_cut):
-    table = table_output.copy()
-    table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
-    table.columns = table.columns.str.replace("E_true / GeV", "E_true / TeV")
-
-    true_gammas = table.where(table["true gammaness"] == 1).dropna().reset_index()
-    true_protons = table.where(table["true gammaness"] == 0).dropna().reset_index()
-
-    gammaness_gammas = true_gammas["reconstructed gammaness"].to_numpy()
-    gammaness_protons = true_protons["reconstructed gammaness"].to_numpy()
-
-    number_energy_ranges_gamma = 9 # 11 # number of energy ranges the whole energy range will be splitted
-    number_energy_ranges_proton = 9
-    gamma_energy_min, gamma_energy_max = energy_range_gamma[0], energy_range_gamma[1] # TeV
-    proton_energy_min, proton_energy_max = energy_range_proton[0], energy_range_proton[1] # TeV
-    bins_gamma = np.logspace(np.log10(gamma_energy_min), np.log10(gamma_energy_max), number_energy_ranges_gamma + 1) 
-    bins_proton = np.logspace(np.log10(proton_energy_min), np.log10(proton_energy_max), number_energy_ranges_proton + 1) 
-
-    bins_central_gamma = np.array([])
-    for b in range(len(bins_gamma) - 1):
-        bins_central_gamma = np.append(bins_central_gamma, bins_gamma[b] + (bins_gamma[b+1] - bins_gamma[b]) / 2)
-
-    bins_central_proton = np.array([])
-    for b in range(len(bins_proton) - 1):
-        bins_central_proton = np.append(bins_central_proton, bins_proton[b] + (bins_proton[b+1] - bins_proton[b]) / 2)
-
-    true_positive_rate_er_gamma = np.array([])
-    false_positive_rate_er_proton = np.array([])
-    gammaness_cut_fpr_requirement_binned = np.array([])
-    for i in range(number_energy_ranges_proton):
-        # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
-        gammaness_protons_er_proton = true_protons[(true_protons["E_true / TeV"] >= bins_proton[i]) & (true_protons["E_true / TeV"] <= bins_proton[i+1])]["reconstructed gammaness"].to_numpy()
-
-        # determine the efficiencies (TPR,...) for gammaness == 0.7
-        false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, np.array([gammaness_cut]))
-        false_positive_rate_er_proton = np.append(false_positive_rate_er_proton, false_positive_rate_er_proton_single)
-
-    for i in range(number_energy_ranges_gamma):
-        # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
-        gammaness_gammas_er_gamma = true_gammas[(true_gammas["E_true / TeV"] >= bins_gamma[i]) & (true_gammas["E_true / TeV"] <= bins_gamma[i+1])]["reconstructed gammaness"].to_numpy()
-        
-        true_positive_rate_er_gamma_single = tpr(gammaness_gammas_er_gamma, np.array([gammaness_cut]))
-
-        true_positive_rate_er_gamma = np.append(true_positive_rate_er_gamma, true_positive_rate_er_gamma_single)
-
-    return(true_positive_rate_er_gamma, false_positive_rate_er_proton)
-
-
-def GetEfficienciesEnergyBinnedFixedProtonEfficiency(table_output, energy_range_gamma, energy_range_proton, proton_efficiency):
-    table = table_output.copy()
-    table["E_true / GeV"] = table["E_true / GeV"] * 1e-3
-    table.columns = table.columns.str.replace("E_true / GeV", "E_true / TeV")
-
-    true_gammas = table.where(table["true gammaness"] == 1).dropna().reset_index()
-    true_protons = table.where(table["true gammaness"] == 0).dropna().reset_index()
-
-    gammaness_gammas = true_gammas["reconstructed gammaness"].to_numpy()
-    gammaness_protons = true_protons["reconstructed gammaness"].to_numpy()
-
-    number_energy_ranges_gamma = 9 # 11 # number of energy ranges the whole energy range will be splitted
-    number_energy_ranges_proton = 9
-    gamma_energy_min, gamma_energy_max = energy_range_gamma[0], energy_range_gamma[1] # TeV
-    proton_energy_min, proton_energy_max = energy_range_proton[0], energy_range_proton[1] # TeV
-    bins_gamma = np.logspace(np.log10(gamma_energy_min), np.log10(gamma_energy_max), number_energy_ranges_gamma + 1) 
-    bins_proton = np.logspace(np.log10(proton_energy_min), np.log10(proton_energy_max), number_energy_ranges_proton + 1) 
-
-    bins_central_gamma = np.array([])
-    for b in range(len(bins_gamma) - 1):
-        bins_central_gamma = np.append(bins_central_gamma, bins_gamma[b] + (bins_gamma[b+1] - bins_gamma[b]) / 2)
-
-    bins_central_proton = np.array([])
-    for b in range(len(bins_proton) - 1):
-        bins_central_proton = np.append(bins_central_proton, bins_proton[b] + (bins_proton[b+1] - bins_proton[b]) / 2)
-
-    true_positive_rate_er_gamma = np.array([])
-    false_positive_rate_er_proton = np.array([])
-    gammaness_cut_fpr_requirement_binned = np.array([])
-    for i in range(number_energy_ranges_proton):
-        # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
-        gammaness_protons_er_proton = true_protons[(true_protons["E_true / TeV"] >= bins_proton[i]) & (true_protons["E_true / TeV"] <= bins_proton[i+1])]["reconstructed gammaness"].to_numpy()
-
-        # calculate the true positive rate for gamma rays and protons depending on the threshold
-        gammaness_cut = np.linspace(0, 1.0, 9999)
-        false_positive_rate_requirement = proton_efficiency[i]
-
-        # determine the efficiencies (TPR,...) for gammaness == 0.7
-        false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, gammaness_cut)
-        index = np.argmin(np.abs(false_positive_rate_requirement - false_positive_rate_er_proton_single))
-        gammaness_cut_fpr_requirement = gammaness_cut[index]
-        gammaness_cut_fpr_requirement_binned = np.append(gammaness_cut_fpr_requirement_binned, gammaness_cut_fpr_requirement)
-
-        false_positive_rate_er_proton = np.append(false_positive_rate_er_proton, false_positive_rate_er_proton_single[index])
-
-    for i in range(number_energy_ranges_gamma):
-        # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
-        gammaness_gammas_er_gamma = true_gammas[(true_gammas["E_true / TeV"] >= bins_gamma[i]) & (true_gammas["E_true / TeV"] <= bins_gamma[i+1])]["reconstructed gammaness"].to_numpy()
-        
-        true_positive_rate_er_gamma_single = tpr(gammaness_gammas_er_gamma, np.array([gammaness_cut_fpr_requirement_binned[i]]))
-        # true_positive_rate_er_gamma_single = tpr(gammaness_gammas_er_gamma, np.array([0.8]))
-
-        true_positive_rate_er_gamma = np.append(true_positive_rate_er_gamma, true_positive_rate_er_gamma_single)
-
-    return(true_positive_rate_er_gamma, false_positive_rate_er_proton)
-
 
 def GetAUCEnergyBinned(table_output, bins):
     table = table_output.copy()
@@ -1128,18 +694,13 @@ def GetAUCEnergyBinned(table_output, bins):
     true_gammas = table.where(table["true gammaness"] == 1).dropna().reset_index()
     true_protons = table.where(table["true gammaness"] == 0).dropna().reset_index()
 
-    gammaness_gammas = true_gammas["reconstructed gammaness"].to_numpy()
-    gammaness_protons = true_protons["reconstructed gammaness"].to_numpy()
-
     area_under_ROC_curve_energy = np.array([])
     gammaness_cut = np.linspace(0, 1.0, 9999)
     for i in range(len(bins) - 1):
-        # gammaness_gammas_binned = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
         gammaness_protons_er_proton = true_protons[(true_protons["E_true / TeV"] >= bins[i]) & (true_protons["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
         gammaness_gammas_er_proton = true_gammas[(true_gammas["E_true / TeV"] >= bins[i]) & (true_gammas["E_true / TeV"] <= bins[i+1])]["reconstructed gammaness"].to_numpy()
 
-        # determine the efficiencies (TPR,...) for gammaness == 0.7
         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, gammaness_cut)
 
         false_positive_rate_er_proton_single = fpr(gammaness_protons_er_proton, gammaness_cut)
@@ -1181,21 +742,16 @@ def ROC(gammaness_true, gammaness_rec):
     true_negative_rate, false_negative_rate = NegativeRates(gammaness_gammas, gammaness_protons, thresholds)
     true_positive_rate_50, false_positive_rate_50 = PositiveRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
     true_negative_rate_50, false_negative_rate_50 = NegativeRates(gammaness_gammas, gammaness_protons, np.array([0.5]))
-    # rejection_power = np.divide(1, false_positive_rate)
-    rejection_power = 0 # placeholder
-    # rejection_power = 1 / true_negative_rate[true_negative_rate == 0] = None
-    # print("Correctly classified photons: ", true_positive_rate_50[0])
-    # print("Correctly classified protons: ", true_negative_rate_50[0])
     area_under_ROC_curve = AreaUnderROCCurve(false_positive_rate, true_positive_rate)
 
-    return(true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, rejection_power, area_under_ROC_curve)
+    return(true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, area_under_ROC_curve)
 
 
 def PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path):
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3)), color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+    plt.plot(false_positive_rate, true_positive_rate, label = "AUC = {0:.3f}".format(np.round(area_under_ROC_curve, 3)), color = color_single) 
     plt.plot(np.linspace(0, 1, 5), np.linspace(0, 1, 5), color = "black", linestyle = "--")
     plt.xlabel("False positive rate")
     plt.ylabel("True positive rate")
@@ -1211,14 +767,13 @@ def SaveROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, path)
     table["AUC"] = area_under_ROC_curve
     table.to_csv(path)
 
-def PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, rejection_power, thresholds, path):
+def PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, thresholds, path):
     # plot the "efficiency" curve
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.plot(thresholds, true_positive_rate, label = "TPR", color = colors_categorial[0]) 
     plt.plot(thresholds, false_positive_rate, label = "FPR", color = colors_categorial[1]) 
-    # plt.plot(thresholds, rejection_power, label = "RP", color = "black") 
-    plt.xlabel("Gammaness")
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel(r"$\eta$")
     plt.legend()
     plt.tight_layout()
@@ -1250,8 +805,8 @@ def AccuracyGammaness(gammaness_true, gammaness_rec):
 def PlotAccuracyGammaness(accuracy_gammaness, thresholds, path):
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    plt.plot(thresholds, accuracy_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-    plt.xlabel("Gammaness")
+    plt.plot(thresholds, accuracy_gammaness, color = color_single)
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel("Accuracy")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -1283,8 +838,8 @@ def PrecisionGammaness(gammaness_true, gammaness_rec):
 def PlotPrecisionGammaness(precision_gammaness, thresholds, path):
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    plt.plot(thresholds, precision_gammaness, color = color_single) # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-    plt.xlabel("Gammaness")
+    plt.plot(thresholds, precision_gammaness, color = color_single) 
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel("Precision")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -1340,10 +895,10 @@ def PlotAccuracyGammanessComparison(accuracy_gammaness_all, thresholds_all, inpu
     linestyles = ["-.", "--"]
     for i in range(len(accuracy_gammaness_all)):
         if input[i] == "cta":
-            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images") 
         elif input[i] == "ps":
-            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-    plt.xlabel("Gammaness")
+            plt.plot(thresholds_all[i], accuracy_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra") 
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel("Accuracy")
     plt.legend(loc = "lower center")
     plt.tight_layout()
@@ -1358,10 +913,10 @@ def PlotPrecisionGammanessComparison(precision_gammaness_all, thresholds_all, in
     linestyles = ["-.", "--"]
     for i in range(len(precision_gammaness_all)):
         if input[i] == "cta":
-            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
+            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[0], color = colors_categorial[0], label = "CTA images")
         elif input[i] == "ps":
-            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra") # \nCC $\gamma$ = {1:.3f}\nCC $p$ = {2:.3f}.format(np.round(area_under_ROC_curve, 3), np.round(true_positive_rate_50[0], 3), np.round(true_negative_rate_50[0], 3)))
-    plt.xlabel("Gammaness")
+            plt.plot(thresholds_all[i], precision_gammaness_all[i], linestyle = linestyles[1], color = colors_categorial[1], label = "Pattern spectra")
+    plt.xlabel(r"$\Gamma$")
     plt.ylabel("Precision")
     plt.legend(loc = "lower right")
     plt.tight_layout()
@@ -1400,79 +955,13 @@ def PlotEfficiencyGammanessComparison(thresholds_all, true_positive_rate_all, fa
         plt.plot(thresholds_all[0], mean_false_positive_rate, linestyle = linestyles[1], color = colors_categorial[i], label = r"$\eta_{{p}}$ ({0})".format(labels[i]))
         plt.fill_between(thresholds_all[0], mean_false_positive_rate - std_false_positive_rate, mean_false_positive_rate + std_false_positive_rate, facecolor = colors_categorial[i], alpha = 0.3)
 
-        # print(labels[i])
-        # print("mean_true_positive_rate")
-        # print(mean_true_positive_rate)
-        # print("mean_false_positive_rate")
-        # print(mean_false_positive_rate)
-        # print("difference")
-        # difference = mean_true_positive_rate - mean_false_positive_rate
-        # print(difference)
-        # print("ratio")
-        # ratio = mean_true_positive_rate / mean_false_positive_rate
-        # print(ratio)
-        # print("difference min, max, gamma_min, gamma_max")
-        # print(np.min(difference), np.max(difference), thresholds_all[0][int(np.argmin(difference))], thresholds_all[0][int(np.argmax(difference))])
-        # print("ratio min, max, gamma_min, gamma_max")
-        # print(np.min(ratio), np.max(ratio), thresholds_all[0][int(np.argmin(ratio))], thresholds_all[0][int(np.argmax(ratio))])
-        # print("_____________________________________")
-
-    plt.xlabel(r"$\alpha_{g}$")
+    plt.xlabel(r"$\alpha_{\Gamma}$")
     plt.ylabel(r"$\eta$")
     plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
 
-
-
-    # plt.figure(figsize = single_column_fig_size_legend)
-    # plt.grid(alpha = 0.2)
-    # linestyles = ["-.", "--"]
-
-    # for i in range(len(thresholds_all)):
-    #     if input[i] == "cta":
-    #         plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[0], label = r"$\eta_{{\gamma}}$ (CTA images)", alpha = 1.0) 
-    #         plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[0], label = r"$\eta_{{p}}$ (CTA images)", alpha = 1.0)
-
-    #         print("CTA")
-    #         index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)
-    #         print("index_purity_10p", index_purity_10p)
-    #         index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)[0][0]
-    #         print("index_purity_10p", index_purity_10p)
-    #         threshold_purity_10p = thresholds_all[i][index_purity_10p]
-    #         true_positive_rate_purity_10p = true_positive_rate_all[i][index_purity_10p]
-    #         false_positive_rate_purity_10p = false_positive_rate_all[i][index_purity_10p]
-
-    #         print("threshold_purity_10p", threshold_purity_10p)
-    #         print("true_positive_rate_purity_10p", true_positive_rate_purity_10p)
-    #         print("false_positive_rate_purity_10p", false_positive_rate_purity_10p)
-    #         print("______________________")
-
-    #     elif input[i] == "ps":
-    #         plt.plot(thresholds_all[i], true_positive_rate_all[i], linestyle = "solid", color = colors_categorial[1], label = r"$\eta_{{\gamma}}$ (pattern spectra)", alpha = 1.0) 
-    #         plt.plot(thresholds_all[i], false_positive_rate_all[i], linestyle = "dashed", color = colors_categorial[1], label = r"$\eta_{{p}}$ (pattern spectra)", alpha = 1.0) 
-
-    #         print("PS")
-    #         index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)
-    #         print("index_purity_10p", index_purity_10p)
-    #         index_purity_10p = np.where(false_positive_rate_all[i] <= 1e-4)[0][0]
-    #         print("index_purity_10p", index_purity_10p)
-    #         threshold_purity_10p = thresholds_all[i][index_purity_10p]
-    #         true_positive_rate_purity_10p = true_positive_rate_all[i][index_purity_10p]
-    #         false_positive_rate_purity_10p = false_positive_rate_all[i][index_purity_10p]
-
-    #         print("threshold_purity_10p", threshold_purity_10p)
-    #         print("true_positive_rate_purity_10p", true_positive_rate_purity_10p)
-    #         print("false_positive_rate_purity_10p", false_positive_rate_purity_10p)
-    #         print("______________________")
-
-    # plt.xlabel(r"$\alpha_{g}$")
-    # plt.ylabel(r"$\eta$")
-    # plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
-    # plt.tight_layout()
-    # plt.savefig(path, dpi = 250)
-    # plt.close()
 
 def PlotAUCEnergyComparison(bins, bins_central, area_under_ROC_curve_energy_all, args_input, path):
     print("Starting PlotAUCEnergyComparison...")
@@ -1555,61 +1044,6 @@ def PlotAccuracyEnergyComparison(bins, bins_central, accuracy_energy_all, args_i
     plt.savefig(path, dpi = 250)
     plt.close()
 
-# def PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate_energy_all, false_positive_rate_energy_all, args_input, path):
-#     table = []
-#     for k in range(len(args_input)):
-#         table.append([args_input[k], true_positive_rate_energy_all[k], false_positive_rate_energy_all[k]])
-
-#     table = pd.DataFrame(table, columns=["input", "TPR energy", "FPR energy"])
-
-#     table_mean = []
-#     args_input_unique = np.unique(args_input)
-#     for k in range(len(args_input_unique)):
-#         table_k = table.copy()
-#         table_k.where(table_k["input"] == args_input_unique[k], inplace = True)
-#         table_mean.append([args_input_unique[k], np.mean(table_k["TPR energy"].dropna().to_numpy(), axis = 0), np.std(table_k["TPR energy"].dropna().to_numpy(), axis = 0, ddof = 1), np.mean(table_k["FPR energy"].dropna().to_numpy(), axis = 0), np.std(table_k["FPR energy"].dropna().to_numpy(), axis = 0, ddof = 1)])
-#     table_mean = pd.DataFrame(table_mean, columns=["input", "mean TPR energy", "std TPR energy", "mean FPR energy", "std FPR energy"])
-
-#     print(table_mean)
-
-#     plt.figure(figsize = single_column_fig_size_legend)
-#     plt.grid(alpha = 0.2)
-#     labels = ["CTA images", "pattern spectra"]
-#     for i in range(len(args_input_unique)):
-#         table_mean_i = table_mean.copy()
-#         mean_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean TPR energy"].dropna().to_numpy()[0]
-#         std_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std TPR energy"].dropna().to_numpy()[0]
-#         mean_false_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean FPR energy"].dropna().to_numpy()[0]
-#         std_false_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std FPR energy"].dropna().to_numpy()[0]
-#         plt.errorbar(bins_central, (mean_true_positive_rate_energy), xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = ".", markersize = 6, label = r"$\eta_{{\gamma}}$ ({0})".format(labels[i]), color = colors_categorial[i])
-#         plt.errorbar(bins_central, (mean_false_positive_rate_energy), xerr = (bins[:-1] - bins_central, bins_central - bins[1:]), linestyle = "", capsize = 0.0, marker = "s", markersize = 3, label = r"$\eta_{{p}}$ ({0})".format(labels[i]), color = colors_categorial[i], fillstyle = "none")
-#         bins_central_fill = np.append(bins_central, bins[-1])
-#         bins_central_fill = np.insert(bins_central_fill, 0, bins[0])
-
-#         filling_lower_tpr = (mean_true_positive_rate_energy) - std_true_positive_rate_energy
-#         filling_lower_tpr = np.append(filling_lower_tpr, filling_lower_tpr[-1])
-#         filling_lower_tpr = np.insert(filling_lower_tpr, 0, filling_lower_tpr[0])
-#         filling_upper_tpr = (mean_true_positive_rate_energy) + std_true_positive_rate_energy
-#         filling_upper_tpr = np.append(filling_upper_tpr, filling_upper_tpr[-1])
-#         filling_upper_tpr = np.insert(filling_upper_tpr, 0, filling_upper_tpr[0])
-        
-#         filling_lower_fpr = (mean_false_positive_rate_energy) - std_false_positive_rate_energy
-#         filling_lower_fpr = np.append(filling_lower_fpr, filling_lower_fpr[-1])
-#         filling_lower_fpr = np.insert(filling_lower_fpr, 0, filling_lower_fpr[0])
-#         filling_upper_fpr = (mean_false_positive_rate_energy) + std_false_positive_rate_energy
-#         filling_upper_fpr = np.append(filling_upper_fpr, filling_upper_fpr[-1])
-#         filling_upper_fpr = np.insert(filling_upper_fpr, 0, filling_upper_fpr[0])
-
-#         plt.fill_between(bins_central_fill, filling_lower_tpr, filling_upper_tpr, facecolor = colors_categorial[i], alpha = 0.3)
-#         plt.fill_between(bins_central_fill, filling_lower_fpr, filling_upper_fpr, facecolor = colors_categorial[i], alpha = 0.3)
-#     plt.xlabel("$E_\mathrm{true}$ [TeV]")
-#     plt.ylabel(r"$\eta$")
-#     plt.xscale("log")
-#     plt.yscale("log")
-#     plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
-#     plt.tight_layout()
-#     plt.savefig(path, dpi = 250)
-#     plt.close()
 
 def PlotEfficiencyEnergyComparison(bins, bins_central, true_positive_rate, false_positive_rate, args_input, path):
     print("Starting PlotEfficiencyEnergyComparison...")
@@ -1694,16 +1128,18 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
     labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
-        mean_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean effective area"].dropna().to_numpy()[0]
-        std_true_positive_rate_energy = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std effective area"].dropna().to_numpy()[0]
-        plt.errorbar(bins_central, (mean_true_positive_rate_energy), xerr = (bins[:-1] - bins_central), linestyle = "", capsize = 0.0, marker = ".", markersize = 6, label = r"{0}".format(labels[i]), color = colors_categorial[i])
+        mean_aeff = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["mean effective area"].dropna().to_numpy()[0]
+        std_aeff = table_mean_i.where(table_mean_i["input"] == args_input_unique[i])["std effective area"].dropna().to_numpy()[0]
+        print(args_input_unique[i])
+        print("mean_aeff: ", mean_aeff)
+        plt.errorbar(bins_central, (mean_aeff), xerr = (bins[:-1] - bins_central), linestyle = "", capsize = 0.0, marker = ".", markersize = 6, label = r"{0}".format(labels[i]), color = colors_categorial[i])
         bins_central_fill_area = np.append(bins_central, bins[-1])
         bins_central_fill_area = np.insert(bins_central_fill_area, 0, bins[0])
 
-        filling_lower_tpr = (mean_true_positive_rate_energy) - std_true_positive_rate_energy
+        filling_lower_tpr = (mean_aeff) - std_aeff
         filling_lower_tpr = np.append(filling_lower_tpr, filling_lower_tpr[-1])
         filling_lower_tpr = np.insert(filling_lower_tpr, 0, filling_lower_tpr[0])
-        filling_upper_tpr = (mean_true_positive_rate_energy) + std_true_positive_rate_energy
+        filling_upper_tpr = (mean_aeff) + std_aeff
         filling_upper_tpr = np.append(filling_upper_tpr, filling_upper_tpr[-1])
         filling_upper_tpr = np.insert(filling_upper_tpr, 0, filling_upper_tpr[0])
 
@@ -1715,10 +1151,6 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
     plt.xlabel(r"$E_\mathrm{true}$ [TeV]")
     plt.ylabel(r"$A_\mathrm{eff}$ [m$^{{2}}$]")
     plt.yscale("log")
-    handles, labels = plt.gca().get_legend_handles_labels()
-    order = [1,0,2]
-    # if len(np.unique(args_input_unique)) > 1:
-    #     plt.legend([handles[idx] for idx in order],[labels[idx] for idx in order], bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
     plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
@@ -1759,7 +1191,6 @@ def PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_ga
         filling_upper_tpr = np.insert(filling_upper_tpr, 0, filling_upper_tpr[0])
         
         plt.fill_between(bins_central_fill_gamma, filling_lower_tpr, filling_upper_tpr, facecolor = colors_categorial[i], alpha = 0.3)
-        # plt.fill_between(bins_central_fill_proton, filling_lower_fpr, filling_upper_fpr, facecolor = colors_categorial[i], alpha = 0.3)
     plt.xlabel("$E_\mathrm{true}$ [TeV]")
     plt.ylabel(r"$\eta_{{\gamma}}$")
     plt.xscale("log")
@@ -1770,23 +1201,6 @@ def PlotGammaEfficiencyEnergyComparison(bins_gamma, bins_proton, bins_central_ga
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
-
-def MeanStdAUC(area_under_ROC_curve_all, input):
-    print("Starting MeanStdAUC...")
-    area_under_ROC_curve_all_cta = np.array([])
-    area_under_ROC_curve_all_ps = np.array([])
-    for i in range(len(input)):
-        if input[i] == "cta":
-            area_under_ROC_curve_all_cta = np.append(area_under_ROC_curve_all_cta, area_under_ROC_curve_all[i])
-        elif input[i] == "ps":
-            area_under_ROC_curve_all_ps = np.append(area_under_ROC_curve_all_ps, area_under_ROC_curve_all[i])
-
-    area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std = np.mean(area_under_ROC_curve_all_cta), np.std(area_under_ROC_curve_all_cta, ddof = 1)
-    area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std = np.mean(area_under_ROC_curve_all_ps), np.std(area_under_ROC_curve_all_ps, ddof = 1)
-
-    # print("CTA images AUC value: {0:.3f} +- {1:.3f}".format(area_under_ROC_curve_all_cta_mean, area_under_ROC_curve_all_cta_std))
-    # print("Pattern spectra AUC value: {0:.3f} +- {1:.3f}".format(area_under_ROC_curve_all_ps_mean, area_under_ROC_curve_all_ps_std))
-
 
 
 def ExtendTable(table_output, string_table_column, string_input, string_ps_input, string_input_short, string_data_type):
@@ -1833,18 +1247,14 @@ def PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column
         N = 4
         fig, ax = plt.subplots(N, N)
         if particle_type[pt] == "gamma_diffuse":
-            # fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}")
             path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
         elif particle_type[pt] == "proton":
-            # fig.suptitle(f"{particle_type[pt]} examples - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}")
             path_total = path + "_" + particle_type[pt] + f"gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
         ax = ax.ravel()
         for n in range(N**2):
-            # ax[n].title.set_text(f"{int(np.round(table_gammaness_limit['E_true / GeV'][n]))} GeV")
             ax[n].imshow(table_gammaness_limit[string_table_column][n], cmap = "Greys_r")
             ax[n].set_xticks([])
             ax[n].set_yticks([])
-        # plt.tight_layout()
         plt.savefig(path_total, dpi = 250)
         plt.close()
 
@@ -1858,8 +1268,6 @@ def ExtractPatternSpectraMean(table_output, particle_type, size, gammaness_limit
 
         pattern_spectra_sum = table_gammaness_limit[string_table_column].sum()
         pattern_spectra_mean[pt] = pattern_spectra_sum / len(table_gammaness_limit)
-        # pattern_spectra_sum_normed[pt] = (pattern_spectra_sum - np.min(pattern_spectra_sum))
-        # pattern_spectra_mean[pt] = pattern_spectra_mean[pt] / np.max(pattern_spectra_mean[pt])
 
     return pattern_spectra_mean
 
@@ -1897,14 +1305,10 @@ def PlotPatternSpectraMean(pattern_spectra_mean, particle_type, attribute, gamma
     for pt in range(len(particle_type)):
         plt.figure(figsize = single_column_fig_size)
         if particle_type[pt] == "gamma_diffuse":
-        #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[0]} < gammaness < {gammaness_limit[1]}", fontsize = 12)
             path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[0]}_{gammaness_limit[1]}" + ".png"
         elif particle_type[pt] == "proton":
-        #     plt.title(f"{particle_type[pt]} mean - {gammaness_limit[2]} < gammaness < {gammaness_limit[3]}", fontsize = 12)
             path_total = path + "_" + particle_type[pt] + f"_gl_{gammaness_limit[2]}_{gammaness_limit[3]}" + ".png"
         plt.imshow(pattern_spectra_mean[pt], cmap = cmap, norm = SymLogNorm(linthresh = 0.1, base = 10))
-        # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
-        # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
         plt.xlabel(f"(moment of inertia) / area$^2$", fontsize = 18)
         plt.ylabel(f"area", fontsize = 18)
         plt.xticks([])
@@ -1927,20 +1331,12 @@ def PlotPatternSpectraDifference(pattern_spectra_mean, particle_type, attributes
         pattern_spectra_mean_difference_min = - abs(pattern_spectra_mean_difference_max)
 
     plt.figure(figsize = single_column_fig_size)
-    # plt.title(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}" "\n" f"{gammaness_limit[0]} ({gammaness_limit[2]}) < gammaness < {gammaness_limit[1]} ({gammaness_limit[3]})", fontsize = 10)
     im = plt.imshow(pattern_spectra_mean[0] - pattern_spectra_mean[1], cmap = "RdBu") #, norm = SymLogNorm(linthresh = 0.001, base = 10))
     im.set_clim(pattern_spectra_mean_difference_min, pattern_spectra_mean_difference_max)
-    # im.set_clim(-0.09, 0.09)    
-    # plt.xlabel(f"attribute {attribute[0]}", fontsize = 18)
-    # plt.ylabel(f"attribute {attribute[1]}", fontsize = 18)
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
     plt.xticks([])
     plt.yticks([])
-    # plt.annotate('', xy=(0, -0.1), xycoords='axes fraction', xytext=(1, -0.1), arrowprops=dict(arrowstyle="<-", color='black'))
-    # plt.annotate('', xy=(-0.1, 1), xycoords='axes fraction', xytext=(-0.1, 0), arrowprops=dict(arrowstyle="<-", color='black'))
-    # plt.xlabel(f"a {attributes[0]}", labelpad = 10, fontsize = 18)
-    # plt.ylabel(f"a {attributes[1]}", labelpad = 10, fontsize = 18)
     cb = plt.colorbar()
     cb.set_label(label = "log$_{10}$(flux)", size = 18)
     cb.ax.tick_params(labelsize = 18) 
