@@ -1,13 +1,13 @@
 import numpy as np
 import pandas as pd
 
-filename_input = "dm-finder/scripts/run_lists/gamma_run_list_complete.csv"
+filename_input = "scripts/run_lists/gamma_run_list_complete.csv"
 
 run = pd.read_csv(filename_input)
 run = run.to_numpy().reshape(len(run))
 run = np.sort(run)
 
-filename_output = "dm-finder/data/gamma/event_files/Prod5_Paranal_AdvancedBaseline_NSB1x_gamma_North_20deg_ctapipe_v0.10.5_DL1_default.list"
+filename_output = "data/gamma/event_files/Prod5_Paranal_AdvancedBaseline_NSB1x_gamma_North_20deg_ctapipe_v0.10.5_DL1_default.list"
 
 file_output = open(filename_output, "w")
 

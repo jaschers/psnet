@@ -53,11 +53,11 @@ elif args.telescope_mode == "stereo_sum_ps":
 # energy mode
 if args.mode == "energy":
     if args.test == "y":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha_test.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha_test.csv"
     elif args.telescope_mode == "mono" or args.telescope_mode == "stereo_sum_ps":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono_alpha.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_mono_alpha.csv"
     else: 
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
@@ -67,7 +67,7 @@ if args.mode == "energy":
     table = pd.DataFrame()
     for r in range(len(run)): 
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/pattern_spectra/input/gamma/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
+        input_filename = f"cnn/pattern_spectra/input/gamma/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
         table_individual_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_individual_run))
         table = table.append(table_individual_run, ignore_index = True)
@@ -89,17 +89,17 @@ elif args.mode == "separation":
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
         if args.test == "y":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_test.csv"
         elif args.telescope_mode == "mono":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
         else: 
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
         for r in range(len(run)):
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-            input_filename = f"dm-finder/cnn/pattern_spectra/input/{particle_type[p]}/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
+            input_filename = f"cnn/pattern_spectra/input/{particle_type[p]}/" + string_ps_input + run_filename + string_telescope_mode + ".h5"
             table_individual_run = pd.read_hdf(input_filename)
             print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_individual_run))
             if (particle_type[p] == "gamma_diffuse") or particle_type[p] == "gamma":
@@ -127,11 +127,11 @@ if args.mode == "separation":
     print("______________________________________________")
 
     # plot original energy distribution of data set
-    path_energy_distribution = f"dm-finder/data/{particle_type[0]}/info/energy_distribution/{args.telescope_mode}/"
+    path_energy_distribution = f"data/{particle_type[0]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
     PlotEnergyDistribution(table, args.energy_range_sep, path_energy_distribution + "energy_distribution_original.pdf")
 
-    path_energy_distribution = f"dm-finder/data/{particle_type[1]}/info/energy_distribution/{args.telescope_mode}/"
+    path_energy_distribution = f"data/{particle_type[1]}/info/energy_distribution/{args.telescope_mode}/"
     os.makedirs(path_energy_distribution, exist_ok = True)
     PlotEnergyDistribution(table, args.energy_range_sep, path_energy_distribution + "energy_distribution_original.pdf")
 
@@ -218,7 +218,7 @@ if args.mode == "energy":
     energy_true_binned = np.split(energy_true, indices)
     ps_binned = np.split(pattern_spectra, indices)
 
-    path = f"dm-finder/data/gamma/info/pattern_spectra_distribution" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
+    path = f"data/gamma/info/pattern_spectra_distribution" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
     os.makedirs(path, exist_ok = True)
 
     # extract the normed sum of all pattern spectra in each specific energy bin
@@ -252,7 +252,7 @@ elif args.mode == "separation":
     ps_total_variance_gamma_proton = np.zeros(shape = (len(particle_type), args.size[0], args.size[1]))
     for p in range(len(particle_type)):
         # create proper path
-        path_energy_distribution = f"dm-finder/data/{particle_type[p]}/info/energy_distribution/{args.telescope_mode}/"
+        path_energy_distribution = f"data/{particle_type[p]}/info/energy_distribution/{args.telescope_mode}/"
         os.makedirs(path_energy_distribution, exist_ok = True)
         # plot energy distribution of data set
         PlotEnergyDistribution(table, args.energy_range_sep, path_energy_distribution + "energy_distribution_redistributed.pdf")
@@ -281,7 +281,7 @@ elif args.mode == "separation":
         newcmp = ListedColormap(vals)
 
         # create proper path
-        path = f"dm-finder/data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
+        path = f"data/{particle_type[p]}/info/pattern_spectra_distribution/" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + f"{args.telescope_mode}/"
         os.makedirs(path, exist_ok = True)
 
         # plot total median, mean and variance

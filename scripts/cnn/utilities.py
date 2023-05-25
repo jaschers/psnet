@@ -1226,7 +1226,7 @@ def ExtendTable(table_output, string_table_column, string_input, string_ps_input
 
         # define the (CNN) input data file name
         run_filename = f"{particle_type_n}_20deg_0deg_run{int(table_output['run'][n])}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type_n}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
+        input_filename = f"cnn/{string_input}/input/{particle_type_n}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
 
         # read the (CNN) input data file to extract CTA image / pattern spectrum of correpsoning run, obs_id and event_id
         table_input = pd.read_hdf(input_filename)
