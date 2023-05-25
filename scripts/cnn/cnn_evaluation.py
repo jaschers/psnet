@@ -126,8 +126,8 @@ if args.mode == "separation":
     dl0_gamma = Table()
     dl0_proton = Table()
     # load simulation info which is necesarry to calculate signal and bkg efficiencies
-    filename_run_gamma_diffuse = f"dm-finder/scripts/run_lists/gamma_diffuse_run_list_alpha.csv"
-    filename_run_proton = f"dm-finder/scripts/run_lists/proton_run_list_alpha.csv"
+    filename_run_gamma_diffuse = f"scripts/run_lists/gamma_diffuse_run_list_alpha.csv"
+    filename_run_proton = f"scripts/run_lists/proton_run_list_alpha.csv"
 
     run_gamma = pd.read_csv(filename_run_gamma_diffuse)
     run_gamma = run_gamma.to_numpy().reshape(len(run_gamma))
@@ -137,14 +137,14 @@ if args.mode == "separation":
     print("loading gamma simulation information...")
     for r in tqdm(range(len(run_gamma))):
         dl1_filename_gamma_diffuse = f"gamma_20deg_0deg_run{run_gamma[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
-        dl1_directory_gamma_diffuse = f"dm-finder/data/gamma_diffuse/event_files/" + dl1_filename_gamma_diffuse + ".h5"
+        dl1_directory_gamma_diffuse = f"data/gamma_diffuse/event_files/" + dl1_filename_gamma_diffuse + ".h5"
         dl0_gamma_temp = read_table(dl1_directory_gamma_diffuse, "/configuration/simulation/run")
         dl0_gamma = vstack([dl0_gamma, dl0_gamma_temp])        
 
     print("loading proton simulation information...")
     for r in tqdm(range(len(run_proton))):
         dl1_filename_proton = f"proton_20deg_0deg_run{run_proton[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        dl1_directory_proton = f"dm-finder/data/proton/event_files/" + dl1_filename_proton + ".h5"
+        dl1_directory_proton = f"data/proton/event_files/" + dl1_filename_proton + ".h5"
         dl0_proton_temp = read_table(dl1_directory_proton, "/configuration/simulation/run")
         dl0_proton = vstack([dl0_proton, dl0_proton_temp])        
 
@@ -207,25 +207,25 @@ if args.mode == "separation":
 for i in range(len(args.input[0])):
     print(f"Processing input {i+1}...")
     # create folder
-    os.makedirs(f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/", exist_ok = True)
+    os.makedirs(f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/", exist_ok = True)
 
     # load loss history file
-    history_path = f"dm-finder/cnn/{string_input[i]}/{args.mode}/history/" + string_ps_input[i] + "history" + string_data_type[i] + string_name[i] + ".csv"
+    history_path = f"cnn/{string_input[i]}/{args.mode}/history/" + string_ps_input[i] + "history" + string_data_type[i] + string_name[i] + ".csv"
     table_history = pd.read_csv(history_path)
 
     # plot loss history
-    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
+    PlotLoss(table_history["epoch"], table_history["loss"], table_history["val_loss"], f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "loss.pdf")
 
     dict["epochs_all"].append(table_history["epoch"] + 1)
     dict["loss_train_all"].append(table_history["loss"])
     dict["loss_val_all"].append(table_history["val_loss"])
 
     # load model
-    model_path = f"dm-finder/cnn/{string_input[i]}/{args.mode}/model/" + string_ps_input[i] + "model" + string_data_type[i] + string_name[i] + ".h5"
+    model_path = f"cnn/{string_input[i]}/{args.mode}/model/" + string_ps_input[i] + "model" + string_data_type[i] + string_name[i] + ".h5"
     model = keras.models.load_model(model_path)
 
     # load data file that contains E_true and E_rec from the test set
-    filename_output = f"dm-finder/cnn/{string_input[i]}/{args.mode}/output/" + string_ps_input[i] + "evaluation" + string_data_type[i] + string_name[i] + ".csv"
+    filename_output = f"cnn/{string_input[i]}/{args.mode}/output/" + string_ps_input[i] + "evaluation" + string_data_type[i] + string_name[i] + ".csv"
 
     table_output = pd.read_csv(filename_output)
 
@@ -237,7 +237,7 @@ for i in range(len(args.input[0])):
         energy_rec = np.asarray((10**table_output["log10(E_rec / GeV)"] * 1e-3))
 
         # create 2D energy scattering plot
-        PlotEnergyScattering2D(np.log10(energy_true), np.log10(energy_rec), f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
+        PlotEnergyScattering2D(np.log10(energy_true), np.log10(energy_rec), f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_scattering_2D.pdf")
 
         # prepare energy binning
         number_energy_ranges = 7 # number of energy ranges the whole energy range will be splitted
@@ -258,26 +258,26 @@ for i in range(len(args.input[0])):
         sigma_total = np.std(relative_energy_error_toal)
         
         # save relative energy error histogram (total)
-        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.pdf")
+        PlotRelativeEnergyError(relative_energy_error_toal, median_total, sigma_total, f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "relative_energy_error.pdf")
 
         # save relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.pdf")
+        PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram.pdf")
 
         # save corrected relative energy error histogram (binned)
-        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.pdf")
+        PlotRelativeEnergyErrorBinnedCorrected(energy_true_binned, energy_rec_binned, bins, f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_binned_histogram_corrected.pdf")
 
         # get median and sigma68 values (binned)
         median, sigma = MedianSigma68(energy_true_binned, energy_rec_binned, bins)
 
         # plot energy accuracy
-        PlotEnergyAccuracy(median, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.pdf")
+        PlotEnergyAccuracy(median, bins, f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.pdf")
     
         # plot energy resolution
-        PlotEnergyResolution(sigma, bins, f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.pdf")
+        PlotEnergyResolution(sigma, bins, f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.pdf")
 
         # save energy accuracy & resolution in csv files
-        SaveCSV(median, bins, "accuracy", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
-        SaveCSV(sigma, bins, "resolution", f"dm-finder/cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.csv")
+        SaveCSV(median, bins, "accuracy", f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_accuracy.csv")
+        SaveCSV(sigma, bins, "resolution", f"cnn/{string_input[i]}/{args.mode}/results/" + string_ps_input[i] + f"{string_name[i][1:]}/" + "energy_resolution.csv")
 
         # collect median and sigma values from each experiment
         dict["median_all"].append(median)
@@ -290,12 +290,12 @@ for i in range(len(args.input[0])):
         gammaness_rec = np.asarray(table_output["reconstructed gammaness"])
         energy_true = np.asarray(table_output["E_true / GeV"])
 
-        PlotGammaness(gammaness_true, gammaness_rec, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
+        PlotGammaness(gammaness_true, gammaness_rec, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/gammaness.pdf")
 
         # perform an energy dependend analysis of accuracy, AUC and gammaness
-        PlotGammanessEnergyBinned(table_output, bins, bins_central, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+        PlotGammanessEnergyBinned(table_output, bins, bins_central, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
 
-        PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist, dl0_proton_hist, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
+        PlotDL0DL1Hist(table_output, bins, bins_central, bins_width, dl0_gamma_hist, dl0_proton_hist, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/")
 
         # perform an gamma & proton energy dependend analysis of accuracy, AUC and gammaness
         true_positive_rate_fixed_eta, false_positive_raten_fixed_eta = GetEfficienciesEnergyBinnedFixedBackground(table_output, bins, bins_central, dl0_gamma_hist, dl0_proton_hist, 0.001)
@@ -306,29 +306,29 @@ for i in range(len(args.input[0])):
         # get AUC energy binned based on proton energy
         area_under_ROC_curve_energy = GetAUCEnergyBinned(table_output, bins)
 
-        PlotEfficienciesEnergyBinned(bins.value, bins_central.value, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
+        PlotEfficienciesEnergyBinned(bins.value, bins_central.value, true_positive_rate_fixed_eta, false_positive_raten_fixed_eta, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiencies_fixed_eta_p.pdf")
 
-        PlotEffectiveAreaEnergyBinned(bins.value, bins_central.value, area_eff.value, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/area_eff.pdf")
+        PlotEffectiveAreaEnergyBinned(bins.value, bins_central.value, area_eff.value, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/area_eff.pdf")
 
         true_positive_rate, false_positive_rate, true_negative_rate, false_negative_rate, area_under_ROC_curve = ROC(gammaness_true, gammaness_rec)
 
-        PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
+        PlotROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.pdf")
 
-        SaveROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.csv")
+        SaveROC(true_positive_rate, false_positive_rate, area_under_ROC_curve, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/roc.csv")
 
         # prepare accuracy vs gammaness threshold plot
         accuracy_gammaness, thresholds = AccuracyGammaness(gammaness_true, gammaness_rec)
 
         # plot accuracy vs gammaness threshold plot
-        PlotAccuracyGammaness(accuracy_gammaness, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/accuracy_gammaness.pdf")
+        PlotAccuracyGammaness(accuracy_gammaness, thresholds, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/accuracy_gammaness.pdf")
 
         # prepare precision vs gammaness treshold plot
         precision_gammaness, threshold_cut = PrecisionGammaness(gammaness_true, gammaness_rec)
 
         # plot precision vs gammaness treshold plot
-        PlotPrecisionGammaness(precision_gammaness, thresholds[:threshold_cut], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/precision_gammaness.pdf")
+        PlotPrecisionGammaness(precision_gammaness, thresholds[:threshold_cut], f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/precision_gammaness.pdf")
 
-        PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, thresholds, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiency_gammaness.pdf")
+        PlotEfficiencyGammaness(true_positive_rate, false_positive_rate, thresholds, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/efficiency_gammaness.pdf")
 
         dict["true_positive_rate_all"].append(true_positive_rate)
         dict["false_positive_rate_all"].append(false_positive_rate)
@@ -351,7 +351,7 @@ for i in range(len(args.input[0])):
             table_output = ExtendTable(table_output, string_table_column[i], string_input[i], string_ps_input[i], string_input_short[i], string_data_type[i])
 
             # Plot 15 examples of wrongly classified events
-            PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column[i], args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_examples")
+            PlotWronglyClassifiedEvents(table_output, particle_type, string_table_column[i], args.gammaness_limit, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_examples")
 
             # get normed sum pattern spectra
             pattern_spectra_mean_gammaness_limit = ExtractPatternSpectraMean(table_output, particle_type, args.size, args.gammaness_limit, string_table_column[i])
@@ -367,22 +367,22 @@ for i in range(len(args.input[0])):
             vals[:, 2] = np.linspace(cstm_RdBu(6)[2], cstm_PuBu(12)[2], N)
             newcmp = ListedColormap(vals)
             # plot normed sum of pattern spectra of missclassified events
-            PlotPatternSpectraMean(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, newcmp, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_sum")
+            PlotPatternSpectraMean(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, newcmp, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_sum")
 
             # plot pattern spectra difference (gamma - proton) of missclassified events
-            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit, particle_type, args.attribute, args.gammaness_limit, f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/misclassified_difference")
 
             # plot pattern spectra difference of correctly and wrongly classified gamma events
-            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_gamma, ["gamma_diffuse", "gamma_diffuse"], args.attribute, [0.9, 1.0, 0.0, 0.1], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_gamma_difference")
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_gamma, ["gamma_diffuse", "gamma_diffuse"], args.attribute, [0.9, 1.0, 0.0, 0.1], f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_gamma_difference")
 
             # plot pattern spectra difference of correctly and wrongly classified proton events
-            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_proton, ["proton", "proton"], args.attribute, [0.0, 0.1, 0.9, 1.0], f"dm-finder/cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_proton_difference")
+            PlotPatternSpectraDifference(pattern_spectra_mean_gammaness_limit_proton, ["proton", "proton"], args.attribute, [0.0, 0.1, 0.9, 1.0], f"cnn/{string_input[i]}/separation/results/{string_ps_input[i]}/{string_name[i][1:]}/correct_wrong_proton_difference")
 
 
 if args.mode == "energy":
     # if more than two inputs are given -> compare the results
     if len(args.input[0]) > 1:
-        os.makedirs(f"dm-finder/cnn/comparison/energy", exist_ok = True)
+        os.makedirs(f"cnn/comparison/energy", exist_ok = True)
 
         if args.suffix == None:
             string_comparison = ""
@@ -405,22 +405,22 @@ if args.mode == "energy":
             string_comparison = string_comparison[:200]
         
         # plot Loss comparison
-        PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"dm-finder/cnn/comparison/energy/" + "loss_comparison_" + string_comparison + ".pdf")
+        PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"cnn/comparison/energy/" + "loss_comparison_" + string_comparison + ".pdf")
 
         # plot energy accuracy comparison
-        PlotEnergyAccuracyComparison(dict["median_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
+        PlotEnergyAccuracyComparison(dict["median_all"], bins, label[0], f"cnn/comparison/energy/" + "energy_accuracy_" + string_comparison + ".pdf")
 
-        PlotEnergyAccuracyComparisonMean(dict["median_all"], bins, label[0], args.input[0], f"dm-finder/cnn/comparison/energy/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
+        PlotEnergyAccuracyComparisonMean(dict["median_all"], bins, label[0], args.input[0], f"cnn/comparison/energy/" + "energy_accuracy_mean_" + string_comparison + ".pdf")
 
         # plot energy resolution comparison
-        PlotEnergyResolutionComparison(dict["sigma_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
+        PlotEnergyResolutionComparison(dict["sigma_all"], bins, label[0], f"cnn/comparison/energy/" + "energy_resolution_" + string_comparison + ".pdf")
 
         # plot mean energy resolution
-        PlotEnergyResolutionComparisonMean(args.input[0], dict["sigma_all"], bins, label[0], f"dm-finder/cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
+        PlotEnergyResolutionComparisonMean(args.input[0], dict["sigma_all"], bins, label[0], f"cnn/comparison/energy/" + "energy_resolution_mean_" + string_comparison + ".pdf")
 
 
 if (args.mode == "separation") and (len(args.input[0]) > 1):
-    os.makedirs(f"dm-finder/cnn/comparison/separation", exist_ok = True)
+    os.makedirs(f"cnn/comparison/separation", exist_ok = True)
 
     string_comparison = ""
     for i in range(len(args.input[0])):
@@ -434,21 +434,21 @@ if (args.mode == "separation") and (len(args.input[0]) > 1):
     if len(string_comparison) > 200:
         string_comparison = string_comparison[:200]
 
-    PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "loss_comparison_" + string_comparison + ".pdf")
+    PlotLossComparison(dict["epochs_all"], dict["loss_train_all"], dict["loss_val_all"], args.input[0], f"cnn/comparison/separation/" + "loss_comparison_" + string_comparison + ".pdf")
 
     if len(args.input[0]) > 3:
-        PlotROCComparison(dict["true_positive_rate_all"], dict["false_positive_rate_all"], dict["area_under_ROC_curve_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
+        PlotROCComparison(dict["true_positive_rate_all"], dict["false_positive_rate_all"], dict["area_under_ROC_curve_all"], args.input[0], f"cnn/comparison/separation/" + "ROC_comparison_" + string_comparison + ".pdf")
 
-        PlotEfficiencyGammanessComparison(dict["thresholds_all"], dict["true_positive_rate_all"], dict["false_positive_rate_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_gammaness_comparison_" + string_comparison + ".pdf")
+        PlotEfficiencyGammanessComparison(dict["thresholds_all"], dict["true_positive_rate_all"], dict["false_positive_rate_all"], args.input[0], f"cnn/comparison/separation/" + "efficiency_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotAccuracyGammanessComparison(dict["accuracy_gammaness_all"], dict["thresholds_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
+    PlotAccuracyGammanessComparison(dict["accuracy_gammaness_all"], dict["thresholds_all"], args.input[0], f"cnn/comparison/separation/" + "accuracy_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotPrecisionGammanessComparison(dict["precision_gammaness_all"], dict["threshold_cut_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
+    PlotPrecisionGammanessComparison(dict["precision_gammaness_all"], dict["threshold_cut_all"], args.input[0], f"cnn/comparison/separation/" + "precision_gammaness_comparison_" + string_comparison + ".pdf")
 
-    PlotAUCEnergyComparison(bins.value, bins_central.value, dict["area_under_ROC_curve_energy_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
+    PlotAUCEnergyComparison(bins.value, bins_central.value, dict["area_under_ROC_curve_energy_all"], args.input[0], f"cnn/comparison/separation/" + "AUC_energy_comparison_" + string_comparison + ".pdf")
 
-    PlotEfficiencyEnergyComparison(bins.value, bins_central.value, dict["true_positive_rate_fixed_eta_all"], dict["false_positive_rate_fixed_eta_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
+    PlotEfficiencyEnergyComparison(bins.value, bins_central.value, dict["true_positive_rate_fixed_eta_all"], dict["false_positive_rate_fixed_eta_all"], args.input[0], f"cnn/comparison/separation/" + "efficiency_energy_comparison_" + string_comparison + ".pdf")
     
-    PlotAeffEnergyComparison(bins.value, bins_central.value, dict["area_eff_all"], args.input[0], f"dm-finder/cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
+    PlotAeffEnergyComparison(bins.value, bins_central.value, dict["area_eff_all"], args.input[0], f"cnn/comparison/separation/" + "area_eff_comparison_" + string_comparison + ".pdf")
 
 print("CNN evaluation completed!")

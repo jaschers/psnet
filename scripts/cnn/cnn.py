@@ -49,10 +49,10 @@ string_name, string_input, string_ps_input, string_input_short, string_table_col
 ##########################################################################################
 
 ######################################## Create some folders ########################################
-path_results = f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{args.name}/"
-path_history = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input
-path_model = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input
-path_output = f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input
+path_results = f"cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{args.name}/"
+path_history = f"cnn/{string_input}/{args.mode}/history/" + string_ps_input
+path_model = f"cnn/{string_input}/{args.mode}/model/" + string_ps_input
+path_output = f"cnn/{string_input}/{args.mode}/output/" + string_ps_input
 
 os.makedirs(path_results, exist_ok = True)
 os.makedirs(path_history, exist_ok = True)
@@ -82,10 +82,10 @@ if args.mode == "energy":
     Y_test = np.log10(np.asarray(table_test["true_energy"]))
 
     # plot a few examples
-    PlotExamplesEnergy(X_train, Y_train, f"dm-finder/cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
+    PlotExamplesEnergy(X_train, Y_train, f"cnn/{string_input}/{args.mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf")
 
     # display total energy distribution of data set
-    PlotEnergyDistributionEnergy(Y_train, f"dm-finder/cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
+    PlotEnergyDistributionEnergy(Y_train, f"cnn/{string_input}/{args.mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf")
 
 ########################################## CLEAN ################################################
 
@@ -168,10 +168,10 @@ print(model.summary())
 
 model.compile(loss = loss, optimizer = keras.optimizers.Adam(learning_rate = 1E-3))
 
-model_path = f"dm-finder/cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_name + ".h5"
+model_path = f"cnn/{string_input}/{args.mode}/model/" + string_ps_input + "model" + string_name + ".h5"
 checkpointer = ModelCheckpoint(filepath = model_path, verbose = 2, save_best_only = True)
 
-history_path = f"dm-finder/cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_name + ".csv"
+history_path = f"cnn/{string_input}/{args.mode}/history/" + string_ps_input + "history" + string_name + ".csv"
 
 # start timer
 start_time = time.time()
@@ -230,5 +230,5 @@ elif args.mode == "separation":
         energy_true_test = np.reshape(energy_true_test, (len(energy_true_test), 1))
         table_output = np.hstack((run_test, obs_id_test, event_id_test, tel_id_test, Y_test, yp, energy_true_test))
 
-pd.DataFrame(table_output).to_csv(f"dm-finder/cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_name + ".csv", index = None, header = header)
+pd.DataFrame(table_output).to_csv(f"cnn/{string_input}/{args.mode}/output/" + string_ps_input + "/evaluation" + string_name + ".csv", index = None, header = header)
 ##########################################################################################

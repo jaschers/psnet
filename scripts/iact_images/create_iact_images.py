@@ -39,9 +39,9 @@ print(f"################### Input summary ################### \nParticle type: {
 
 # load data
 if args.telescope_mode == "mono" and args.particle_type == "gamma":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
+    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
+    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -59,7 +59,7 @@ for r in range(len(run)): #len(run)
         input_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
     else:
         input_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_directory = f"dm-finder/data/{args.particle_type}/event_files/" + input_filename + ".h5"
+    input_directory = f"data/{args.particle_type}/event_files/" + input_filename + ".h5"
 
     output_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 
@@ -71,8 +71,8 @@ for r in range(len(run)): #len(run)
     subarray.info()
 
     # create figure of telescope subarray layout
-    path_array_layout = f"dm-finder/data/{args.particle_type}/info/array_layout/"
-    path_energy_distribution = f"dm-finder/data/{args.particle_type}/info/energy_distribution/"
+    path_array_layout = f"data/{args.particle_type}/info/array_layout/"
+    path_energy_distribution = f"data/{args.particle_type}/info/energy_distribution/"
     os.makedirs(path_array_layout, exist_ok = True)
     os.makedirs(path_energy_distribution, exist_ok = True)
 
@@ -111,13 +111,13 @@ for r in range(len(run)): #len(run)
         table_csv = complete_table_by_obs_id_event_id.groups.keys
 
         # save data into a .csv file
-        path_tables = f"dm-finder/data/{args.particle_type}/tables/"
+        path_tables = f"data/{args.particle_type}/tables/"
         os.makedirs(path_tables, exist_ok = True)
 
-        ascii.write(table_csv, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
+        ascii.write(table_csv, f"data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
 
         # open csv file and prepare table for filling in images 
-        table_path = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha" + ".csv"
+        table_path = f"data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_mono_alpha" + ".csv"
 
         table = pd.read_csv(table_path)
 
@@ -147,7 +147,7 @@ for r in range(len(run)): #len(run)
             image = reshape_image(image)
 
             # create directory in which the float images will be saved
-            path_hdf = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/hdf/"
+            path_hdf = f"data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/hdf/"
             os.makedirs(path_hdf, exist_ok = True)
 
             image_HDF = np.array([np.reshape(image, (48 * 48))])
@@ -159,7 +159,7 @@ for r in range(len(run)): #len(run)
 
             # save a few examples
             if run[r] == 10 and i <= 125:
-                path_tif = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
+                path_tif = f"data/{args.particle_type}/images/{output_filename}/float/mono_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}__tel_id_{complete_table['tel_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
@@ -167,12 +167,12 @@ for r in range(len(run)): #len(run)
             # add image to table
             table["image"][i] = image
 
-        path_cnn_input = f"dm-finder/cnn/iact_images/input/{args.particle_type}/"
+        path_cnn_input = f"cnn/iact_images/input/{args.particle_type}/"
         os.makedirs(path_cnn_input, exist_ok = True)
 
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
 
-        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_mono_alpha"
+        output_hdf_filename = f"cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_mono_alpha"
 
         # save table as hdf file
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)
@@ -197,10 +197,10 @@ for r in range(len(run)): #len(run)
             k += 1
             
         # save data into a .csv file
-        path_tables = f"dm-finder/data/{args.particle_type}/tables/"
+        path_tables = f"data/{args.particle_type}/tables/"
         os.makedirs(path_tables, exist_ok = True)
 
-        ascii.write(complete_table_tel_combined, f"dm-finder/data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
+        ascii.write(complete_table_tel_combined, f"data/{args.particle_type}/tables/{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha.csv", format = "csv", fast_writer = False, overwrite = True)
 
         # add combined images list to the table
         complete_table_tel_combined["image combined"] = image_combined
@@ -210,8 +210,8 @@ for r in range(len(run)): #len(run)
 
         # open csv file and prepare table for filling in images 
         run_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        # table_path = f"dm-finder/data/{args.particle_type}/tables/" + run_filename + ".csv"
-        table_path = f"dm-finder/data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha" + ".csv"
+        # table_path = f"data/{args.particle_type}/tables/" + run_filename + ".csv"
+        table_path = f"data/{args.particle_type}/tables/" + f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1_alpha" + ".csv"
 
         table = pd.read_csv(table_path)
 
@@ -245,7 +245,7 @@ for r in range(len(run)): #len(run)
             image = reshape_image(image)
 
             # create directory in which the float images will be saved
-            path = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/"
+            path = f"data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table_tel_combined['obs_id'][i]}/"
             os.makedirs(path, exist_ok = True)
 
             image_HDF = np.array([np.reshape(image, (48 * 48))])
@@ -257,7 +257,7 @@ for r in range(len(run)): #len(run)
 
             # save a few examples
             if run[r] == 10 and i <= 50:
-                path_tif = f"dm-finder/data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
+                path_tif = f"data/{args.particle_type}/images/{output_filename}/float_alpha/obs_id_{complete_table['obs_id'][i]}/tif/"
                 os.makedirs(path_tif, exist_ok = True)
                 output_tif_filename = path_tif + f"obs_id_{complete_table['obs_id'][i]}__event_id_{complete_table['event_id'][i]}.tif"
                 GetEventImageBasic(image, cmap = "Greys_r", show_frame = False, colorbar = True, clean_image = False, savefig = output_tif_filename)
@@ -265,10 +265,10 @@ for r in range(len(run)): #len(run)
             # add image to table
             table["image"][i] = image
 
-        path_cnn_input = f"dm-finder/cnn/iact_images/input/{args.particle_type}/"
+        path_cnn_input = f"cnn/iact_images/input/{args.particle_type}/"
         os.makedirs(path_cnn_input, exist_ok = True)
         
-        output_hdf_filename = f"dm-finder/cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_alpha"
+        output_hdf_filename = f"cnn/iact_images/input/{args.particle_type}/" + run_filename + "_images_alpha"
 
         # save table as HDF file
         table.to_hdf(output_hdf_filename + ".h5", key = 'events', mode = 'w', index = False)

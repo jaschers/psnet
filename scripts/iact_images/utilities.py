@@ -159,7 +159,7 @@ def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, numb
     # prepare hillas_ellipticity binning
     bins_ellipticity = np.linspace(np.min(table[hillas_parameter]), np.max(table[hillas_parameter]), 50)
 
-    os.makedirs(f"dm-finder/data/{particle_type}/info/hillas", exist_ok = True)
+    os.makedirs(f"data/{particle_type}/info/hillas", exist_ok = True)
 
     fig, ax = plt.subplots(int(np.sqrt(number_energy_ranges)), int(np.sqrt(number_energy_ranges)))
     fig.set_size_inches(12, 8)
@@ -186,7 +186,7 @@ def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, numb
     ax[3].set_ylabel("number of events")
     # plt.setp(ax, xlim = xlim)
     plt.tight_layout()
-    plt.savefig(f"dm-finder/data/{particle_type}/info/hillas/{hillas_parameter}_dist.png", dpi = 250)
+    plt.savefig(f"data/{particle_type}/info/hillas/{hillas_parameter}_dist.png", dpi = 250)
     # plt.show()
 
     # sns.pairplot(table, kind="hist")
@@ -210,7 +210,7 @@ def plot_energy_dist(table, particle_type, run):
     plt.xlabel("True energy [TeV]")
     plt.ylabel("Number of events")
     plt.yscale("log")
-    plt.savefig(f"dm-finder/data/{particle_type}/info/energy_distribution/energy_distribution_run{run}_alpha.pdf", dpi = 500)
+    plt.savefig(f"data/{particle_type}/info/energy_distribution/energy_distribution_run{run}_alpha.pdf", dpi = 500)
     plt.close()
 
 

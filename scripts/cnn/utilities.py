@@ -313,8 +313,8 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
     for b in range(len(bins) - 1):
         bins_central = np.append(bins_central, bins[b] + (bins[b+1] - bins[b]) / 2)
 
-    # data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-SST-ERes.dat")
-    data_cta_requirement = np.genfromtxt("dm-finder/data/South-50h-ERes.dat")
+    # data_cta_requirement = np.genfromtxt("data/South-50h-SST-ERes.dat")
+    data_cta_requirement = np.genfromtxt("data/South-50h-ERes.dat")
     cta_requirement_energy = 10**data_cta_requirement[:,0]
     cta_requirement_energy_resolution = data_cta_requirement[:,1]
 
@@ -358,7 +358,7 @@ def PlotEnergyResolutionComparisonMean(args_input, sigma_all, bins, label, path)
 def LoadExampleData(run, string_input, particle_type, string_ps_input, string_input_short, string_data_type, string_table_column):
     # load example data
     run_filename = f"{particle_type}_20deg_0deg_run{run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
+    input_filename = f"cnn/{string_input}/input/{particle_type}/" + string_ps_input + run_filename + string_input_short + string_data_type + ".h5"
 
     table = pd.read_hdf(input_filename, ignore_index = True)
 
@@ -1119,7 +1119,7 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
         table_mean.append([args_input_unique[k], np.mean(table_k["effective area"].dropna().to_numpy(), axis = 0), np.std(table_k["effective area"].dropna().to_numpy(), axis = 0, ddof = 1)])
     table_mean = pd.DataFrame(table_mean, columns=["input", "mean effective area", "std effective area"])
 
-    data_cta_requirement = np.genfromtxt("dm-finder/data/South-30m-SST-EffectiveArea.dat")
+    data_cta_requirement = np.genfromtxt("data/South-30m-SST-EffectiveArea.dat")
     cta_requirement_energy = 10**data_cta_requirement[:,0]
     cta_requirement_area_eff = data_cta_requirement[:,1]
 

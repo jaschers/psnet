@@ -13,7 +13,7 @@ from tqdm import tqdm
 
 script_version=0.1
 script_descr="""
-This script selects CTA images based on selection criteria on the Hillas intensity, the leakage2 or the multiplicity parameter. The table including the obs_id, event_id and tel_id is saved in dm-finder/cnn/selection_cuts/
+This script selects CTA images based on selection criteria on the Hillas intensity, the leakage2 or the multiplicity parameter. The table including the obs_id, event_id and tel_id is saved in cnn/selection_cuts/
 """
 
 # Open argument parser
@@ -39,9 +39,9 @@ print(f"################### Input summary ################### \nParticle type: {
 
 # load data
 if args.telescope_mode == "mono" and args.particle_type == "gamma":
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
+    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"dm-finder/scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
+    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -59,7 +59,7 @@ for r in tqdm(range(len(run))): #len(run)
         input_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_cone10_merged.DL1"
     else:
         input_filename = f"{args.particle_type}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-    input_directory = f"dm-finder/data/{args.particle_type}/event_files/" + input_filename + ".h5"
+    input_directory = f"data/{args.particle_type}/event_files/" + input_filename + ".h5"
 
     source = EventSource(input_directory)
 
@@ -86,8 +86,8 @@ for r in tqdm(range(len(run))): #len(run)
         table_cut = table_cut.reset_index(drop = True)
         table_cut = table_cut[["obs_id", "event_id"]] 
     
-        os.makedirs(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/", exist_ok = True)
-        table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/run{run[r]}.csv", index = False)
+        os.makedirs(f"cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/", exist_ok = True)
+        table_cut.to_csv(f"cnn/selection_cuts/{args.particle_type}/mult{args.multiplicity}/run{run[r]}.csv", index = False)
         # table_cut.close()
 
         source.close()
@@ -97,8 +97,8 @@ for r in tqdm(range(len(run))): #len(run)
         table_cut = parameters_table[mask][["obs_id", "event_id", "tel_id"]]
         table_cut = pd.DataFrame(np.array(table_cut))
 
-        os.makedirs(f"dm-finder/cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/", exist_ok = True)
-        table_cut.to_csv(f"dm-finder/cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/run{run[r]}.csv", index = False)
+        os.makedirs(f"cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/", exist_ok = True)
+        table_cut.to_csv(f"cnn/selection_cuts/{args.particle_type}/l2{args.leakage2}_hi{args.hillas_intensity}/run{run[r]}.csv", index = False)
 
         # table_cut.close()
 

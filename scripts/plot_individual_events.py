@@ -71,7 +71,7 @@ elif args.input == "ps":
     string_table_column = "pattern spectrum"
 ##########################################################################################
 run_filename = f"{args.particle_type}_20deg_0deg_run{args.run}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-input_filename = f"dm-finder/cnn/{string_input}/input/{args.particle_type}/" + string_ps_input + run_filename + string_input_short + ".h5"
+input_filename = f"cnn/{string_input}/input/{args.particle_type}/" + string_ps_input + run_filename + string_input_short + ".h5"
 
 attribute_names = [r"$A$ (log scale)", "Area of the minimum enclosing rectangle", "Length of the diagonal of the minimum encl. rect.", "Area (Peri)", "Perimeter (Peri)", "Complexity (Peri)", "Simplicity (Peri)", "Compactness (Peri)", r"$I$", r"$I / A^2$ (log scale)", "Compactnes", r"$I / A^2$ (Jagged)", "Jaggedness", "Entropy", "Lambda-Max", "Max. Pos. X", "Max. Pos. Y", "Grey level", "Sum Grey Levels"]
 
@@ -87,7 +87,7 @@ table.reset_index(inplace = True)
 print(table)
 
 if args.input == "ps":
-    path_pdf = f"dm-finder/data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
+    path_pdf = f"data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
 
     if args.tel_id == None:
         filename_pdf = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"
@@ -128,7 +128,7 @@ if args.input == "ps":
     plt.close()
 
 elif args.input == "cta":
-    path_pdf = f"dm-finder/data/{args.particle_type}/images/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
+    path_pdf = f"data/{args.particle_type}/images/" + run_filename + "/float_alpha" + f"/{args.telescope_mode}" + "/obs_id_" + f"{table['obs_id'][0]}/pdf/"
 
     if args.tel_id == None:
         filename_pdf = "obs_id_" + f"{table['obs_id'][0]}" + "__event_id_" + f"{table['event_id'][0]}"

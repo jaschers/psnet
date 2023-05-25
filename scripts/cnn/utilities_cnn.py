@@ -89,11 +89,11 @@ def GetDataEnergyReconstruction(small_dataset, string_input, string_ps_input, st
         """
     # load csv file with list of runs
     if small_dataset == "y":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha_test.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha_test.csv"
     elif telescope_mode == "mono":
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_mono_alpha.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_mono_alpha.csv"
     else: 
-        filename_run_csv = f"dm-finder/scripts/run_lists/gamma_run_list_alpha.csv"
+        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
@@ -109,7 +109,7 @@ def GetDataEnergyReconstruction(small_dataset, string_input, string_ps_input, st
     for r in range(len(run)):
         # load data from run
         run_filename = f"gamma_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-        input_filename = f"dm-finder/cnn/{string_input}/input/gamma/" + string_ps_input + run_filename + string_input_short + ".h5"
+        input_filename = f"cnn/{string_input}/input/gamma/" + string_ps_input + run_filename + string_input_short + ".h5"
 
         table_run = pd.read_hdf(input_filename)
         print(f"Number of events in Run {run[r]}:", len(table_run))
@@ -129,7 +129,7 @@ def GetDataEnergyReconstruction(small_dataset, string_input, string_ps_input, st
 
         # apply selection cut on training data
         if selection_cuts_train != None:
-            selection_cuts_train_filename = f"dm-finder/cnn/selection_cuts/gamma/{selection_cuts_train}/run{run[r]}.csv"
+            selection_cuts_train_filename = f"cnn/selection_cuts/gamma/{selection_cuts_train}/run{run[r]}.csv"
             table_selection_cuts_train = pd.read_csv(selection_cuts_train_filename)
             if telescope_mode == "stereo_sum_cta":
                 merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id"])
@@ -142,7 +142,7 @@ def GetDataEnergyReconstruction(small_dataset, string_input, string_ps_input, st
 
         # apply selection cut on test data
         if selection_cuts_test != None:
-            selection_cuts_test_filename = f"dm-finder/cnn/selection_cuts/gamma/{selection_cuts_test}/run{run[r]}.csv"
+            selection_cuts_test_filename = f"cnn/selection_cuts/gamma/{selection_cuts_test}/run{run[r]}.csv"
             table_selection_cuts_test = pd.read_csv(selection_cuts_test_filename)
             if telescope_mode == "stereo_sum_cta":
                 merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id"])
@@ -195,11 +195,11 @@ def GetDataSeparation(small_dataset, telescope_mode, string_input, string_ps_inp
     events_count_selection_cuts_test = np.array([0, 0])
     for p in range(len(particle_type)):
         if small_dataset == "y":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
         elif telescope_mode == "mono":
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_mono_alpha.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_mono_alpha.csv"
         else: 
-            filename_run_csv = f"dm-finder/scripts/run_lists/{particle_type[p]}_run_list_alpha.csv"
+            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_alpha.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 
@@ -208,7 +208,7 @@ def GetDataSeparation(small_dataset, telescope_mode, string_input, string_ps_inp
 
         for r in range(len(run)):
             run_filename = f"{particle_type[p]}_20deg_0deg_run{run[r]}___cta-prod5-paranal_desert-2147m-Paranal-dark_merged.DL1"
-            input_filename = f"dm-finder/cnn/{string_input}/input/{particle_type[p]}/" + string_ps_input + run_filename + string_input_short + ".h5"
+            input_filename = f"cnn/{string_input}/input/{particle_type[p]}/" + string_ps_input + run_filename + string_input_short + ".h5"
 
             table_run = pd.read_hdf(input_filename)
             print(f"Number of events in {particle_type[p]} Run {run[r]}:", len(table_run))
@@ -239,7 +239,7 @@ def GetDataSeparation(small_dataset, telescope_mode, string_input, string_ps_inp
 
             # apply selection cuts on training data
             if selection_cuts_train != None:
-                selection_cuts_train_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{selection_cuts_train}/run{run[r]}.csv"
+                selection_cuts_train_filename = f"cnn/selection_cuts/{particle_type[p]}/{selection_cuts_train}/run{run[r]}.csv"
                 table_selection_cuts_train = pd.read_csv(selection_cuts_train_filename)
                 if telescope_mode == "stereo_sum_cta":
                     merged_table_train = pd.merge(table_run_train, table_selection_cuts_train, on=["obs_id", "event_id"])
@@ -258,7 +258,7 @@ def GetDataSeparation(small_dataset, telescope_mode, string_input, string_ps_inp
 
             # apply selection cuts on test data
             if selection_cuts_test != None:
-                selection_cuts_test_filename = f"dm-finder/cnn/selection_cuts/{particle_type[p]}/{selection_cuts_test}/run{run[r]}.csv"
+                selection_cuts_test_filename = f"cnn/selection_cuts/{particle_type[p]}/{selection_cuts_test}/run{run[r]}.csv"
                 table_selection_cuts_test = pd.read_csv(selection_cuts_test_filename)
                 if telescope_mode == "stereo_sum_cta":
                     merged_table_test = pd.merge(table_run_test, table_selection_cuts_test, on=["obs_id", "event_id"])
@@ -378,7 +378,7 @@ def PlotExamplesSeparation(X, Y, string_input, string_ps_input, string_name, mod
             ax[i].title.set_text(f"proton")
         ax[i].axis("off")
     plt.tight_layout()
-    plt.savefig(f"dm-finder/cnn/{string_input}/{mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf", dpi = 250)
+    plt.savefig(f"cnn/{string_input}/{mode}/results/{string_ps_input}/{string_name[1:]}/input_examples" + string_name + ".pdf", dpi = 250)
     plt.close()
 
 def PlotEnergyDistributionSeparation(table, string_input, string_ps_input, string_name, mode):
@@ -401,5 +401,5 @@ def PlotEnergyDistributionSeparation(table, string_input, string_ps_input, strin
     plt.xscale("log")
     plt.yscale("log")
     plt.legend()
-    plt.savefig(f"dm-finder/cnn/{string_input}/{mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf", dpi = 250)
+    plt.savefig(f"cnn/{string_input}/{mode}/results/" + string_ps_input + f"{string_name[1:]}/" + "total_energy_distribution" + string_name + ".pdf", dpi = 250)
     plt.close()
