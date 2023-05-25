@@ -1,73 +1,42 @@
 # PSNet
-## Preamble
-This project investigates the potential of pattern spectra for analyses based on Cherenkov telescope data. By applying pattern spectra on convolutional neural networks (CNNs), the goal of this project is to outperform the performance of the current standard analysis and/or to reduce the computational power needed to train the CNNs.
+PSNet is the first application of pattern spectra on convolutional neural networks (CNNs) for the event reconstruction of imaging atmospheric Cherenkov telescopes (IACTs). PSNet is a CNN trained on pattern spectra of gamma-ray events from the Cherenkov Telescope Array (CTA) and is able to reconstruct the energy of gamma rays and to to separate between signal and background events. PSNet is based on Tensorflow 2.3.1 and Keras 2.4.3 and uses the [ctapipe](https://github.com/cta-observatory/ctapipe) software for the data handling. PSNet is part of my PhD project at the University of Groningen. For more information, see the following publications:
+
+- [J. Aschersleben, R. F. Peletier, M. Vecchi, M. H. F. Wilkinson (2021)](https://arxiv.org/abs/2108.00834)
+
+- [J. Aschersleben, R. F. Peletier, M. Vecchi, M. H. F. Wilkinson (2023)](https://arxiv.org/abs/2302.11876)
 
 ## Installation
-### Git and personal access token
-Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
-```
-git config --global user.name "<firstname> <lastname>"
-git config --global user.email "<email>"
-git config --list
-```
-<!---
-```
-ssh-keygen -t ed25519 -C "your_email@example.com"
-eval "$(ssh-agent -s)"
-vim ~/.ssh/config
-```
-Add the following lines into the ``~/.ssh/config`` file:
-```
-Host *
-  IgnoreUnknown UseKeychain
-  AddKeysToAgent yes
-  UseKeychain yes
-  IdentityFile ~/.ssh/id_ed25519
-```
-Close the file with the ``esc``-key and type ``:wq`` followed by the ``enter``-key. Add your SSH private key to the ssh-agent and store your passphrase in the keychain:
-
-```
-ssh-add -k ~/.ssh/id_ed25519
-```
-Ope the the ssh key with ``vim ~/.ssh/id_ed25519.pub`` and copy the content of the file. Go on [GitHub](https://github.com/) -> click your profile photo -> Settings -> SSH and GPG keys -> New SSH key or Add SSH key. In the "Title" field, add a descriptive label for the new key. Paste your key into the "Key" field. Click 'Add SSH key'. If prompted, confirm your GitHub password. Test your ssh connection with ``ssh -T git@github.com``. If everything was setup correctly, you should get the following message
-
-```
-You've successfully authenticated, but GitHub does not provide shell access.
-```
---->
-Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
 
 ### dm-finder repository
 Clone this repository into your prefered folder:
 ```sh
-git clone https://github.com/jaschers/dm-finder.git
+git clone git@github.com:jaschers/psnet.git
 ```
 
 ### Anaconda
 Follow the [instructions](https://docs.anaconda.com/anaconda/install/linux/) to install ``Anaconda3``. 
 
 ### Environment setup
-Setup the ``ctapipe`` environment:
+Setup the ``psnet`` environment:
 
 ```sh
-conda install mamba -n base -c conda-forge
-mamba env create --file environment.yml
+conda env create -f environment.yml
 ```
 
-Start the ``ctapipe`` environment:
+Start the ``psnet`` environment:
 
 ```sh
-conda activate ctapipe
+conda activate psnet
 ```
 ## Usage
 Every script has a help option ``-h`` or ``--help`` in order to get basic instructions on how to use the script. Some details will be discussed in the following.
 
 ### CTA data download
-Use 
+Go into the ``psnet``directory and use 
 ```sh
-mkdir -p data/gamma_diffuse/event_files
+mkdir -p data/gamma/event_files data/gamma_diffuse/event_files data/proton/event_files
 ``` 
-to create the ``event_files`` directory and download the CTA data with ``DiRAC`` into the ``event_files`` directory (see the [Checklist for CTA newcomers](https://github.com/jaschers/cta-newcomers) for details). 
+to create the ``event_files`` directories and move your corresponding CTA data into the directories. 
 
 ### Create CTA images
 Run 
@@ -126,27 +95,80 @@ mapper = 0 - Area mapper
         4 - Log10 mapper
 ```
 
-The pattern spectra are saved as matlab files into the ``data/gamma/pattern_spectra`` directory. Again the pattern spectra are created from the runs listed in ``main/run_lists/gamma_run_list_alpha.csv``. Pattern spectra from a particular run can be created by adding the ``-r`` command.
+The pattern spectra are saved as matlab files into the ``data/<particle_type>/pattern_spectra`` directory. Again the pattern spectra are created from the runs listed in ``main/run_lists/<particle_type>_run_list_alpha.csv``. Pattern spectra from a particular run can be created by adding the ``-r`` command.
 
 ### Evaluation / investigation
-In order to use the GUI of the pattern spectra code to have a look at an individual pattern spectrum, one has to go into the ``xmaxtree`` directoy via ``cd main/pattern_spectra/xmaxtree`` and run e.g. ``./xmaxtree <filename>.pgm a 9, 0 dl 0.8, 30 dh 5, 130000 m 4, 4 n 20, 20 f 3``. The input parameter can be adjusted according to your needs.
-
 The total data set of pattern spectra can be further investigated with the following script:
 
 ```
 python main/pattern_spectra/python/pattern_spectra_evaluation.py -h
 ```
 
-It evaluates the pattern spectra pixel distribution for different energies and primary particles. The evaluation plots will be saved under ``data/<particle_type>/info/pattern_spectra_distribution/<pattern_spectra_specifications>/``:
+It evaluates the pattern spectra pixel distribution for different energies and particle types. The evaluation plots will be saved under ``data/<particle_type>/info/pattern_spectra_distribution/<pattern_spectra_specifications>/``:
 
 ### Convolutional neural network (CNN)
-Currently, the code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
+The code provides options to train and evaluate a CNN for energy reconstruction of gamma rays, and for the separation of gamma-ray and proton events. 
 
 #### Training
 ```
 python main/cnn/cnn.py -h
 ```
-It is highly recommened to train the CNN on a computer cluster (such as Peregrine HPC cluster), if the full data set is used for training. In order to copy your local data and main on the Peregrine HPC cluster, copy the following commands into your ``~/.bashrc`` file:
+It is highly recommened to train the CNN on a computer cluster, if the full data set is used for training. 
+
+Tests can be performed with a smaller data set listed in ``main/run_lists/<particle_type>_run_list_alpha_test.csv`` on your local machine with the ``-sd y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
+
+##### Signal/background separation
+```
+python main/cnn/cnn.py -m separation -i cta
+python main/cnn/cnn.py -m separation -i ps
+```
+The CNN can be trained for signal/background (photon/proton) separation with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra** section. By default, the full data set of all runs listed in ``main/run_lists/gamma_diffuse_run_list_alpha.csv`` and ``main/run_lists/proton_run_list_alpha.csv`` are considered. The energy range of the considered gamma-ray and proton events can be specified with the ``-erg <energy_lower> <energy_upper>`` and ``-erp <energy_lower> <energy_upper>`` arguments. Currently, we recommend to use ``-erg 0.5 100`` and ``-erp 1.5 100`` to consider gamma-ray events between 500 GeV and 100 TeV and proton events between 1.5 TeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
+
+##### Energy reconstruction
+```
+python main/cnn/cnn.py -m energy -i cta
+python main/cnn/cnn.py -m energy -i ps
+```
+The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra section**. By default, the full data set of all runs listed in ``main/run_lists/gamma_run_list_alpha.csv`` are considered. The energy range of the considered events can be specified with the ``-erg <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-erg 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
+
+#### Evaluation
+```
+python main/cnn/cnn_evaluation.py -h
+```
+The CNN evaluation script loads the output csv file that contains the performance of the CNN on the test data and evaluates the results. 
+
+##### Signal/background separation
+```
+python main/cnn/cnn_evaluation.py -m separation -i <ps/cta> -na <name> -erg <energy_lower> <energy_upper> -erp <energy_lower> <energy_upper>
+```
+Specify ``-m separation`` in order to evaluate a CNN that was trained for signal/background separation. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-erg`` option that you specified for the CNN training in the previous section. The gammaness limit ``-gl <g_min_gamma> <g_max_gamma> <g_min_proton> <g_max_proton>`` option is optional and can help to investigate wrongly classified events. The plots will be extracted and saved under ``cnn/<iact_images/pattern_spectra>/separation/results/<pattern_spectra_specifications>/<name>/``.
+
+##### Energy reconstruction
+```
+python main/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -erg <energy_lower> <energy_upper>
+```
+Specify ``-m energy`` in order to evaluate a CNN that was trained for energy reconstruction. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-erg`` option that you specified for the CNN training in the previous section. The plots will be extracted and saved under ``cnn/<iact_images/pattern_spectra>/energy/results/<pattern_spectra_specifications>/<name>/``.
+
+
+It is also possible to directly compare the results of several CNNs, e.g. via
+```
+python main/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -erg <energy_lower> <energy_upper>
+```
+The corresponding plots are saved under ``cnn/comparison/``. 
+
+######################################################
+## Information for students of the University of Groningen
+### Git and personal access token
+Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
+```
+git config --global user.name "<firstname> <lastname>"
+git config --global user.email "<email>"
+git config --list
+```
+Create a personal access token by following the instructions [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token).
+
+### CNN training on a computer cluster
+In order to copy your local data and main on the Peregrine HPC cluster, copy the following commands into your ``~/.bashrc`` file:
 
 ```
 alias sshperigrine='ssh -X <your_P/S-number>@peregrine.hpc.rug.nl'
@@ -162,7 +184,7 @@ Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The 
 6. Install Tables via ``pip install tables --user ``
 7. Install TQDM via ``pip install tqdm --user ``
 8. Load the required modules via ``module add matplotlib/3.1.1-fosscuda-2019b-Python-3.7.4`` and ``module add TensorFlow/2.3.1-fosscuda-2019b-Python-3.7.4``
-9. Save the modules for later use ``module save ctapipe``
+9. Save the modules for later use ``module save psnet``
 10. Create your job, e.g. with vim via ``vim jobs/<name_of_your_job>.sh``
 11. Copy the following lines into the file (this is an example of a job, you have to adjust it according to your needs):
 
@@ -176,53 +198,12 @@ Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The 
 #SBATCH --mail-type=BEGIN,END,FAIL,REQUEUE
 #SBATCH --mail-user=j.j.m.aschersleben@rug.nl
 #SBATCH --output=outputs/cta_images_cnn_separation.log
-module restore ctapipe
+module restore psnet
 python /data/p301858/main/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_exp1 -er 0.5 100 -e 50
 ```
 10. Close and save the file. 
-12. Load your modules via ``module restore ctapipe``
+12. Load your modules via ``module restore psnet``
 13. Send a job request via ``sbatch jobs/<name_of_your_job>.sh``
 14. You can check the current status of your job via ``squeue -u $USER``
 
 More information can be found on the [Peregrine HPC cluster wiki page](https://wiki.hpc.rug.nl/peregrine/start). After the job is completed, you can copy the output of your neural network to your local machine via ``pullperegrine`` (on your local machine).
-
-Tests can be performed with a smaller data set listed in ``main/run_lists/<particle_type>_run_list_alpha_test.csv`` on your local machine with the ``-t y`` option. The mode argument ``-m`` and the input argument ``-i`` are required in order to run the script. Other optional arguments will be discussed in the following.
-
-##### Signal/background separation
-```
-python main/cnn/cnn.py -m separation -i cta
-python main/cnn/cnn.py -m separation -i ps
-```
-The CNN can be trained for signal/background (photon/proton) separation with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra** section. By default, the full data set of all runs listed in ``main/run_lists/gamma_diffuse_run_list_alpha.csv`` and ``main/run_lists/proton_run_list_alpha.csv`` are considered. The energy range of the considered gamma-ray and proton events can be specified with the ``-erg <energy_lower> <energy_upper>`` and ``-erp <energy_lower> <energy_upper>`` arguments. Currently, we recommend to use ``-erg 0.5 100`` and ``-erp 1.5 100`` to consider gamma-ray events between 500 GeV and 100 TeV and proton events between 1.5 TeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The number of epochs for the CNN training can be chosen with the ``-e <number_epochs>`` argument. 
-
-##### Energy reconstruction
-```
-python main/cnn/cnn.py -m energy -i cta
-python main/cnn/cnn.py -m energy -i ps
-```
-The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra section**. By default, the full data set of all runs listed in ``main/run_lists/gamma_run_list_alpha.csv`` are considered. The energy range of the considered events can be specified with the ``-erg <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-erg 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The number of epochs for the CNN training can be chosen with the ``-e <number_epochs>`` argument. 
-
-#### Evaluation
-```
-python main/cnn/cnn_evaluation.py -h
-```
-The CNN evaluation script loads the output csv file that contains the performance of the CNN on the test data and evaluates the results. 
-
-##### Signal/background separation
-```
-python main/cnn/cnn_evaluation.py -m separation -i <ps/cta> -na <name> -erg <energy_lower> <energy_upper> -erp <energy_lower> <energy_upper>
-```
-Specify ``-m separation`` in order to evaluate a CNN that was trained for signal/background separation. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-erg`` option that you specified for the CNN training in the previous section. The gammaness limit ``-gl <g_min_gamma> <g_max_gamma> <g_min_proton> <g_max_proton>`` option is optional and can help to investigate wrongly classified events (but it will take a long time). The plots will be extracted and saved under ``cnn/<iact_images/pattern_spectra>/separation/results/<pattern_spectra_specifications>/<name>/``.
-
-##### Energy reconstruction
-```
-python main/cnn/cnn_evaluation.py -m energy -i <ps/cta> -na <name> -erg <energy_lower> <energy_upper>
-```
-Specify ``-m energy`` in order to evaluate a CNN that was trained for energy reconstruction. Use the same ``<name>`` for the ``-na`` option and the same ``<energy_lower> <energy_upper>`` for the ``-erg`` option that you specified for the CNN training in the previous section. The plots will be extracted and saved under ``cnn/<iact_images/pattern_spectra>/energy/results/<pattern_spectra_specifications>/<name>/``.
-
-
-It is also possible to directly compare the results of several CNNs, e.g. via
-```
-python main/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -erg <energy_lower> <energy_upper>
-```
-The corresponding plots are saved under ``cnn/comparison/``. 
