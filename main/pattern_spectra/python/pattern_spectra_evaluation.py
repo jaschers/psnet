@@ -53,11 +53,11 @@ elif args.telescope_mode == "stereo_sum_ps":
 # energy mode
 if args.mode == "energy":
     if args.test == "y":
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha_test.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_alpha_test.csv"
     elif args.telescope_mode == "mono" or args.telescope_mode == "stereo_sum_ps":
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_mono_alpha.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_mono_alpha.csv"
     else: 
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_alpha.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
@@ -89,11 +89,11 @@ elif args.mode == "separation":
     events_count = np.array([0, 0])
     for p in range(len(particle_type)):
         if args.test == "y":
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_test.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list_test.csv"
         elif args.telescope_mode == "mono":
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_mono.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list_mono.csv"
         else: 
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 

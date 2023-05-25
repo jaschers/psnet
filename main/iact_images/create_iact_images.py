@@ -39,9 +39,9 @@ print(f"################### Input summary ################### \nParticle type: {
 
 # load data
 if args.telescope_mode == "mono" and args.particle_type == "gamma":
-    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
+    filename_run_csv = f"main/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
+    filename_run_csv = f"main/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 

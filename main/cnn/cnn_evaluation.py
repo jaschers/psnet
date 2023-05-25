@@ -126,7 +126,7 @@ if args.mode == "separation":
     dl0_gamma = Table()
     dl0_proton = Table()
     # load simulation info which is necesarry to calculate signal and bkg efficiencies
-    filename_run_gamma_diffuse = f"scripts/run_lists/gamma_diffuse_run_list_alpha.csv"
+    filename_run_gamma_diffuse = f"main/run_lists/gamma_diffuse_run_list_alpha.csv"
     filename_run_proton = f"scripts/run_lists/proton_run_list_alpha.csv"
 
     run_gamma = pd.read_csv(filename_run_gamma_diffuse)

@@ -89,11 +89,11 @@ def GetDataEnergyReconstruction(small_dataset, string_input, string_ps_input, st
         """
     # load csv file with list of runs
     if small_dataset == "y":
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha_test.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_alpha_test.csv"
     elif telescope_mode == "mono":
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_mono_alpha.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_mono_alpha.csv"
     else: 
-        filename_run_csv = f"scripts/run_lists/gamma_run_list_alpha.csv"
+        filename_run_csv = f"main/run_lists/gamma_run_list_alpha.csv"
     run = pd.read_csv(filename_run_csv)
     run = run.to_numpy().reshape(len(run))
 
@@ -195,11 +195,11 @@ def GetDataSeparation(small_dataset, telescope_mode, string_input, string_ps_inp
     events_count_selection_cuts_test = np.array([0, 0])
     for p in range(len(particle_type)):
         if small_dataset == "y":
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list_alpha_test.csv"
         elif telescope_mode == "mono":
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_mono_alpha.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list_mono_alpha.csv"
         else: 
-            filename_run_csv = f"scripts/run_lists/{particle_type[p]}_run_list_alpha.csv"
+            filename_run_csv = f"main/run_lists/{particle_type[p]}_run_list_alpha.csv"
         run = pd.read_csv(filename_run_csv)
         run = run.to_numpy().reshape(len(run))
 

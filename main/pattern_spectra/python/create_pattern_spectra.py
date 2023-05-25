@@ -66,11 +66,11 @@ print(f"################### Input summary ################### \nParticle type: {
 ##########################################################################################
 
 if args.test == "y":
-    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_alpha_test.csv"
+    filename_run_csv = f"main/run_lists/{args.particle_type}_run_list_alpha_test.csv"
 elif (args.telescope_mode == "mono" and args.particle_type == "gamma") or (args.telescope_mode == "stereo_sum_ps" and args.particle_type == "gamma"):
-    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
+    filename_run_csv = f"main/run_lists/{args.particle_type}_run_list_mono_alpha.csv"
 else: 
-    filename_run_csv = f"scripts/run_lists/{args.particle_type}_run_list_alpha.csv"
+    filename_run_csv = f"main/run_lists/{args.particle_type}_run_list_alpha.csv"
 run = pd.read_csv(filename_run_csv)
 run = run.to_numpy().reshape(len(run))
 
@@ -134,7 +134,7 @@ for r in range(len(run)): #len(run)
             filename = "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}"
 
             # command to create pattern spectra
-            command = "./scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" data/{args.particle_type}/images/" + run_filename + "/float_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
+            command = "./main/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" data/{args.particle_type}/images/" + run_filename + "/float_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "obs_id_" + f"{table['obs_id'][i]}" + "__" "event_id_" + f"{table['event_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
         elif args.telescope_mode == "mono":
             # create folder 
             path_mat = f"data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
@@ -146,7 +146,7 @@ for r in range(len(run)): #len(run)
             filename = "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}"
 
             # command to create pattern spectra
-            command = "./scripts/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" data/{args.particle_type}/images/" + run_filename + "/float" + "/mono_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "hdf/" + "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
+            command = "./main/pattern_spectra/xmaxtree_HDF_float_single_MW/xmaxtree" + f" data/{args.particle_type}/images/" + run_filename + "/float" + "/mono_alpha" + "/obs_id_" + f"{table['obs_id'][i]}/" + "hdf/" + "obs_id_" + f"{table['obs_id'][i]}" + "__event_id_" + f"{table['event_id'][i]}" + "__tel_id_" + f"{table['tel_id'][i]}.h5" f" a {args.attribute[0]}, {args.attribute[1]} dl {args.domain_lower[0]}, {args.domain_lower[1]} dh {args.domain_higher[0]}, {args.domain_higher[1]} m {args.mapper[0]}, {args.mapper[1]} n {args.size[0]}, {args.size[1]} f {args.filter} nogui e " + path_mat + filename + " &> /dev/null"
 
         elif args.telescope_mode == "stereo_sum_ps":
             path_mat = f"data/{args.particle_type}/pattern_spectra" + f"/a_{args.attribute[0]}_{args.attribute[1]}__dl_{args.domain_lower[0]}_{args.domain_lower[1]}__dh_{args.domain_higher[0]}_{args.domain_higher[1]}__m_{args.mapper[0]}_{args.mapper[1]}__n_{args.size[0]}_{args.size[1]}__f_{args.filter}/" + run_filename + "/float_alpha" + "/mono" + "/obs_id_" + f"{table['obs_id'][i]}/mat/"
