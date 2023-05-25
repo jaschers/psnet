@@ -246,7 +246,7 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
 
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    plt.plot(np.linspace(bins[0], bins[-1], 10), np.linspace(0, 0, 10), color = "grey", linestyle = "--")
+    # plt.plot(np.linspace(bins[0], bins[-1], 10), np.linspace(0, 0, 10), color = "grey", linestyle = "--")
     labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
@@ -1123,7 +1123,8 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
     cta_requirement_energy = 10**data_cta_requirement[:,0]
     cta_requirement_area_eff = data_cta_requirement[:,1]
 
-    plt.figure(figsize = single_column_fig_size_legend)
+    # plt.figure(figsize = single_column_fig_size_legend)
+    plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
@@ -1151,7 +1152,8 @@ def PlotAeffEnergyComparison(bins, bins_central, area_eff, args_input, path):
     plt.xlabel(r"$E_\mathrm{true}$ [TeV]")
     plt.ylabel(r"$A_\mathrm{eff}$ [m$^{{2}}$]")
     plt.yscale("log")
-    plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    # plt.legend(bbox_to_anchor=(0., 1. , 1., .102), loc="lower left", mode = "expand", ncol = 2)
+    plt.legend(loc="upper left")
     plt.tight_layout()
     plt.savefig(path, dpi = 250)
     plt.close()
