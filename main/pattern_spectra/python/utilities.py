@@ -90,7 +90,7 @@ def PlotPatternSpectraMean(number_energy_ranges, ps_mean, ps_mean_min, ps_mean_m
         # plot pattern spectra sum
         fig_mean.suptitle(f"pattern spectra mean - {particle_type}")   
         ax_mean[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax_mean[i].imshow(ps_mean[i], cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.1, base = 10))
+        im = ax_mean[i].imshow(ps_mean[i], cmap = cmap_mean_pattern_spectra)
         im.set_clim(ps_mean_min, ps_mean_max)
         ax_mean[i].set_xticks([])
         ax_mean[i].set_yticks([])
@@ -106,7 +106,7 @@ def PlotPatternSpectraMean(number_energy_ranges, ps_mean, ps_mean_min, ps_mean_m
         # plot pattern spectra difference
         fig_diff.suptitle(f"pattern spectra mean difference - {particle_type}")   
         ax_diff[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax_diff[i].imshow(ps_mean_diff[i], cmap = cmap_mean_ps_diff) #, norm = SymLogNorm(linthresh = 0.1, vmin = ps_mean_diff_min, vmax = ps_mean_diff_max, base = 10))
+        im = ax_diff[i].imshow(ps_mean_diff[i], cmap = cmap_mean_ps_diff) 
         im.set_clim(ps_mean_diff_min, ps_mean_diff_max)
         ax_diff[i].set_xticks([])
         ax_diff[i].set_yticks([])
@@ -141,7 +141,7 @@ def PlotPatternSpectraMedian(number_energy_ranges, ps_median, ps_median_min, ps_
         # plot pattern spectra sum
         fig_median.suptitle(f"pattern spectra median - {particle_type}")   
         ax_median[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax_median[i].imshow(ps_median[i], cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.1, base = 10))
+        im = ax_median[i].imshow(ps_median[i], cmap = cmap_mean_pattern_spectra) 
         im.set_clim(ps_median_min, ps_median_max)
         ax_median[i].set_xticks([])
         ax_median[i].set_yticks([])
@@ -193,7 +193,7 @@ def PlotPatternSpectraVariance(number_energy_ranges, ps_variance, ps_variance_mi
         # plot pattern spectra sum
         fig_variance.suptitle(f"pattern spectra variance - {particle_type}")   
         ax_variance[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax_variance[i].imshow(ps_variance[i], cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.1, base = 10))
+        im = ax_variance[i].imshow(ps_variance[i], cmap = cmap_mean_pattern_spectra)
         im.set_clim(ps_variance_min, ps_variance_max)
         ax_variance[i].set_xticks([])
         ax_variance[i].set_yticks([])
@@ -245,7 +245,7 @@ def PlotPatternSpectraMeanComparison(number_energy_ranges, ps_mean_gamma_proton,
         # plot pattern spectra difference
         fig.suptitle(f"pattern spectra mean difference - {particle_type[0]} - {particle_type[1]}")   
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax[i].imshow(ps_mean_gamma_proton_diff[i], cmap = cmap_mean_ps_diff) #, norm = SymLogNorm(linthresh = 0.01, base = 10))
+        im = ax[i].imshow(ps_mean_gamma_proton_diff[i], cmap = cmap_mean_ps_diff) 
         im.set_clim(ps_mean_diff_min, ps_mean_diff_max)
         ax[i].set_xticks([])
         ax[i].set_yticks([])
@@ -361,7 +361,7 @@ def PlotPatternSpectraVarianceComparison(number_energy_ranges, ps_variance_gamma
         # plot pattern spectra difference
         fig.suptitle(f"pattern spectra variance difference - {particle_type[0]} - {particle_type[1]}")   
         ax[i].set_title(f"{np.round(bins[i], 1)} - {np.round(bins[i+1], 1)} TeV", fontdict = {"fontsize" : 10})
-        im = ax[i].imshow(ps_variance_gamma_proton_diff[i], cmap = cmap_mean_ps_diff) #, norm = SymLogNorm(linthresh = 0.01, base = 10))
+        im = ax[i].imshow(ps_variance_gamma_proton_diff[i], cmap = cmap_mean_ps_diff) 
         im.set_clim(ps_variance_diff_min, ps_variance_diff_max)
         ax[i].set_xticks([])
         ax[i].set_yticks([])
@@ -390,7 +390,7 @@ def PlotPatternSpectraVarianceComparisonTotal(ps_total_variance_gamma_proton, pa
 
     plt.figure()
     plt.title(f"pattern spectra total variance difference - {particle_type[0]} - {particle_type[1]}", fontsize = 10)
-    im = plt.imshow(ps_total_variance_gamma_proton_diff, cmap = cmap_mean_ps_diff) #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(ps_total_variance_gamma_proton_diff, cmap = cmap_mean_ps_diff) 
     im.set_clim(ps_sum_total_diff_min, ps_sum_total_diff_max)
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
@@ -487,7 +487,7 @@ def PlotPatternSpectraPixelDistribution(pattern_spectra, ps_binned, number_energ
 def PlotPatternSpectraTotal(ps_total_mean, ps_total_median, ps_total_variance, particle_type, attributes, path):
     plt.figure()
     plt.title(f"pattern spectra total mean - {particle_type}", fontsize = 10)
-    im = plt.imshow(ps_total_mean, cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(ps_total_mean, cmap = cmap_mean_pattern_spectra) 
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
     plt.xticks([])
@@ -501,7 +501,7 @@ def PlotPatternSpectraTotal(ps_total_mean, ps_total_median, ps_total_variance, p
 
     plt.figure()
     plt.title(f"pattern spectra total median - {particle_type}", fontsize = 10)
-    im = plt.imshow(ps_total_median, cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(ps_total_median, cmap = cmap_mean_pattern_spectra) 
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
     plt.xticks([])
@@ -515,7 +515,7 @@ def PlotPatternSpectraTotal(ps_total_mean, ps_total_median, ps_total_variance, p
 
     plt.figure()
     plt.title(f"pattern spectra total variance - {particle_type}", fontsize = 10)
-    im = plt.imshow(ps_total_variance, cmap = cmap_mean_pattern_spectra) #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(ps_total_variance, cmap = cmap_mean_pattern_spectra) 
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)
     plt.xticks([])
@@ -539,7 +539,7 @@ def PlotPatternSpectraTotal(ps_total_mean, ps_total_median, ps_total_variance, p
 
     plt.figure()
     plt.title(f"pattern spectra total (mean - median) / mean - {particle_type}", fontsize = 10)
-    im = plt.imshow(ps_total_mean_median, cmap = cmap_mean_ps_diff) #, norm = SymLogNorm(linthresh = 0.04, base = 10))
+    im = plt.imshow(ps_total_mean_median, cmap = cmap_mean_ps_diff) 
     im.set_clim(ps_total_mean_median_min, ps_total_mean_median_max)
     plt.xlabel(f"attribute {attributes[0]}", fontsize = 18)
     plt.ylabel(f"attribute {attributes[1]}", fontsize = 18)

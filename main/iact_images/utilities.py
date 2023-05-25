@@ -5,19 +5,7 @@ from mpl_toolkits.axes_grid1 import make_axes_locatable
 import os
 
 def GetEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
-    """[summary]
-
-    Args:
-        image ([numpy.ndarray]): [description]
-        camera_geometry ([ctapipe.instrument.camera.geometry.CameraGeometry]): [description]
-        cmap (str, optional): [description]. Defaults to "Greys".
-        show_frame (bool, optional): [description]. Defaults to False.
-        colorbar (bool, optional): [description]. Defaults to False.
-        clean_image (bool, optional): [description]. Defaults to False.
-        savefig (bool, optional): [description]. Defaults to False.
-    """
     plt.figure()
-    # plt.style.use('dark_background')
     disp = CameraDisplay(camera_geometry, cmap = cmap, show_frame = show_frame)
     disp.image = image
 
@@ -38,19 +26,9 @@ def GetEventImage(image, camera_geometry, cmap = "Greys", show_frame = False, co
         plt.savefig(savefig, bbox_inches = bbox_inches, pad_inches = pad_inches)
     
     plt.close()
-    #plt.show()
+
 
 def GetEventImageBasic(image, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
-    """[summary]
-
-    Args:
-        image ([numpy.ndarray]): [description]
-        cmap (str, optional): [description]. Defaults to "Greys".
-        show_frame (bool, optional): [description]. Defaults to False.
-        colorbar (bool, optional): [description]. Defaults to False.
-        clean_image (bool, optional): [description]. Defaults to False.
-        savefig (bool, optional): [description]. Defaults to False.
-    """
     plt.figure()
     plt.imshow(image, cmap = cmap) 
 
@@ -74,20 +52,9 @@ def GetEventImageBasic(image, cmap = "Greys", show_frame = False, colorbar = Fal
         plt.savefig(savefig, bbox_inches = bbox_inches, pad_inches = pad_inches)
     
     plt.close()
-    #plt.show()
 
 
 def GetEventImageBasicSmall(image, cmap = "Greys", show_frame = False, colorbar = False, clean_image = False, savefig = False):
-    """[summary]
-
-    Args:
-        image ([numpy.ndarray]): [description]
-        cmap (str, optional): [description]. Defaults to "Greys".
-        show_frame (bool, optional): [description]. Defaults to False.
-        colorbar (bool, optional): [description]. Defaults to False.
-        clean_image (bool, optional): [description]. Defaults to False.
-        savefig (bool, optional): [description]. Defaults to False.
-    """
     dpi = 80
     height, width = np.array(image.shape, dtype=float) / dpi
     
@@ -99,7 +66,6 @@ def GetEventImageBasicSmall(image, cmap = "Greys", show_frame = False, colorbar 
     fig.savefig(savefig, dpi=dpi)
 
     plt.close("all")
-    #plt.show()
 
 def PlotImages(number_energy_ranges, size, bins, image_binned, path):
     image_sum = np.zeros(shape = (number_energy_ranges, size[0], size[1]))
@@ -120,9 +86,6 @@ def PlotImages(number_energy_ranges, size, bins, image_binned, path):
         image_sum_normed[i] /= np.max(image_sum_normed[i])
         # calculate normed patter spectra sum minus pattern spectra of first energy range
         image_sum_difference[i] = image_sum_normed[i] - image_sum_normed[0]
-
-        # image_sum_difference[i] = (image_sum_difference[i] - np.min(image_sum_difference[i])) / np.max(image_sum_difference[i])
-        # image_sum_difference[i] /= np.max(image_sum_difference[i])
 
         # plot pattern spectra sum
         fig_normed.suptitle("CTA images sum")   
@@ -148,7 +111,6 @@ def PlotImages(number_energy_ranges, size, bins, image_binned, path):
     fig_normed.savefig(path + "image_sum_normed.png", dpi = 250)
     fig_difference.tight_layout()
     fig_difference.savefig(path + "image_sum_difference.png", dpi = 250)
-    # plt.show()
 
 def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, number_energy_ranges, particle_type):
     # prepare energy binning
@@ -169,28 +131,20 @@ def PlotHillasParametersDistribution(table, hillas_parameter, energy_range, numb
         table_copy.drop(table_copy.loc[table_copy["true_energy"] <= bins_energy[i]].index, inplace=True)
         table_copy.drop(table_copy.loc[table_copy["true_energy"] >= bins_energy[i+1]].index, inplace=True)
         table_copy.reset_index()
-        # print(table_copy)
         mean = np.mean(table_copy[hillas_parameter])
-        # median = np.median(table_copy[hillas_parameter])
         ax[i].set_title(f"{np.round(bins_energy[i], 1)} - {np.round(bins_energy[i+1], 1)} TeV")
         ax[i].hist(table_copy[hillas_parameter], bins = bins_ellipticity)
         if hillas_parameter == "hillas_intensity":
             ax[i].set_yscale('log')
         ymin, ymax = ax[i].get_ylim()
         ax[i].vlines(mean, ymin, ymax, color = "black", linestyle = "--", label = f"$\mu = {np.round(mean, 1)}$")
-        # ax[i].vlines(median, ymin, ymax, color = "black", linestyle = "--", label = f"$\mu = {np.round(median, 1)}$")
         ax[i].set_ylim(ymin, ymax)
         ax[i].legend()
-    xlim = (np.min(table[hillas_parameter]) - 1, np.max(table[hillas_parameter]) + 5)
     ax[-2].set_xlabel(hillas_parameter)
     ax[3].set_ylabel("number of events")
-    # plt.setp(ax, xlim = xlim)
     plt.tight_layout()
     plt.savefig(f"data/{particle_type}/info/hillas/{hillas_parameter}_dist.png", dpi = 250)
-    # plt.show()
 
-    # sns.pairplot(table, kind="hist")
-    # plt.show()
 
 def reshape_image(image):
     image = np.append(image, np.ones(4 * 8 * 8) * np.min(image))
@@ -202,6 +156,7 @@ def reshape_image(image):
     image = image.reshape(6,6,8,8).transpose(0,2,1,3).reshape(48,48)
     image = np.round(image, 1)
     return(image)
+
 
 def plot_energy_dist(table, particle_type, run):
     plt.figure()

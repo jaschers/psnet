@@ -18,10 +18,8 @@ plt.rcParams['mathtext.fontset'] = 'cm'
 
 # define some colors and cmaps
 color_single = "#143d59"
-# colors_categorial = ["#143d59", "#e49d23"] # blue, yellow
 colors_categorial = ["#143d59", "#00c6b4"] # blue, turquoise
 colors_quat = ["#143d59", "#2C91D2", "#008175", "#00c6b4"] # blue, turquoise
-# colors_categorial_hist = ["#143d59", "#93000F"]
 colors_categorial_hist = ["#143d59", "#00c6b4"]
 cmap_energy_scattering = LinearSegmentedColormap.from_list("", ['#143d59', '#00c6b4', "#fff7d6"])
 
@@ -57,7 +55,6 @@ def PlotLossComparison(epochs_all, loss_train_all, loss_val_all, input, path):
     # plot the ROC curve
     plt.figure(figsize = single_column_fig_size_legend)
     plt.grid(alpha = 0.2)
-    linestyles = ["-.", "--"]
 
     for i in range(len(epochs_all)):
         if input[i] == "cta":
@@ -78,7 +75,6 @@ def PlotEnergyScattering2D(energy_true, energy_rec, path):
     plt.grid(alpha = 0.2)
     x = np.linspace(np.min(energy_true), np.max(energy_true), 100)
     plt.plot(x, x, color="black", label = "$E_\mathrm{rec} = E_\mathrm{true}$")
-    # plt.scatter(x,y,edgecolors='none',s=marker_size,c=void_fraction, norm=matplotlib.colors.LogNorm())
     plt.hist2d(energy_true, energy_rec, bins=(50, 50), cmap = cmap_energy_scattering, norm = matplotlib.colors.LogNorm())
     cbar = plt.colorbar()
     cbar.set_label('Number of events')
@@ -93,7 +89,6 @@ def PlotRelativeEnergyError(relative_energy_error_single, mean, sigma_total, pat
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
     plt.hist(relative_energy_error_single, bins = np.linspace(np.min(relative_energy_error_single), np.max(relative_energy_error_single), 40), color = color_single)
-    # plt.yscale("log")
     plt.xlabel("($E_\mathrm{rec} - E_\mathrm{true})/ E_\mathrm{true}$")
     plt.ylabel("Number of events")
     plt.text(0.95, 0.95, "median $ = %.3f$" % mean, ha = "right", va = "top", transform = plt.gca().transAxes)
@@ -108,14 +103,11 @@ def PlotRelativeEnergyErrorBinned(energy_true_binned, energy_rec_binned, bins, p
     for j in range(len(energy_true_binned)):
         relative_energy_error = (energy_rec_binned[j] - energy_true_binned[j]) / energy_true_binned[j] 
         median = np.median(relative_energy_error)
-        sigma = np.std(relative_energy_error, ddof = 1)
         ax[j].set_title("{0:.1f} TeV ".format(np.round(bins[j], 1)) + "$< E_\mathrm{true} <$" + " {0:.1f} TeV".format(np.round(bins[j+1], 1)), fontsize = fontsize_plots)
         ax[j].grid(alpha = 0.2)
         ax[j].hist(relative_energy_error, bins = np.linspace(-1, 1, 40), color = color_single)
         ymin, ymax = ax[j].get_ylim()
         ax[j].vlines(median, ymin, ymax, color = "black", linestyle = '-', linewidth = 0.7,  label = "median $ = {0:.3f}$".format(np.round(median, 3)))
-        # ax[j].vlines(median - sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7, label = r"$\sigma = %.3f$" % sigma)
-        # ax[j].vlines(median + sigma, ymin, ymax, color = "black", linestyle = '--', linewidth = 0.7)
         ax[j].tick_params(axis='both', which='major')
         ax[j].legend()
         ymax = 1.6 * ymax
@@ -246,7 +238,6 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
 
     plt.figure(figsize = single_column_fig_size)
     plt.grid(alpha = 0.2)
-    # plt.plot(np.linspace(bins[0], bins[-1], 10), np.linspace(0, 0, 10), color = "grey", linestyle = "--")
     labels = ["CTA images", "Pattern spectra"]
     for i in range(len(args_input_unique)):
         table_mean_i = table_mean.copy()
@@ -269,7 +260,6 @@ def PlotEnergyAccuracyComparisonMean(median_all, bins, label, args_input, path):
     plt.xscale("log")
     xmin, xmax, ymin, ymax = plt.axis()
     ylim = np.max([np.abs(ymax), np.abs(ymin)])
-    #   plt.ylim(ymin, 1.2 * ymax)
     plt.ylim(-ylim, ylim)
     plt.legend()
     plt.tight_layout()
