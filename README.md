@@ -1,5 +1,5 @@
 # PSNet
-PSNet is the first application of pattern spectra on convolutional neural networks (CNNs) for the event reconstruction of imaging atmospheric Cherenkov telescopes (IACTs). PSNet is a CNN trained on pattern spectra of gamma-ray events from the Cherenkov Telescope Array (CTA) and is able to reconstruct the energy of gamma rays and to to separate between signal and background events. PSNet is based on Tensorflow 2.3.1 and Keras 2.4.3 and uses the [ctapipe](https://github.com/cta-observatory/ctapipe) software for the data handling. PSNet is part of my PhD project at the University of Groningen. For more information, see the following publications:
+PSNet is the first application of pattern spectra on convolutional neural networks (CNNs) for the event reconstruction of imaging atmospheric Cherenkov telescopes (IACTs). We train a CNN on pattern spectra of gamma-ray events from the Cherenkov Telescope Array (CTA) for energy reconstruction and signal-background separation. PSNet is based on Tensorflow 2.3.1 and Keras 2.4.3 and uses the [ctapipe](https://github.com/cta-observatory/ctapipe) software for the data handling. This project is part of my PhD at the University of Groningen. For more information, see the following publications:
 
 - [J. Aschersleben, R. F. Peletier, M. Vecchi, M. H. F. Wilkinson (2021)](https://arxiv.org/abs/2108.00834)
 
@@ -23,7 +23,7 @@ Setup the ``psnet`` environment:
 conda env create -f environment.yml
 ```
 
-Start the ``psnet`` environment:
+Activate the ``psnet`` environment:
 
 ```sh
 conda activate psnet
@@ -31,14 +31,14 @@ conda activate psnet
 ## Usage
 Every script has a help option ``-h`` or ``--help`` in order to get basic instructions on how to use the script. Some details will be discussed in the following.
 
-### CTA data download
+### CTA data
 Go into the ``psnet``directory and use 
 ```sh
 mkdir -p data/gamma/event_files data/gamma_diffuse/event_files data/proton/event_files
 ``` 
-to create the ``event_files`` directories and move your corresponding CTA data into the directories. 
+to create the ``event_files`` directories and move your corresponding CTA data into the directories. In our work, we used simulated gamma-ray and proton events detected by the southern CTA array (Prod5 DL1 ([ctapipe v0.10.5](https://github.com/cta-observatory/ctapipe)), zenith angle of 20 deg, North pointing, see [here](https://zenodo.org/record/6218687#.ZG9U9tZBzao) for more details).
 
-### Create CTA images
+### Extract CTA images
 Run 
 ```sh
 python main/iact_images/create_iact_images.py -h
@@ -122,14 +122,14 @@ Tests can be performed with a smaller data set listed in ``main/run_lists/<parti
 python main/cnn/cnn.py -m separation -i cta
 python main/cnn/cnn.py -m separation -i ps
 ```
-The CNN can be trained for signal/background (photon/proton) separation with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra** section. By default, the full data set of all runs listed in ``main/run_lists/gamma_diffuse_run_list_alpha.csv`` and ``main/run_lists/proton_run_list_alpha.csv`` are considered. The energy range of the considered gamma-ray and proton events can be specified with the ``-erg <energy_lower> <energy_upper>`` and ``-erp <energy_lower> <energy_upper>`` arguments. Currently, we recommend to use ``-erg 0.5 100`` and ``-erp 1.5 100`` to consider gamma-ray events between 500 GeV and 100 TeV and proton events between 1.5 TeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
+The CNN can be trained for signal/background (photon/proton) separation with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Pattern spectra - Extraction** section. By default, the full data set of all runs listed in ``main/run_lists/gamma_diffuse_run_list_alpha.csv`` and ``main/run_lists/proton_run_list_alpha.csv`` are considered. The energy range of the considered gamma-ray and proton events can be specified with the ``-erg <energy_lower> <energy_upper>`` and ``-erp <energy_lower> <energy_upper>`` arguments. Currently, we recommend to use ``-erg 0.5 100`` and ``-erp 1.5 100`` to consider gamma-ray events between 500 GeV and 100 TeV and proton events between 1.5 TeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
 
 ##### Energy reconstruction
 ```
 python main/cnn/cnn.py -m energy -i cta
 python main/cnn/cnn.py -m energy -i ps
 ```
-The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Create pattern spectra section**. By default, the full data set of all runs listed in ``main/run_lists/gamma_run_list_alpha.csv`` are considered. The energy range of the considered events can be specified with the ``-erg <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-erg 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
+The CNN can be trained for energy reconstruction with the CTA images ``-i cta`` or the pattern spectra ``-i ps`` as input. The pattern spectra characteristics can be specified as described in the **Pattern spectra - Extraction**. By default, the full data set of all runs listed in ``main/run_lists/gamma_run_list_alpha.csv`` are considered. The energy range of the considered events can be specified with the ``-erg <energy_lower> <energy_upper>`` argument. Currently, we recommend to use ``-erg 0.5 100`` to consider events between 500 GeV and 100 TeV. We recommend to always specify the ``-na <name>`` argument in order to give a name to the particular experiment. The training of the CNN is stopped if there is no improvement on the validation dataset for over 20 epochs, and the model with the lowest validation loss is saved.
 
 #### Evaluation
 ```
@@ -156,7 +156,6 @@ python main/cnn/cnn_evaluation.py -m energy -i cta ps -na <name_cta> <name_ps> -
 ```
 The corresponding plots are saved under ``cnn/comparison/``. 
 
-######################################################
 ## Information for students of the University of Groningen
 ### Git and personal access token
 Create an GitHub account [here](https://github.com/). Check if ``git`` is installed on the machine you are working on via ``git --version``. Setup git with the following commands:
@@ -199,7 +198,7 @@ Source your ``.bashrc`` file to apply the updates via ``source ~/.bashrc``. The 
 #SBATCH --mail-user=j.j.m.aschersleben@rug.nl
 #SBATCH --output=outputs/cta_images_cnn_separation.log
 module restore psnet
-python /data/p301858/main/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_exp1 -er 0.5 100 -e 50
+python /data/<your_s_number>/main/cnn/cnn.py -m separation -i cta -na 0.5_100_TeV_exp1 -er 0.5 100 -e 50
 ```
 10. Close and save the file. 
 12. Load your modules via ``module restore psnet``
