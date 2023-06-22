@@ -12,7 +12,7 @@ from utilities_cnn import *
 print("Packages successfully loaded")
 
 ######################################## argparse setup ########################################
-script_version=0.2
+script_version=1.0
 script_descr="""
 This script loads data (CTA images or pattern spectra), defines a CNN for energy reconstruction or gamma/proton separation, trains the CNN and puts its predictions in a csv table.
 """

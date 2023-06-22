@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 ######################################## argparse setup ########################################
 
-script_version=0.1
+script_version=1.0
 script_descr="""
 This script selects CTA images based on selection criteria on the Hillas intensity, the leakage2 or the multiplicity parameter. The table including the obs_id, event_id and tel_id is saved in cnn/selection_cuts/
 """

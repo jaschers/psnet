@@ -11,7 +11,7 @@ from utilities import PlotPatternSpectrum
 plt.rcParams.update({'font.size': 16})
 
 ######################################## argparse setup ########################################
-script_version=0.1
+script_version=1.0
 script_descr="""
 This script creates pattern spectra from the CTA images of gamma/gamma_diffuse/proton events.
 attr =  0 - Area (default) 

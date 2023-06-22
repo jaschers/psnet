@@ -18,7 +18,7 @@ plt.rcParams.update({'font.size': 14})
 
 ######################################## argparse setup ########################################
 
-script_version=0.1
+script_version=1.0
 script_descr="""
 This script creates Cherenkov images of gamma/diffuse-gamma/proton events simulated for CTA. The images are stored in a HDF table.
 """

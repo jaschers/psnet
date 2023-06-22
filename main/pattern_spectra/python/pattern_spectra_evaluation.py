@@ -9,7 +9,7 @@ import random
 np.seterr(divide='ignore', invalid='ignore')
 
 ######################################## argparse setup ########################################
-script_version=0.1
+script_version=1.0
 script_descr="""
 Evaluates the pattern spectra pixel distribution for different energies and primary particles
 """

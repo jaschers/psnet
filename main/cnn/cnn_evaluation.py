@@ -22,7 +22,7 @@ plt.rc('font', family='Times New Roman')#, weight='normal', size=14)
 plt.rcParams['mathtext.fontset'] = 'cm'
 
 ######################################## argparse setup ########################################
-script_version=0.1
+script_version=1.0
 script_descr="""
 Evaluation of the CNN performance on the test data
 """
