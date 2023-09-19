@@ -1,4 +1,7 @@
 # PSNet
+
+<img src="https://github.com/jaschers/psnet/blob/master/logo/logo.png" width="250">
+
 PSNet is the first application of pattern spectra on convolutional neural networks (CNNs) for the event reconstruction of imaging atmospheric Cherenkov telescopes (IACTs). We train a CNN on pattern spectra of gamma-ray events from the Cherenkov Telescope Array (CTA) for energy reconstruction and signal-background separation. PSNet is based on Tensorflow 2.3.1 and Keras 2.4.3 and uses the [ctapipe](https://github.com/cta-observatory/ctapipe) software for the data handling. This project is part of my PhD at the University of Groningen. For more information, see the following publications:
 
 - [J. Aschersleben, R. F. Peletier, M. Vecchi, M. H. F. Wilkinson (2021)](https://arxiv.org/abs/2108.00834)
